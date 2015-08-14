@@ -27,6 +27,23 @@ type Import3d_LexToken
     iline
 end
 
+type Section
+    is_subsidiary
+    ztrans
+    first
+    nameindex
+    parentx
+    volatile
+    volatile2
+    pid
+    iscontour
+    mytype
+    centroid_color
+    id
+    raw
+    xyx
+    d
+end
 
 function input(morphology::ASCIISTRING)
     b2serr = new List()
@@ -34,16 +51,23 @@ function input(morphology::ASCIISTRING)
     nspine = 0
     err = 0
     mtype = new Vector() #originally called type
-    sections = Array{something,1000) #don't know why they said 1000. doesn't matter
+    sections = Array{Section,0)
     alloc(25000, x, y, z, d, iline)
     lines = new List(25000)
     itoken = 0
     depth = 0
-    rdfile(morphology) #seems important
+    rdfile(morphology)
     firstpoints = new Vector(sections.count)
     set_firstpoints()
     connect2soma()
 end
+
+#Need to read in file, then parse it and use data to create sections
+
+#readlines can read in every line
+
+#
+
 
 #sets firstpoints equal to object
 function set_firstpoints(sections::Array{something,1000))
