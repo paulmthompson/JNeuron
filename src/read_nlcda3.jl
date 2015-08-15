@@ -58,48 +58,46 @@ type Section
     d::Array{Int64,1}
 end
 
+function Section(ID::Int64,N::Int64)
+    Section(0,0,0,0,0,1,0,0,-1,0,0,2,ID,Array(Int64,N,3),Array(Int64,N,3),Array(Int64,N))         
+end
+
+type curxyz
+    x::Array{Float64,1}
+    y::Array{Float64,1}
+    z::Array{Float64,1}
+end
+
+function curxyz()
+    curxyz(Array(Float64,0),Array(Float64,0),Array(Float64,0))
+end
+
 type nlcda3
     cursec::Section
     parentsec::Section
     sections::Array{Section,1}
+    mytypes::Array{Int64,1}
     file::Array{ByteString,1}
+    opensec::Array{Section,1}
+    curxyz::curxyz
 end
 
 function nlcda3(filename::ASCIIString)
     f = open(filename)
     a=readlines(f)
     close(f)
-    nlcda3()
-end
-
-function Section(ID::Int64,N::Int64)
-    Section(0,0,0,0,0,1,0,0,-1,0,0,2,ID,Array(Int64,N,3),Array(Int64,N,3),Array(Int64,N))         
-end
-
-function newsec(start::Int64,finish::Int64)
-    first = 0
-    n = finish - start
-    cursec(start,n)
-    cursec.mytype=sectype
-    append!(mytype,sectype)
-    append!(sections,cursec)
-    init_sec(cursec,first,start,n,x,y,z,d)
+    nlcda3() #initialize 
 end
 
 function input(morphology::ASCIISTRING)
-    b2serr = new List()
-    b2sinfo = new List()
-    nspine = 0
-    err = 0
-    mytype = new Vector() #originally called type
-    sections = Array{Section,0)
-    alloc(25000, x, y, z, d, iline)
-    lines = new List(25000)
-    itoken = 0
-    depth = 0
-    rdfile(morphology)
-    firstpoints = new Vector(sections.count)
-    set_firstpoints()
+    #b2serr = new List()
+    #b2sinfo = new List()
+    
+    nlcda=nlcda3(morphology)
+    parse_file(nlcda)
+    
+    #firstpoints = new Vector(sections.count)
+    #set_firstpoints() #don't know how this is different than mytype
     connect2soma()
 end
 
@@ -110,38 +108,38 @@ function parse_file(nlcda::nlcda3)
     depth=0
     skip=0
     state=0
-    opensec=Array(Section,1)
-    cursec=Section(0)
     while linenum < length(nlcda.file)
         leftpar=length(matchall(r"\(",nlcda.file[linenum]))
         rightpar=length(matchall(r"\)",nlcda.file[linenum]))       
         if leftpar>0
             if contains(nlcda.file[linenum],"CellBody")
                 state=1
-                append!(nlcda.sections,Section(1))
-                #must be on first level. make top of open sec, set as current sec, and no parent
+                newsec(nlcda,state)
+                parentsec(nlcda)
             elseif contains(nlcda.file[linenum],"Axon")
                 state=2
-                append!(nlcda.sections,Section(2))
+                newsec(nlcda,state)
+                parentsec(nlcda)
             elseif contains(nlcda.file[linenum],"Dendrite")
                 state=3
-                append!(nlcda.sections,Section(3))
+                newsec(nlcda,state)
+                parentsec(nlcda)
             elseif contains(nlcda.file[linenum],"Apical")
                 state=4
-                append!(nlcda.sections,Section(4))
+                newsec(nlcda,state)
+                parentsec(nlcda)
             elseif markerdetect(nlcda, linenum)
                 skip+=1
             elseif nonsensedetect(nlcda,linenum)
             else
                 if (leftpar-rightpar)>0 & state>0 #check for new section
                     depth+=(leftpar-rightpar)
-                    append!(nlcda.sections,Section(state))
-                    #add to current sec, set previous depth as parent, add to open sec
-                else
-                    
+                    newsec(nlcda,state)
+                    newchild(nlcda)
+                else        
                     mynums=matchall(r"[-+]?[0-9]*\.?[0-9]+", nlcda.file[linenum])
                     if state>0 & length(mynums)>3 & skip<1
-                        #add numbers to current section
+                        dimadd(nlcda,mynums)
                     end
                 end
                 
@@ -151,12 +149,50 @@ function parse_file(nlcda::nlcda3)
             if skip>0
                 skip-=1
             else
+                closesec(nlcda)
             end
-            #close current section and go back to last one at previous depth
         else #no parenthesis, so can just ignore
         end
             linenum+=1
     end      
+end
+
+function newsec(nlcda::nlcda3,state::Int64)
+    append!(nlcda.sections,Section(state))
+    append!(nlcda.mytype,state)
+    nlcda.cursec=nlcda.sections[end]
+    nothing
+end
+
+function newparent(nlcda::nlcda3)
+    nlcda.opensec=[nlcda.sections[end]] #need to have no parent
+    nlcda.curxyz=curxyz()
+    nothing
+end
+
+function newchild(nlcda::nlcda3)
+    nlcda.opensec[end-1].raw=vcat(nlcda.opensec[end-1].raw,
+[nlcda.curxyz.x;nlcda.curxyz.y;nlcda.curxyz.z])
+    nlcda.curxyz=curxyz()
+    append!(nlcda.opensec,nlcda.sections[end])
+    nlcda.sections[end].parent=length(nlcda.sections)-1
+    nothing
+end
+
+function closesec(nlcda::nlcda3)
+    nlcda.cursec.raw=vcat(nlcda.cursec.raw,[nlcda.curxyz.x;nlcda.curxyz.y;nlcda.curxyz.z])
+    nlcda.curxyx()
+    pop!(nlcda.opensec)
+    nlcda.cursec=nlcda.opensec[end]
+    nothing
+end
+
+function dimadd(nlcda::nlcda3,mynums::Array{SubString{UTF8String},1})
+    append!(nlcda.curxyz.x,float(mynums[1]))
+    append!(nlcda.curxyz.y,float(mynums[2]))
+    append!(nlcda.curxyz.z,float(mynums[3]))
+    append!(nlcda.cursec.d,float(mynums[4]))
+    nothing
 end
 
 function markerdetect(nlcda::nlcda3, linenum::Int64)
