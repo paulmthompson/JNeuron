@@ -76,7 +76,7 @@ type nlcda3
     cursec::Section
     parentsec::Section
     sections::Array{Section,1}
-    mytypes::Array{Int64,1}
+    mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
     file::Array{ByteString,1}
     opensec::Array{Section,1}
     curxyz::curxyz
@@ -159,7 +159,7 @@ end
 
 function newsec(nlcda::nlcda3,state::Int64)
     append!(nlcda.sections,Section(state))
-    append!(nlcda.mytype,state)
+    nlcda.mytype[state]+=1
     nlcda.cursec=nlcda.sections[end]
     nothing
 end
