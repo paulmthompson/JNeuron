@@ -1,23 +1,4 @@
 
-proc init() {
-	quiet = 0
-	debug_on = 0
-	gm = new GUIMath()
-	filetype = "Neurolucida V3"
-	current = new Import3d_LexToken()
-	look_ahead = new Import3d_LexToken()
-	look_ahead2 = new Import3d_LexToken()
-	eof=0
-	number=1  leftpar=2  rightpar=3  comma=4  bar=5
-	set=6  rgb=7  string=8  label_=9  err_=10
-	leftsp=11  rightsp=12
-	tokens = new List()
-	tokensappend("eof", "number", "leftpar", "rightpar", "comma", "bar")
-	tokensappend("set", "rgb", "string", "label", "err")
-	tokensappend("leftsp", "rightsp")
-	plist = new List()
-}
-
 const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","DoubleCircle",
          "OpenQuadStar","CircleCross","Cross","Circle1","Flower3","Plus","Circle2",
          "Pinwheel","OpenUpTriangle","Circle3","TexacoStar","OpenDownTriangle","Circle4",
@@ -28,7 +9,7 @@ const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","Dou
          "FilledFinial","KnightsCross","Flower","MalteseCross","Splat"]
 
 const nonsense=["Name", "ImageCoords","Thumbnail","Color","Sections","SSM","dZI","Normal",
-                "Low","High","Generated","Incomplete","SSM2","Resolution"]
+                "Low","High","Generated","Incomplete","SSM2","Resolution","\"CellBody\""]
 
 #=
 sec type
@@ -105,15 +86,6 @@ function newsec(start::Int64,finish::Int64)
     init_sec(cursec,first,start,n,x,y,z,d)
 end
 
-#append()
-function init_sec(sec::Section,first,start,n,x,y,z,d)
-    sec.raw[:,1]=deepcopy(x)
-    sec.raw[:,2]=deepcopy(y)
-    sec.raw[:,3]=deepcopy(z)
-    sec.d[:]=deepcopy(d)
-    nothing 
-end
-
 function input(morphology::ASCIISTRING)
     b2serr = new List()
     b2sinfo = new List()
@@ -136,40 +108,52 @@ function parse_file(nlcda::nlcda3)
     leftpar=0
     rightpart=0
     depth=0
-    state=zeros(Int64,1)
+    skip=0
+    state=0
+    opensec=Array(Section,1)
+    cursec=Section(0)
     while linenum < length(nlcda.file)
         leftpar=length(matchall(r"\(",nlcda.file[linenum]))
-        rightpar=length(matchall(r"\)",nlcda.file[linenum]))
-        depth+=(leftpar-rightpar)
-        if depth>=length(state)
-            append!(state,0)
-        end
-        
+        rightpar=length(matchall(r"\)",nlcda.file[linenum]))       
         if leftpar>0
             if contains(nlcda.file[linenum],"CellBody")
-                state[depth+1]=1
+                state=1
+                append!(nlcda.sections,Section(1))
+                #must be on first level. make top of open sec, set as current sec, and no parent
             elseif contains(nlcda.file[linenum],"Axon")
-                state[depth+1]=2
+                state=2
+                append!(nlcda.sections,Section(2))
             elseif contains(nlcda.file[linenum],"Dendrite")
-                state[depth+1]=3
+                state=3
+                append!(nlcda.sections,Section(3))
             elseif contains(nlcda.file[linenum],"Apical")
-                state[depth+1]=4
+                state=4
+                append!(nlcda.sections,Section(4))
             elseif markerdetect(nlcda, linenum)
-                state[depth+1]=0
+                skip+=1
             elseif nonsensedetect(nlcda,linenum)
-                state[depth+1]=0
             else
-                mynums=matchall(r"[-+]?[0-9]*\.?[0-9]+", nlcda.file[linenum])
-                if state[depth+1]>0 & length(mynums)>3
+                if (leftpar-rightpar)>0 & state>0 #check for new section
+                    depth+=(leftpar-rightpar)
+                    append!(nlcda.sections,Section(state))
+                    #add to current sec, set previous depth as parent, add to open sec
+                else
                     
-                elseif
+                    mynums=matchall(r"[-+]?[0-9]*\.?[0-9]+", nlcda.file[linenum])
+                    if state>0 & length(mynums)>3 & skip<1
+                        #add numbers to current section
+                    end
                 end
                 
             end
             
         elseif rightpar>0
+            if skip>0
+                skip-=1
+            else
+            end
             #close current section and go back to last one at previous depth
-        else
+        else #no parenthesis, so can just ignore
         end
             linenum+=1
     end      
