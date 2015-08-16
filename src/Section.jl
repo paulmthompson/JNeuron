@@ -21,6 +21,15 @@ function Node()
     Node()
 end
 
+#associated 3d point
+type Pt3d
+    x
+    y
+    z
+    d
+    arc
+end
+
 abstract Prop #Property of section (HH, passive etc). contains all of the stuff you need to calc things
 
 type Section{T <: Prop}
@@ -42,19 +51,6 @@ end
 function Section{T<:Prop}(prop::T,n::nseg)
 end
 
-type Pt3d
-    x
-    y
-    z
-    d
-    arc
-end
-
-function new_section(section3d::Section3D) # don't know if i need this rather than a Section constructor
-    sec=Section()
-
-    #add to secstack array
-    
-    return sec
+function Section{T<:Prop}(section3d::Section3D) #like new_section
 end
 
