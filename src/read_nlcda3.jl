@@ -19,26 +19,6 @@ Dendrite =3
 Apical = 4
 =#
 
-#=
-Find the section type
-
-For trees
-read in the x, y, z values and diameter for point in that tree
-cursec = Section(size(x) before treepoints are read, size(x)_after - size(x)_before)
-=#
-
-type Import3d_LexToken
-    s
-    token
-    x
-    itok
-    iline
-end
-
-#=
-Need data container that is keeping track of parent sec, current sec, x,y,z,d values etc
-=#
-
 type Section
     is_subsidiary::Bool
     ztrans::Int64
