@@ -21,8 +21,7 @@ const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","Dou
 const nonsense=["Name", "ImageCoords","Thumbnail","Color","Sections","SSM","dZI","Normal",
                 "Low","High","Generated","Incomplete","SSM2","Resolution","\"CellBody\""]
 
-#for 3d. probably want to change this name because Section is what is used to refer to neuron (rather than hoc 3d import) section of cable
-type Section
+type Section3D
     is_subsidiary::Bool
     ztrans::Int64
     first::Bool
@@ -41,8 +40,8 @@ type Section
     d::Array{Int64,1}
 end
 
-function Section(ID::Int64,N::Int64)
-    Section(0,0,0,0,0,1,0,0,-1,0,0,2,ID,Array(Int64,N,3),Array(Int64,N,3),Array(Int64,N))         
+function Section3D(ID::Int64)
+    Section(0,0,0,0,0,1,0,0,-1,0,0,2,ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0))         
 end
 
 type curxyz #may need to keep this whole list. I think neuron might do that
@@ -56,8 +55,8 @@ function curxyz()
 end
 
 type nlcda3
-    cursec::Section
-    parentsec::Section
+    cursec::Section3D
+    parentsec::Section3D
     sections::Array{Section,1}
     mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
     file::Array{ByteString,1}
@@ -142,7 +141,7 @@ function parse_file(nlcda::nlcda3)
 end
 
 function newsec(nlcda::nlcda3,state::Int64)
-    append!(nlcda.sections,Section(state))
+    append!(nlcda.sections,Section3D(state))
     nlcda.mytype[state]+=1
     nlcda.cursec=nlcda.sections[end]
     nothing
