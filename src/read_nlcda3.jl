@@ -1,4 +1,14 @@
 
+#=
+Initially planned for this to have the methods for just loading neurolucida3 files, 
+but since converting the hoc code saves a TON of space, probably will use (and rename) this
+to encompass all of the Import3D functions that have to do with making the sections
+
+the Import3d had lots of GUI stuff intertwined in it. I'm not planning on doing anything GUI
+related anytime soon, but I'd like to keep it separate if I do
+=#
+
+
 const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","DoubleCircle",
          "OpenQuadStar","CircleCross","Cross","Circle1","Flower3","Plus","Circle2",
          "Pinwheel","OpenUpTriangle","Circle3","TexacoStar","OpenDownTriangle","Circle4",
@@ -11,14 +21,7 @@ const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","Dou
 const nonsense=["Name", "ImageCoords","Thumbnail","Color","Sections","SSM","dZI","Normal",
                 "Low","High","Generated","Incomplete","SSM2","Resolution","\"CellBody\""]
 
-#=
-sec type
-Cellbody=1
-Axon =2
-Dendrite =3
-Apical = 4
-=#
-
+#for 3d. probably want to change this name because Section is what is used to refer to neuron (rather than hoc 3d import) section of cable
 type Section
     is_subsidiary::Bool
     ztrans::Int64
@@ -30,7 +33,7 @@ type Section
     volatile2::Bool
     pid::Int64
     iscontour::Bool
-    mytype::Int64
+    mytype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     centroid_color::Int64
     id::Int64
     raw::Array{Int64,2}
@@ -42,7 +45,7 @@ function Section(ID::Int64,N::Int64)
     Section(0,0,0,0,0,1,0,0,-1,0,0,2,ID,Array(Int64,N,3),Array(Int64,N,3),Array(Int64,N))         
 end
 
-type curxyz
+type curxyz #may need to keep this whole list. I think neuron might do that
     x::Array{Float64,1}
     y::Array{Float64,1}
     z::Array{Float64,1}
@@ -134,7 +137,8 @@ function parse_file(nlcda::nlcda3)
         else #no parenthesis, so can just ignore
         end
             linenum+=1
-    end      
+    end
+    nothing
 end
 
 function newsec(nlcda::nlcda3,state::Int64)
@@ -196,6 +200,29 @@ function nonsensedetect(nlcda::nlcda3,linenum::Int64)
     return false
 end
 
-    
+function connect2soma(nlcda::nlcda3)
+    #move somas to beginning of list
+
+    #combine somas with overlapping bounding boxes
+
+    #find sections that arent' somas and don't have parents and label them as roots
+
+    #loop through each soma, and find what roots connect to it
+    #if inside
+    #parentsec=soma section
+    #parentx=.5
+    #somehow incorporate center of soma into root , i think as starting point
+    #first=1
+    #fid=1
+
+    #If roots are not within any soma bounding box, connect to the closest one   
+end
+
+function instantiate(nlcda::nlcda3)
+    #create section types (soma, axon etc)
+
+    #connect them
+end
+
 
 
