@@ -1,25 +1,9 @@
 
 #=
-Initially planned for this to have the methods for just loading neurolucida3 files, 
-but since converting the hoc code saves a TON of space, probably will use (and rename) this
-to encompass all of the Import3D functions that have to do with making the sections
+These functions and types are designed to import 3D files of various formats. Currently only neurolucida3 is supported.
 
-the Import3d had lots of GUI stuff intertwined in it. I'm not planning on doing anything GUI
-related anytime soon, but I'd like to keep it separate if I do
+This will mostly address the functionality that was available in Neuron's import3d hoc files. The Import3d had lots of GUI stuff intertwined in it, though and I'm not planning on doing anything GUI related anytime soon, but I'd like to keep it separate if I do
 =#
-
-
-const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","DoubleCircle",
-         "OpenQuadStar","CircleCross","Cross","Circle1","Flower3","Plus","Circle2",
-         "Pinwheel","OpenUpTriangle","Circle3","TexacoStar","OpenDownTriangle","Circle4",
-         "ShadedStar","OpenSquare","Circle5","SkiBasket","Asterisk","Circle6","Clock",
-         "OpenDiamond","Circle7","ThinArrow","FilledStar","Circle8","ThickArrow","FilledCircle",
-         "Circle9","SquareGunSight","FilledUpTriangle","Flower2","GunSight","FilledDownTriangle",
-         "SnowFlake","TriStar","FilledSquare","OpenFinial","NinjaStar","FilledDiamond",
-         "FilledFinial","KnightsCross","Flower","MalteseCross","Splat"]
-
-const nonsense=["Name", "ImageCoords","Thumbnail","Color","Sections","SSM","dZI","Normal",
-                "Low","High","Generated","Incomplete","SSM2","Resolution","\"CellBody\""]
 
 type Section3D
     is_subsidiary::Bool
@@ -54,13 +38,59 @@ function curxyz()
     curxyz(Array(Float64,0),Array(Float64,0),Array(Float64,0))
 end
 
-type nlcda3
+abstract Import3D
+
+function input(morphology::ASCIISTRING)
+
+    if contains(morphology,".asc")
+        import3d=nlcda3(morphology)
+    end
+        
+    parse_file(import3d)
+    
+    #firstpoints = new Vector(sections.count)
+    #set_firstpoints() #don't know how this is different than mytype
+    connect2soma()
+
+    #should then "instantiate" to create Neuron object and return it
+end
+
+
+function connect2soma{T<:Import3D}(Import3D::T)
+    #move somas to beginning of list
+
+    #combine somas with overlapping bounding boxes
+
+    #find sections that arent' somas and don't have parents and label them as roots
+
+    #loop through each soma, and find what roots connect to it
+    #if inside
+    #parentsec=soma section
+    #parentx=.5
+    #somehow incorporate center of soma into root , i think as starting point
+    #first=1
+    #fid=1
+
+    #If roots are not within any soma bounding box, connect to the closest one   
+end
+
+function instantiate{T<:Import3D}(Import3D::T)
+    #create section types (soma, axon etc)
+
+    #connect them
+end
+
+#=
+Neurolucida file types
+=#
+
+type nlcda3 <: Import3D
     cursec::Section3D
     parentsec::Section3D
-    sections::Array{Section,1}
+    sections::Array{Section3D,1}
     mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
     file::Array{ByteString,1}
-    opensec::Array{Section,1}
+    opensec::Array{Section3D,1}
     curxyz::curxyz
 end
 
@@ -71,19 +101,19 @@ function nlcda3(filename::ASCIIString)
     nlcda3() #initialize 
 end
 
-function input(morphology::ASCIISTRING)
-    #b2serr = new List()
-    #b2sinfo = new List()
-    
-    nlcda=nlcda3(morphology)
-    parse_file(nlcda)
-    
-    #firstpoints = new Vector(sections.count)
-    #set_firstpoints() #don't know how this is different than mytype
-    connect2soma()
-end
+const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","DoubleCircle",
+         "OpenQuadStar","CircleCross","Cross","Circle1","Flower3","Plus","Circle2",
+         "Pinwheel","OpenUpTriangle","Circle3","TexacoStar","OpenDownTriangle","Circle4",
+         "ShadedStar","OpenSquare","Circle5","SkiBasket","Asterisk","Circle6","Clock",
+         "OpenDiamond","Circle7","ThinArrow","FilledStar","Circle8","ThickArrow","FilledCircle",
+         "Circle9","SquareGunSight","FilledUpTriangle","Flower2","GunSight","FilledDownTriangle",
+         "SnowFlake","TriStar","FilledSquare","OpenFinial","NinjaStar","FilledDiamond",
+         "FilledFinial","KnightsCross","Flower","MalteseCross","Splat"]
 
-function parse_file(nlcda::nlcda3)
+const nonsense=["Name", "ImageCoords","Thumbnail","Color","Sections","SSM","dZI","Normal",
+                "Low","High","Generated","Incomplete","SSM2","Resolution","\"CellBody\""]
+
+function parse_file{T<:nlcda3}(nlcda::T)
     linenum=1
     leftpar=0
     rightpart=0
@@ -198,30 +228,5 @@ function nonsensedetect(nlcda::nlcda3,linenum::Int64)
 
     return false
 end
-
-function connect2soma(nlcda::nlcda3)
-    #move somas to beginning of list
-
-    #combine somas with overlapping bounding boxes
-
-    #find sections that arent' somas and don't have parents and label them as roots
-
-    #loop through each soma, and find what roots connect to it
-    #if inside
-    #parentsec=soma section
-    #parentx=.5
-    #somehow incorporate center of soma into root , i think as starting point
-    #first=1
-    #fid=1
-
-    #If roots are not within any soma bounding box, connect to the closest one   
-end
-
-function instantiate(nlcda::nlcda3)
-    #create section types (soma, axon etc)
-
-    #connect them
-end
-
 
 
