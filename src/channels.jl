@@ -2,6 +2,7 @@
 #=
 Passive
 still needs range variables
+adapt for Julia by PMT
 =#
 
 function prop_init(prop::Prop,node::Node)
@@ -26,6 +27,15 @@ end
     
 #=
 HH
+ This is the original Hodgkin-Huxley treatment for the set of sodium, 
+  potassium, and leakage channels found in the squid giant axon membrane.
+  ("A quantitative description of membrane current and its application 
+  conduction and excitation in nerve" J.Physiol. (Lond.) 117:500-544 (1952).)
+ Membrane voltage is in absolute mV and has been reversed in polarity
+  from the original HH convention and shifted to reflect a resting potential
+  of -65 mV.
+SW Jaslove  6 March, 1992
+adapted for Julia by PMT
 =#
 
 type HH <: Prop
@@ -59,9 +69,9 @@ function prop_calc(prop::HH,node::Node)
 
     rates(prop,node)
 
-    prop.m = prop.m + (1. - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.mtau)))*(- ( ( ( prop.minf ) ) / prop.mtau ) / ( ( ( ( - 1.0) ) ) / prop.mtau ) - prop.m)
-    prop.n = prop.n + (1. - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.ntau)))*(- ( ( ( prop.ninf ) ) / prop.ntau ) / ( ( ( ( - 1.0) ) ) / prop.ntau ) - prop.n)
-    prop.h = prop.h + (1. - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.htau)))*(- ( ( ( prop.hinf ) ) / prop.htau ) / ( ( ( ( - 1.0) ) ) / prop.htau ) - prop.h)
+    prop.m = prop.m + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.mtau)))*(- ( ( ( prop.minf ) ) / prop.mtau ) / ( ( ( ( - 1.0) ) ) / prop.mtau ) - prop.m)
+    prop.n = prop.n + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.ntau)))*(- ( ( ( prop.ninf ) ) / prop.ntau ) / ( ( ( ( - 1.0) ) ) / prop.ntau ) - prop.n)
+    prop.h = prop.h + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.htau)))*(- ( ( ( prop.hinf ) ) / prop.htau ) / ( ( ( ( - 1.0) ) ) / prop.htau ) - prop.h)
         
     prop.gna = prop.gnabar * prop.m^3 * prop.h
     prop.ina = prop.gna * (node.vars["v"] - node.vars["ena"])
