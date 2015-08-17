@@ -3,7 +3,7 @@ Methods to construct and act on Section type, which mirrors the functions of Neu
 =#
 
 type Node
-    v
+    vars::Dict{ASCIIString,Float64}
     area
     a
     b
@@ -15,11 +15,20 @@ type Node
     b_matelm
     child::Section #section connected to this node
     sec::Section #this section
-    prop::Prop
+    prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 
 end
 
 function Node()
     Node()
+end
+
+function add_prop(node::Node,prop::Prop)
+    for i=1:length(prop.nodevar)
+        if !haskey(node.vars,prop.nodevar[i])
+            node.vars[prop.nodevar[i]]=0.0
+        end
+    end
+    nothing        
 end
 
 #associated 3d point
@@ -45,7 +54,7 @@ ppvar con contains other values, looks like usually related to ions
 So as far as Julia goes, at each node there are state variables unique to one ion channel(e.g. sodium gate m), state variables shared among ion channels (e.g. voltage), constant paramters for each channel
 =#
 
-type Section{T <: Prop}
+type Section
     refcount::Int64 #ID for section, also the place in secstack array
     nnode::Int64 #Number of nodes (nseg+1)
     pnode::Array{Node,1} #nseg+1
@@ -58,12 +67,11 @@ type Section{T <: Prop}
     volatile_mark::Int64
     npt3d::Int64
     pt3d::Array{Pt3d,1}
-    prop::T #property list
 end
 
-function Section{T<:Prop}(prop::T,n::nseg)
+function Section(n::nseg)
 end
 
-function Section{T<:Prop}(section3d::Section3D) #like new_section
+function Section(section3d::Section3D) #like new_section
 end
 
