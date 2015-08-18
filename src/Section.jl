@@ -24,7 +24,7 @@ function Node()
     Node()
 end
 
-function add_prop(node::Node,prop::Prop)
+function add_prop!(node::Node,prop::Prop)
     for i=1:length(prop.nodevar)
         if !haskey(node.vars,prop.nodevar[i])
             node.vars[prop.nodevar[i]]=0.0
@@ -46,20 +46,27 @@ type Section
     refcount::Int64 #ID for section, also the place in secstack array
     nnode::Int64 #Number of nodes (nseg+1)
     pnode::Array{Node,1} #nseg+1
-    parentsec::Section
-    child::Section
-    sibling::Section
-    parentnode::Node
-    order::Int64
-    recalc_area::Int64
-    volatile_mark::Int64
+    parent::Int64
+    child::Int64
     npt3d::Int64
     pt3d::Array{Pt3d,1}
 end
 
-function Section(n::nseg)
+function Section(section3d::Section3D) #like new_section
+    sec=Section(1,0,Array(Node,0),0,0,size(section3d.xyz,1),Array(Pt3d,size(section3d.xyz,1)))
+    
+    #add 3d points from 3d
+    for i=1:length(section3d.d)
+        sec.pt3d[i]=pt3d(section3d.xyz[i,:]...,section3d.d[i],i/length(section3d.d))
+    end
+    sec
 end
 
-function Section(section3d::Section3D) #like new_section
+function change_nseg!()
+
+end
+
+function define_shape()
+
 end
 

@@ -20,7 +20,7 @@ type Section3D
     centroid_color::Int64
     id::Int64
     raw::Array{Int64,2}
-    xyx::Array{Int64,2}
+    xyz::Array{Int64,2}
     d::Array{Int64,1}
 end
 
@@ -74,10 +74,17 @@ function connect2soma{T<:Import3D}(Import3D::T)
     #If roots are not within any soma bounding box, connect to the closest one   
 end
 
-function instantiate{T<:Import3D}(Import3D::T)
-    #create section types (soma, axon etc)
+function instantiate(import3d::Import3D)
 
-    #connect them
+    neuron=Neuron()
+
+    for i=1:length(import3d.sections)
+        newsec=Section(import3d.sections[i])
+        add_sec(neuron,newsec)
+    end
+    
+
+    #connect them, making adjustments to 3d points as necessary
 end
 
 #=
