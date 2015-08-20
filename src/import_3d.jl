@@ -12,8 +12,7 @@ type Section3D
     fid::Int64
     nameindex::Float64
     parentx::Float64
-    volatile::Bool
-    volatile2::Bool
+    parent::Int64
     pid::Int64
     iscontour::Bool
     mytype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
@@ -25,7 +24,7 @@ type Section3D
 end
 
 function Section3D(ID::Int64)
-    Section(0,0,0,0,0,1,0,0,-1,0,0,2,ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0))         
+    Section(0,0,0,0,0,1,0,-1,0,0,2,ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0))         
 end
 
 type curxyz #may need to keep this whole list. I think neuron might do that
@@ -82,8 +81,12 @@ function instantiate(import3d::Import3D)
         newsec=Section(import3d.sections[i])
         add_sec(neuron,newsec)
     end
-    
 
+    #grow section children
+    for i=1:length(import3d.sections)
+        push!(neuron.seclist[import3d.sections[i].parent],neuron.seclist[i])
+    end
+    
     #connect them, making adjustments to 3d points as necessary
 end
 

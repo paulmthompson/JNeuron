@@ -44,16 +44,16 @@ end
 
 type Section
     refcount::Int64 #ID for section, also the place in secstack array
+    mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     nnode::Int64 #Number of nodes (nseg+1)
     pnode::Array{Node,1} #nseg+1
-    parent::Int64
-    child::Int64
+    child::Array{Section,0}
     npt3d::Int64
     pt3d::Array{Pt3d,1}
 end
 
 function Section(section3d::Section3D) #like new_section
-    sec=Section(1,0,Array(Node,0),0,0,size(section3d.xyz,1),Array(Pt3d,size(section3d.xyz,1)))
+    sec=Section(1,0,section3d.mytype,Array(Node,0),Array(Section,0),size(section3d.xyz,1),Array(Pt3d,size(section3d.xyz,1)))
     
     #add 3d points from 3d
     for i=1:length(section3d.d)
@@ -66,7 +66,7 @@ function change_nseg!()
 
 end
 
-function define_shape()
+function define_shape!(neuron::Neuron)
 
 end
 
