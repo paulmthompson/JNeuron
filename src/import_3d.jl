@@ -6,28 +6,18 @@ This will mostly address the functionality that was available in Neuron's import
 =#
 
 type Section3D
-    is_subsidiary::Bool
-    ztrans::Int64
-    first::Bool
-    fid::Int64
-    nameindex::Float64
-    parentx::Float64
     parent::Int64
-    pid::Int64
-    iscontour::Bool
     mytype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
-    centroid_color::Int64
-    id::Int64
     raw::Array{Int64,2}
     xyz::Array{Int64,2}
     d::Array{Int64,1}
 end
 
 function Section3D(ID::Int64)
-    Section(0,0,0,0,0,1,0,-1,0,0,2,ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0))         
+    Section(0,ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0))         
 end
 
-type curxyz #may need to keep this whole list. I think neuron might do that
+type curxyz
     x::Array{Float64,1}
     y::Array{Float64,1}
     z::Array{Float64,1}
@@ -65,7 +55,7 @@ function connect2soma{T<:Import3D}(Import3D::T)
     #loop through each soma, and find what roots connect to it
     #if inside
     #parentsec=soma section
-    #parentx=.5
+    #parentx=.5 #where along section of parent it connects
     #somehow incorporate center of soma into root , i think as starting point
     #first=1
     #fid=1
@@ -86,6 +76,7 @@ function instantiate(import3d::Import3D)
     for i=1:length(import3d.sections)
         push!(neuron.seclist[import3d.sections[i].parent],neuron.seclist[i])
     end
+    
     
     #connect them, making adjustments to 3d points as necessary
 end
