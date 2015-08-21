@@ -37,8 +37,6 @@ function input(morphology::ASCIISTRING)
         
     parse_file(import3d)
     
-    #firstpoints = new Vector(sections.count)
-    #set_firstpoints() #don't know how this is different than mytype
     connect2soma()
 
     #should then "instantiate" to create Neuron object and return it
