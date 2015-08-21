@@ -170,9 +170,18 @@ function Section(section3d::Section3D) #like new_section
     sec
 end
 
-function change_nseg!(sec::Section)
-    #use triangular integration to find diameter, area, arc, (ri?) at each node point
+function change_nseg!(sec::Section,nseg::Int64)
 
+    newnodes=Array(Node,0)
+   
+    for i=1:nseg
+        push!(newnodes,Node(sec,i,nseg))
+    end
+
+    sec.pnode=newnodes
+
+    nothing
+    
 end
 
 function define_shape!(neuron::Neuron)
