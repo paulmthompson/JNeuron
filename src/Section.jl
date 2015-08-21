@@ -108,7 +108,6 @@ function interp_area(x1::Float64, x2::Float64, x3::Float64)
     [frac1,frac2]
 end
 
-
 function add_prop!(node::Node,prop::Prop)
 
     if sum([typeof(node.prop[i])==typeof(prop) for i=1:length(node.prop)])==0

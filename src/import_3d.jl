@@ -6,7 +6,8 @@ This will mostly address the functionality that was available in Neuron's import
 =#
 
 type Section3D
-    parent::Int64
+    parent::Array{Section3D,1}
+    children::Array{Section3D,1}
     mytype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     raw::Array{Int64,2}
     xyz::Array{Int64,2}
@@ -14,7 +15,7 @@ type Section3D
 end
 
 function Section3D(ID::Int64)
-    Section(0,ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0))         
+    Section(Array(Section3D,0),Array(Section3D,0),ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0),0)         
 end
 
 type curxyz
@@ -36,7 +37,14 @@ function input(morphology::ASCIISTRING)
     end
         
     parse_file(import3d)
-    
+
+    #divide up sections so that they aren't connected in the middle of each other
+
+    for i=1:length(import3d.sections)
+        if import3d.sections[i].mytype>1
+            
+    end
+   
     connect2soma()
 
     #should then "instantiate" to create Neuron object and return it
@@ -116,7 +124,6 @@ function parse_file{T<:nlcda3}(nlcda::T)
     linenum=1
     leftpar=0
     rightpart=0
-    depth=0
     skip=0
     state=0
     while linenum < length(nlcda.file)
@@ -144,7 +151,6 @@ function parse_file{T<:nlcda3}(nlcda::T)
             elseif nonsensedetect(nlcda,linenum)
             else
                 if (leftpar-rightpar)>0 & state>0 #check for new section
-                    depth+=(leftpar-rightpar)
                     newsec(nlcda,state)
                     newchild(nlcda)
                 else        
@@ -170,9 +176,9 @@ function parse_file{T<:nlcda3}(nlcda::T)
 end
 
 function newsec(nlcda::nlcda3,state::Int64)
-    append!(nlcda.sections,Section3D(state))
+    append!(nlcda.sections,Section3D(state)) #add new section to overall list of 3D
     nlcda.mytype[state]+=1
-    nlcda.cursec=nlcda.sections[end]
+    nlcda.cursec=nlcda.sections[end] #set new section as current section
     nothing
 end
 
@@ -182,11 +188,16 @@ function newparent(nlcda::nlcda3)
     nothing
 end
 
-function newchild(nlcda::nlcda3)
-    nlcda.opensec[end-1].raw=vcat(nlcda.opensec[end-1].raw,
-[nlcda.curxyz.x;nlcda.curxyz.y;nlcda.curxyz.z])
-    nlcda.curxyz=curxyz()
-    append!(nlcda.opensec,nlcda.sections[end])
+function newchild(nlcda::nlcda3) #new branch off of main section
+    nlcda.opensec[end].raw=vcat(nlcda.opensec[end].raw,
+[nlcda.curxyz.x;nlcda.curxyz.y;nlcda.curxyz.z]) #add points that have accumulated to most recent parent
+    nlcda.cursec.raw=[nlcda.curxyz.x[end];nlcda.curxyz.y[end];nlcda.curxyz.z[end]] #make first point equalt to most recent data point (where branch was)
+    nlcda.cursec.d=[nlcda.opensec[end].d]
+
+    push!(nlcda.opensec[end].children,nlcda.cursec) #add as child to parent
+    push!(nlcda.cursec.parent, nlcda.opensec[end]) #add as parent to child 
+    nlcda.curxyz=curxyz() #reset xyz container
+    append!(nlcda.opensec,nlcda.sections[end]) #add new section to list of open
     nlcda.sections[end].parent=length(nlcda.sections)-1
     nothing
 end
