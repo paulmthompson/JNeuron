@@ -6,16 +6,16 @@ abstract Prop #Property of section (HH, passive etc). contains all of the stuff 
 
 type Node
     vars::Dict{ASCIIString,Float64}
-    area
+    area::Float64 #area of section at node
     a
     b
-    rinv
+    ri #resistance between center of segment and parent segment
     v_temp
-    d
+    d::Float64 #diameter of section at node
     rhs
     a_matelm
     b_matelm
-    child::Section #section connected to this node
+    child::Section #section connected to this node?
     sec::Section #this section
     prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 
 end
@@ -25,44 +25,65 @@ function Node()
 end
 
 function add_prop!(node::Node,prop::Prop)
-    for i=1:length(prop.nodevar)
-        if !haskey(node.vars,prop.nodevar[i])
-            node.vars[prop.nodevar[i]]=0.0
+
+    if sum([typeof(node.prop[i])==typeof(prop) for i=1:length(node.prop)])==0
+
+        push!(node.prop,prop)
+        
+        for i=1:length(prop.nodevar)
+            if !haskey(node.vars,prop.nodevar[i])
+                node.vars[prop.nodevar[i]]=0.0
+            end
         end
+    else
+        println("Property also exists in node. Not inserting")
     end
+           
     nothing        
 end
 
 #associated 3d point
 type Pt3d
-    x
-    y
-    z
-    d
-    arc
+    x::Float64
+    y::Float64
+    z::Float64
+    d::Float64
+    arc::Float64 #normalized distance from 0 to end
 end
 
 type Section
     refcount::Int64 #ID for section, also the place in secstack array
     mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
-    nnode::Int64 #Number of nodes (nseg+1)
-    pnode::Array{Node,1} #nseg+1
+    pnode::Array{Node,1} #one node at center of each segment
     child::Array{Section,0}
-    npt3d::Int64
     pt3d::Array{Pt3d,1}
+    Ra::Float64 #cytoplasmic resistivity
 end
 
 function Section(section3d::Section3D) #like new_section
-    sec=Section(1,0,section3d.mytype,Array(Node,0),Array(Section,0),size(section3d.xyz,1),Array(Pt3d,size(section3d.xyz,1)))
-    
+    sec=Section(1,section3d.mytype,Array(Node,0),Array(Section,0),Array(Pt3d,size(section3d.xyz,1)),)
+
+    mylength=0.0
     #add 3d points from 3d
     for i=1:length(section3d.d)
-        sec.pt3d[i]=pt3d(section3d.xyz[i,:]...,section3d.d[i],i/length(section3d.d))
+        if i>0
+            mylength+=sec.pt3d+
+            sec.pt3d[i]=pt3d(section3d.xyz[i,:]...,section3d.d[i],norm(section3d.xyz[i,:],section3d.xyz[i-1,:]))
+        else
+            sec.pt3d[i]=pt3d(section3d.xyz[i,:]...,section3d.d[i],0.0)
+        end
     end
+
+    #normalize arc length
+    for i=2:size(sec.pt3d,1)
+        sec.pt3d[i].arc=sec.pt3d[i]/mylength
+    end
+    
     sec
 end
 
-function change_nseg!()
+function change_nseg!(sec::Section)
+    #use triangular integration to find diameter, area, arc, (ri?) at each node point
 
 end
 
