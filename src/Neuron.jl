@@ -6,9 +6,7 @@ Main data container for JNeuron
 
 export Neuron
 
-type Neuron
-    secstack::Array{Section,1}
-end
+
 
 function Neuron()
     Neuron(Array(Section,0))
