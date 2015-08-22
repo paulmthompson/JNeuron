@@ -30,7 +30,7 @@ end
 
 abstract Import3D
 
-function input(morphology::ASCIISTRING)
+function input(morphology::ASCIIString)
 
     if contains(morphology,".asc")
         import3d=nlcda3(morphology)
