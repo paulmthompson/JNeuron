@@ -8,9 +8,9 @@ This will mostly address the functionality that was available in Neuron's import
 type Section3D
     parent::Array{Section3D,1}
     children::Array{Section3D,1}
+    childind::Array{Int64,1}
     mytype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     raw::Array{Int64,2}
-    xyz::Array{Int64,2}
     d::Array{Int64,1}
 end
 
@@ -40,18 +40,56 @@ function input(morphology::ASCIISTRING)
 
     #divide up sections so that they aren't connected in the middle of each other
 
-    for i=1:length(import3d.sections)
-        if import3d.sections[i].mytype>1
-            
+    while branch_axons!(import3d)
     end
-   
-    connect2soma()
+
+    return import3d
+    #connect2soma()
 
     #should then "instantiate" to create Neuron object and return it
 end
 
+function branch_axons!(import3d::Import3D)
 
-function connect2soma{T<:Import3D}(Import3D::T)
+    flag=false
+    
+    for i=1:length(import3d.sections)
+        for j=1:length(import3d.sections[i].children) #change to while loop
+            #if beginning of child is not at end of parent section
+            if import3d.sections[i].children[j].raw[:,1]!=import3d.sections[i].raw[:,end]
+
+                flag=true
+                #new section is first piece with this child as only child, switch that child to have new section as parent
+                append!(import3d.sections,Section3D(import3d.sections[i].mytype))
+                import3d.mytype[import3d.sections[i].mytype]+=1
+                import3d.sections[end].parent=import3d.sections[i].parent
+                push!(import3d.sections[end].children,import3d.sections[i].children[j])
+                push!(import3d.sections[end].childind,import3d.sections[i].childind[j])
+                import3d.sections[end].raw=import3d.sections[i].raw[1:import3d.sections[i].childind[j],:]
+                import3d.sections[end].d=import3d.sections[i].d[1:import3d.sections[i].childind[j],:]
+
+                import3d.sections[i].children[j].parent=import3d.sections[end]
+
+                #delete this section from old section and set new section as parent
+                import3d.sections[i].parent=[import3d.sections[end]]
+                deleteat!(import3d.sections[i].children,j)
+                import3d.sections[i].raw=import3d.sections[i].raw[import3d.sections[i].childind[j]:end,:]
+                import3d.sections[i].d=import3d.sections[i].d[import3d.sections[i].childind[j]:end]
+                import3d.sections[i].childind-=import3d.sections[i].childind[j]                
+                deleteat!(import3d.sections[i].childind,j)
+                j-=1
+            end
+        end
+        
+            
+    end
+
+    return flag
+    
+end
+
+
+function connect2soma(import3d::Import3D)
     #move somas to beginning of list
 
     #combine somas with overlapping bounding boxes
@@ -195,7 +233,9 @@ function newchild(nlcda::nlcda3) #new branch off of main section
     nlcda.cursec.d=[nlcda.opensec[end].d]
 
     push!(nlcda.opensec[end].children,nlcda.cursec) #add as child to parent
-    push!(nlcda.cursec.parent, nlcda.opensec[end]) #add as parent to child 
+    push!(nlcda.opensec[end].childind,length(nlcda.opensec[end].d)) #add index of this child to parent
+    push!(nlcda.cursec.parent, nlcda.opensec[end]) #add as parent to child
+    
     nlcda.curxyz=curxyz() #reset xyz container
     append!(nlcda.opensec,nlcda.sections[end]) #add new section to list of open
     nlcda.sections[end].parent=length(nlcda.sections)-1
