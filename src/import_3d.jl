@@ -15,7 +15,7 @@ type Section3D
 end
 
 function Section3D(ID::Int64)
-    Section(Array(Section3D,0),Array(Section3D,0),ID,Array(Int64,0,3),Array(Int64,0,3),Array(Int64,0),0)         
+    Section3D(Array(Section3D,0),Array(Section3D,0),Array(Int64,0),ID,Array(Int64,0,3),Array(Int64,0))         
 end
 
 type curxyz
@@ -131,7 +131,7 @@ Neurolucida file types
 
 type nlcda3 <: Import3D
     cursec::Section3D
-    parentsec::Section3D
+    #parentsec::Section3D
     sections::Array{Section3D,1}
     mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
     file::Array{ByteString,1}
@@ -143,7 +143,7 @@ function nlcda3(filename::ASCIIString)
     f = open(filename)
     a=readlines(f)
     close(f)
-    nlcda3() #initialize 
+    nlcda3(Section3D(0),Array(Section3D,0),zeros(Int64,4),a,Array(Section3D,0),curxyz()) 
 end
 
 const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","DoubleCircle",
