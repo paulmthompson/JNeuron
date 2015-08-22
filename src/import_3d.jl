@@ -10,12 +10,12 @@ type Section3D
     children::Array{Section3D,1}
     childind::Array{Int64,1}
     mytype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
-    raw::Array{Int64,2}
-    d::Array{Int64,1}
+    raw::Array{Float64,2}
+    d::Array{Float64,1}
 end
 
 function Section3D(ID::Int64)
-    Section3D(Array(Section3D,0),Array(Section3D,0),Array(Int64,0),ID,Array(Int64,0,3),Array(Int64,0))         
+    Section3D(Array(Section3D,0),Array(Section3D,0),Array(Int64,0),ID,Array(Float64,0,3),Array(Float64,0))         
 end
 
 type curxyz
@@ -38,56 +38,11 @@ function input(morphology::ASCIIString)
         
     parse_file(import3d)
 
-    #divide up sections so that they aren't connected in the middle of each other
-
-    while branch_axons!(import3d)
-    end
-
     return import3d
     #connect2soma()
 
     #should then "instantiate" to create Neuron object and return it
 end
-
-function branch_axons!(import3d::Import3D)
-
-    flag=false
-    
-    for i=1:length(import3d.sections)
-        for j=1:length(import3d.sections[i].children) #change to while loop
-            #if beginning of child is not at end of parent section
-            if import3d.sections[i].children[j].raw[:,1]!=import3d.sections[i].raw[:,end]
-
-                flag=true
-                #new section is first piece with this child as only child, switch that child to have new section as parent
-                append!(import3d.sections,Section3D(import3d.sections[i].mytype))
-                import3d.mytype[import3d.sections[i].mytype]+=1
-                import3d.sections[end].parent=import3d.sections[i].parent
-                push!(import3d.sections[end].children,import3d.sections[i].children[j])
-                push!(import3d.sections[end].childind,import3d.sections[i].childind[j])
-                import3d.sections[end].raw=import3d.sections[i].raw[1:import3d.sections[i].childind[j],:]
-                import3d.sections[end].d=import3d.sections[i].d[1:import3d.sections[i].childind[j],:]
-
-                import3d.sections[i].children[j].parent=import3d.sections[end]
-
-                #delete this section from old section and set new section as parent
-                import3d.sections[i].parent=[import3d.sections[end]]
-                deleteat!(import3d.sections[i].children,j)
-                import3d.sections[i].raw=import3d.sections[i].raw[import3d.sections[i].childind[j]:end,:]
-                import3d.sections[i].d=import3d.sections[i].d[import3d.sections[i].childind[j]:end]
-                import3d.sections[i].childind-=import3d.sections[i].childind[j]                
-                deleteat!(import3d.sections[i].childind,j)
-                j-=1
-            end
-        end
-        
-            
-    end
-
-    return flag
-    
-end
-
 
 function connect2soma(import3d::Import3D)
     #move somas to beginning of list
@@ -130,20 +85,19 @@ Neurolucida file types
 =#
 
 type nlcda3 <: Import3D
-    cursec::Section3D
-    #parentsec::Section3D
     sections::Array{Section3D,1}
     mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
     file::Array{ByteString,1}
-    opensec::Array{Section3D,1}
     curxyz::curxyz
+    opensecs::Array{Int64,1} #inds of last section at that depth
+    depth::Int64
 end
 
 function nlcda3(filename::ASCIIString)
     f = open(filename)
     a=readlines(f)
     close(f)
-    nlcda3(Section3D(0),Array(Section3D,0),zeros(Int64,4),a,Array(Section3D,0),curxyz()) 
+    nlcda3(Array(Section3D,0),zeros(Int64,4),a,curxyz(),zeros(Int64,0),0) 
 end
 
 const markers=["Dot","OpenStar","FilledQuadStar","CircleArrow","OpenCircle","DoubleCircle",
@@ -165,35 +119,37 @@ function parse_file{T<:nlcda3}(nlcda::T)
     skip=0
     state=0
     while linenum < length(nlcda.file)
+        println(linenum, " ", length(nlcda.opensecs))
         leftpar=length(matchall(r"\(",nlcda.file[linenum]))
         rightpar=length(matchall(r"\)",nlcda.file[linenum]))       
         if leftpar>0
-            if contains(nlcda.file[linenum],"CellBody")
-                state=1
+            if contains(nlcda.file[linenum],"(CellBody)")
+                state=1               
                 newsec(nlcda,state)
-                parentsec(nlcda)
-            elseif contains(nlcda.file[linenum],"Axon")
+                newparent(nlcda)
+            elseif contains(nlcda.file[linenum],"(Axon)")
                 state=2
                 newsec(nlcda,state)
-                parentsec(nlcda)
-            elseif contains(nlcda.file[linenum],"Dendrite")
+                newparent(nlcda)
+            elseif contains(nlcda.file[linenum],"(Dendrite)")
                 state=3
                 newsec(nlcda,state)
-                parentsec(nlcda)
-            elseif contains(nlcda.file[linenum],"Apical")
+                newparent(nlcda)
+            elseif contains(nlcda.file[linenum],"(Apical)")
                 state=4
                 newsec(nlcda,state)
-                parentsec(nlcda)
+                newparent(nlcda)
             elseif markerdetect(nlcda, linenum)
                 skip+=1
             elseif nonsensedetect(nlcda,linenum)
             else
-                if (leftpar-rightpar)>0 & state>0 #check for new section
+                if ((leftpar-rightpar)>0) & (state>0) #check for new section
+                    nlcda.depth+=1
                     newsec(nlcda,state)
                     newchild(nlcda)
                 else        
                     mynums=matchall(r"[-+]?[0-9]*\.?[0-9]+", nlcda.file[linenum])
-                    if state>0 & length(mynums)>3 & skip<1
+                    if (state>0) & (length(mynums)>3) & (skip<1)
                         dimadd(nlcda,mynums)
                     end
                 end
@@ -206,7 +162,12 @@ function parse_file{T<:nlcda3}(nlcda::T)
             else
                 closesec(nlcda)
             end
-        else #no parenthesis, so can just ignore
+        elseif contains(nlcda.file[linenum], " | ")
+            closesec(nlcda)
+            newsec(nlcda,state)
+            newchild(nlcda)
+        else #no parenthesis so just ignore
+            
         end
             linenum+=1
     end
@@ -214,47 +175,46 @@ function parse_file{T<:nlcda3}(nlcda::T)
 end
 
 function newsec(nlcda::nlcda3,state::Int64)
-    append!(nlcda.sections,Section3D(state)) #add new section to overall list of 3D
-    nlcda.mytype[state]+=1
-    nlcda.cursec=nlcda.sections[end] #set new section as current section
+    push!(nlcda.sections,Section3D(state)) #add new section to overall list of 3D
+    nlcda.mytypes[state]+=1
     nothing
 end
 
 function newparent(nlcda::nlcda3)
-    nlcda.opensec=[nlcda.sections[end]] #need to have no parent
     nlcda.curxyz=curxyz()
+    nlcda.depth+=1
+    push!(nlcda.opensecs,length(nlcda.sections))
     nothing
 end
 
 function newchild(nlcda::nlcda3) #new branch off of main section
-    nlcda.opensec[end].raw=vcat(nlcda.opensec[end].raw,
-[nlcda.curxyz.x;nlcda.curxyz.y;nlcda.curxyz.z]) #add points that have accumulated to most recent parent
-    nlcda.cursec.raw=[nlcda.curxyz.x[end];nlcda.curxyz.y[end];nlcda.curxyz.z[end]] #make first point equalt to most recent data point (where branch was)
-    nlcda.cursec.d=[nlcda.opensec[end].d]
+    nlcda.sections[end-1].raw=[nlcda.curxyz.x nlcda.curxyz.y nlcda.curxyz.z] #add points that have accumulated to most recent section
+    nlcda.sections[end].raw=nlcda.sections[nlcda.opensecs[nlcda.depth-1]].raw[end,:] #make first point equal to most recent data point (where branch was)
+    nlcda.sections[end].d=[nlcda.sections[nlcda.opensecs[nlcda.depth-1]].d[end]]
 
-    push!(nlcda.opensec[end].children,nlcda.cursec) #add as child to parent
-    push!(nlcda.opensec[end].childind,length(nlcda.opensec[end].d)) #add index of this child to parent
-    push!(nlcda.cursec.parent, nlcda.opensec[end]) #add as parent to child
+    push!(nlcda.sections[nlcda.opensecs[nlcda.depth-1]].children,nlcda.sections[end]) #add as child to parent
+    push!(nlcda.sections[end].parent, nlcda.sections[nlcda.opensecs[nlcda.depth-1]]) #add as parent to child
     
     nlcda.curxyz=curxyz() #reset xyz container
-    append!(nlcda.opensec,nlcda.sections[end]) #add new section to list of open
-    nlcda.sections[end].parent=length(nlcda.sections)-1
+    push!(nlcda.opensecs,length(nlcda.sections)) #add new section to list of open
+
     nothing
 end
 
 function closesec(nlcda::nlcda3)
-    nlcda.cursec.raw=vcat(nlcda.cursec.raw,[nlcda.curxyz.x;nlcda.curxyz.y;nlcda.curxyz.z])
-    nlcda.curxyx()
-    pop!(nlcda.opensec)
-    nlcda.cursec=nlcda.opensec[end]
+    nlcda.sections[end].raw=vcat(nlcda.sections[end].raw,[nlcda.curxyz.x nlcda.curxyz.y nlcda.curxyz.z])
+    nlcda.depth-=1
+    nlcda.curxyz=curxyz()
+    pop!(nlcda.opensecs)
+
     nothing
 end
 
 function dimadd(nlcda::nlcda3,mynums::Array{SubString{UTF8String},1})
-    append!(nlcda.curxyz.x,float(mynums[1]))
-    append!(nlcda.curxyz.y,float(mynums[2]))
-    append!(nlcda.curxyz.z,float(mynums[3]))
-    append!(nlcda.cursec.d,float(mynums[4]))
+    push!(nlcda.curxyz.x,float(mynums[1]))
+    push!(nlcda.curxyz.y,float(mynums[2]))
+    push!(nlcda.curxyz.z,float(mynums[3]))
+    push!(nlcda.sections[end].d,float(mynums[4]))
     nothing
 end
 
