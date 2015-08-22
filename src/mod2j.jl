@@ -46,7 +46,6 @@ function parsehoc(ph::ParsedHoc)
                 cursection=""
             elseif contains(ph.file[linenum],"ENDCOMMENT")
                 cursection=""
-            elseif
                 #skip blank lines or lines with comments
             elseif cursection=="COMMENT"
             elseif cursection=="UNITS"
