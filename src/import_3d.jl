@@ -45,7 +45,6 @@ function input(morphology::ASCIIString)
 end
 
 function connect2soma(import3d::Import3D)
-    #move somas to beginning of list
 
     #combine somas with overlapping bounding boxes
 
@@ -67,8 +66,8 @@ function instantiate(import3d::Import3D)
     neuron=Neuron()
 
     for i=1:length(import3d.sections)
-        newsec=Section(import3d.sections[i])
-        add_sec(neuron,newsec)
+        sec=Section(import3d.sections[i])
+        add_sec(neuron,sec)
     end
 
     #grow section children
@@ -119,7 +118,6 @@ function parse_file{T<:nlcda3}(nlcda::T)
     skip=0
     state=0
     while linenum < length(nlcda.file)
-        println(linenum, " ", length(nlcda.opensecs))
         leftpar=length(matchall(r"\(",nlcda.file[linenum]))
         rightpar=length(matchall(r"\)",nlcda.file[linenum]))       
         if leftpar>0
@@ -162,8 +160,9 @@ function parse_file{T<:nlcda3}(nlcda::T)
             else
                 closesec(nlcda)
             end
-        elseif contains(nlcda.file[linenum], " | ")
+        elseif contains(nlcda.file[linenum], " |")
             closesec(nlcda)
+            nlcda.depth+=1
             newsec(nlcda,state)
             newchild(nlcda)
         else #no parenthesis so just ignore
@@ -188,7 +187,7 @@ function newparent(nlcda::nlcda3)
 end
 
 function newchild(nlcda::nlcda3) #new branch off of main section
-    nlcda.sections[end-1].raw=[nlcda.curxyz.x nlcda.curxyz.y nlcda.curxyz.z] #add points that have accumulated to most recent section
+    nlcda.sections[end-1].raw=vcat(nlcda.sections[end-1].raw,[nlcda.curxyz.x nlcda.curxyz.y nlcda.curxyz.z]) #add points that have accumulated to most recent section
     nlcda.sections[end].raw=nlcda.sections[nlcda.opensecs[nlcda.depth-1]].raw[end,:] #make first point equal to most recent data point (where branch was)
     nlcda.sections[end].d=[nlcda.sections[nlcda.opensecs[nlcda.depth-1]].d[end]]
 
