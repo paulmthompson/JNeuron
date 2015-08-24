@@ -39,44 +39,55 @@ function input(morphology::ASCIIString)
     parse_file(import3d)
 
     return import3d
-    #connect2soma()
 
     #should then "instantiate" to create Neuron object and return it
-end
-
-function connect2soma(import3d::Import3D)
-
-    #combine somas with overlapping bounding boxes
-
-    #find sections that arent' somas and don't have parents and label them as roots
-
-    #loop through each soma, and find what roots connect to it
-    #if inside
-    #parentsec=soma section
-    #parentx=.5 #where along section of parent it connects
-    #somehow incorporate center of soma into root , i think as starting point
-    #first=1
-    #fid=1
-
-    #If roots are not within any soma bounding box, connect to the closest one   
 end
 
 function instantiate(import3d::Import3D)
 
     neuron=Neuron()
 
+    somaind=Array(Int64,0)
+    #skip somas, we'll do them later
     for i=1:length(import3d.sections)
-        sec=Section(import3d.sections[i])
-        add_sec(neuron,sec)
-    end
-
-    #grow section children
-    for i=1:length(import3d.sections)
-        push!(neuron.seclist[import3d.sections[i].parent],neuron.seclist[i])
+        if import3d.sections[i].mytype>1
+            sec=Section(import3d.sections[i])
+            add_sec(neuron,sec)
+        elseif import3d.sections[i].mytype==1
+            push!(somaind,i)
+        end
     end
     
+    connect2soma(import3d,neuron,somaind)
     
     #connect them, making adjustments to 3d points as necessary
+end
+
+function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
+
+    #Determine how soma is described in this file
+
+    if length(somaind)==1
+        
+        if std(import3d.sections[somaind[1]].raw[:,3])/mean(import3d.sections[somaind[1]].raw[:,3])<0.1
+            #single outline of cell at one z position - "belt"
+
+            
+        elseif
+            #xyzd measurements along estimated centroid - "stack of frusta"
+            
+        end
+               
+    else
+        if
+        #determine whether it is one of the methods above with multiple somas, or
+        else
+            #multiple outlines of cell at different z positions - "stack of pancakes"
+        end
+        
+    end
+    
+
 end
 
 #=
