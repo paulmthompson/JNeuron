@@ -65,31 +65,99 @@ end
 
 function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
 
+    #We need to
+    #1) determine how many somas are described in file
+    #2) assign a sensical 3D shape to it
+    #3) find the centroid of that 3D shape
+    #4) connect all roots to soma with the closest centroid (first point of root will be centroid)
+
     #Determine how soma is described in this file
 
-    if length(somaind)==1
-        
-        if std(import3d.sections[somaind[1]].raw[:,3])/mean(import3d.sections[somaind[1]].raw[:,3])<0.1
-            #single outline of cell at one z position - "belt"
+    if reduce(&, [mostly_constantz(import3d,somaind[i]) for i=1:length(somaind)])
+        #if soma contours have a constant z
+
+        if length(somaind)==1
+            #approximate as sphere with diameter taken from section
 
             
-        elseif
-            #xyzd measurements along estimated centroid - "stack of frusta"
             
-        end
-               
-    else
-        if
-        #determine whether it is one of the methods above with multiple somas, or
         else
-            #multiple outlines of cell at different z positions - "stack of pancakes"
+            overlaps=stack_overlap(import3d, somaind) #find which soma sections overlap
+            for i=1:length(overlaps)
+                if length(overlaps[i])==1 #if a soma doesn't overlap with any other sections
+                    #approximate as sphere
+                else
+                    #multiple outlines of cell at different z positions - "stack of pancakes"
+                    #find principle axis through stack
+                    #approximate as "carrot" looking thing along principle axis
+                end
+            end
         end
-        
-    end
-    
+
+    else
+        #xyzd measurements along estimated centroid - "stack of frusta"
+    end    
 
 end
 
+function mostly_constantz(import3d::Import3D, ind::Int64)
+    if std(import3d.sections[ind].raw[:,3])/mean(import3d.sections[ind].raw[:,3])<0.1
+        return true
+    else
+        return false
+    end
+end
+
+function stack_overlap(import3d::Import3D, somaind::Array{Int64,1})
+    #this is the ugliest thing i have ever created. shame on me
+ 
+    n = length(somaind)
+    combos=[[list[c[i]-i+1] for i=1:length(c)] for c in combinations(collect(1:(n+k-1)),2)]
+
+    overlaps=Array(Array{Int64,1},1)
+    overlaps[1]=[1]
+    for i=1:length(combos)
+        bb1=boundbox(import3d, combos[i][1])
+        bb2=boundbox(import3d, combos[i][2])
+
+        if max(bb1[1],bb2[1])<min(bb1[2],bb2[2])
+            if max(bb1[3],bb2[3])<min(bb1[4],bb2[4]) #if bounding boxes of these slices overlap
+                flag=false
+                for j=1:length(overlaps) #check groups of overlapping slices from previous iterations
+                    if length(intersect(overlaps[j],combos[i]))>0
+                        append!(overlaps[j],setdiff(combos[i],a[j]))
+                        flag=true
+                    end
+                end
+                if flag=false #if no group has yet been determined, assign to new group
+                    append!(overlaps,combos[i])
+                end
+            end
+        end       
+    end
+
+    return overlaps
+   
+end
+
+function boundbox(import3d::Import3D, ind::Int64)
+
+    xmin=min(import3d.sections[ind].raw[:,1])
+    xmax=max(import3d.sections[ind].raw[:,1])
+    ymin=min(import3d.sections[ind].raw[:,2])
+    ymax=max(import3d.sections[ind].raw[:,2])
+
+    bb=collect(xmin, xmax, ymin, ymax)
+    
+end
+
+function sphere_approx(import3d::Import3D, ind::Int64)
+    #going to make 3 3D points to describe 1 constant z section through the soma as a cylinder with L=D
+    
+    
+end
+
+                   
 #=
 Neurolucida file types
 =#
