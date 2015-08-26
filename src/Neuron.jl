@@ -13,5 +13,5 @@ function Neuron()
 end
 
 function add_sec(neuron::Neuron, sec::Section) #Add section to workspace
-    append!(neuron.secstack,sec)
+    push!(neuron.secstack,sec)
 end

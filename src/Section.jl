@@ -150,29 +150,6 @@ function add_prop!(node::Node,prop::Prop)
     nothing        
 end
 
-function Section(section3d::Section3D) #like new_section
-    sec=Section(1,section3d.mytype,Array(Node,0),Array(Section,0),Array(Pt3d,size(section3d.xyz,1)),0.0,0.0,0.0)
-
-    #add 3d points from 3d
-    for i=1:length(section3d.d)
-        if i>0
-            sec.pt3d[i]=pt3d(section3d.xyz[i,:]...,section3d.d[i],norm(section3d.xyz[i,:],section3d.xyz[i-1,:]))
-            sec.length+=sec.pt3d[i].arc
-        else
-            sec.pt3d[i]=pt3d(section3d.xyz[i,:]...,section3d.d[i],0.0)
-        end
-    end
-
-    #normalize arc length
-    for i=2:size(sec.pt3d,1)
-        sec.pt3d[i].arc=sec.pt3d[i]/sec.length
-    end
-
-    sec.parentx=section3d.parentx
-    
-    sec
-end
-
 function change_nseg!(sec::Section,nseg::Int64)
 
     newnodes=Array(Node,0)

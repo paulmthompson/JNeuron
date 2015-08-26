@@ -30,6 +30,15 @@ end
 
 abstract Import3D
 
+type nlcda3 <: Import3D
+    sections::Array{Section3D,1}
+    mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
+    file::Array{ByteString,1}
+    curxyz::curxyz
+    opensecs::Array{Int64,1} #inds of last section at that depth
+    depth::Int64
+end
+
 function input(morphology::ASCIIString)
 
     if contains(morphology,".asc")
@@ -71,6 +80,7 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
     #3) find the centroid of that 3D shape
     #4) connect all roots to soma with the closest centroid (first point of root will be centroid)
 
+    centroids=Array(Float64,3,0)
     #Determine how soma is described in this file
 
     if reduce(&, [mostly_constantz(import3d,somaind[i]) for i=1:length(somaind)])
@@ -79,13 +89,15 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
         if length(somaind)==1
             #approximate as sphere with diameter taken from section
 
-            
+            hcat(centroids,sphere_approx(import3d, somaind[1]))
             
         else
             overlaps=stack_overlap(import3d, somaind) #find which soma sections overlap
             for i=1:length(overlaps)
                 if length(overlaps[i])==1 #if a soma doesn't overlap with any other sections
+                    
                     #approximate as sphere
+                    hcat(centroids,sphere_approx(import3d, overlaps[i]))
                 else
                     #multiple outlines of cell at different z positions - "stack of pancakes"
                     #find principle axis through stack
@@ -129,7 +141,7 @@ function stack_overlap(import3d::Import3D, somaind::Array{Int64,1})
                         flag=true
                     end
                 end
-                if flag=false #if no group has yet been determined, assign to new group
+                if flag==false #if no group has yet been determined, assign to new group
                     append!(overlaps,combos[i])
                 end
             end
@@ -153,7 +165,27 @@ end
 
 function sphere_approx(import3d::Import3D, ind::Int64)
     #going to make 3 3D points to describe 1 constant z section through the soma as a cylinder with L=D
+    #trace perimeter
+    perimeter=0.0
+    for i=2:size(import3d.sections[ind].raw,1)
+        perimeter+=sqrt((import3d.sections[ind].raw[i,1]-import3d.sections[ind].raw[i-1,1])^2 +
+                        (import3d.sections[ind].raw[i,2]-import3d.sections[ind].raw[i-1,1])^2)
+    end
+
+    perimeter+=sqrt((import3d.sections[ind].raw[1,1]-import3d.sections[ind].raw[end,1])^2 +
+                    (import3d.sections[ind].raw[1,2]-import3d.sections[ind].raw[end,1])^2)
+
+    radi=perimeter/(2*pi)
+
+    centroid=[mean(import3d.sections[ind].raw[:,1]); mean(import3d.sections[ind].raw[:,2]); mean(import3d.sections[ind].raw[:,3])]
+
     
+    import3d.sections[ind].raw=[centroid[1]-radi centroid[2]-radi centroid[3]; centroid';
+                                centroid[1]+radi centroid[2]+radi centroid[3]]
+
+    import3d.sections[ind].d=[2*radi; 2*radi; 2*radi]
+
+    centroid
     
 end
 
@@ -161,15 +193,6 @@ end
 #=
 Neurolucida file types
 =#
-
-type nlcda3 <: Import3D
-    sections::Array{Section3D,1}
-    mytypes::Array{Int64,1} # 4x1 array to tally total num of each section type
-    file::Array{ByteString,1}
-    curxyz::curxyz
-    opensecs::Array{Int64,1} #inds of last section at that depth
-    depth::Int64
-end
 
 function nlcda3(filename::ASCIIString)
     f = open(filename)
@@ -318,3 +341,26 @@ function nonsensedetect(nlcda::nlcda3,linenum::Int64)
 end
 
 
+function Section(section3d::Section3D) #like new_section
+    sec=Section(1,section3d.mytype,Array(Node,0),Array(Section,0),Array(Pt3d,size(section3d.raw,1)),0.0,0.0,0.0)
+
+    #add 3d points from 3d
+    for i=1:length(section3d.d)
+        if i>1
+            mylength=sqrt((section3d.raw[i,1]-section3d.raw[i-1,1])^2+(section3d.raw[i,2]-section3d.raw[i-1,2])^2+(section3d.raw[i,3]-section3d.raw[i-1,3])^2)
+            sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],mylength)
+            sec.length+=sec.pt3d[i].arc
+        else
+            sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],0.0)
+        end
+    end
+
+    #normalize arc length
+    for i=2:size(sec.pt3d,1)
+        sec.pt3d[i].arc=sec.pt3d[i].arc/sec.length
+    end
+
+    sec.parentx=1.0
+    
+    sec
+end
