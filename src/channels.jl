@@ -8,6 +8,11 @@ adapt for Julia by PMT
 function prop_init(prop::Prop,node::Node)
 end
 
+function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
+    x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
+end
+
+
 type Passive <: Prop
     nodevar::Array{ASCIIString,1}
     v::Float64
@@ -69,10 +74,10 @@ function prop_calc(prop::HH,node::Node)
 
     rates(prop,node)
 
-    prop.m = prop.m + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.mtau)))*(- ( ( ( prop.minf ) ) / prop.mtau ) / ( ( ( ( - 1.0) ) ) / prop.mtau ) - prop.m)
-    prop.n = prop.n + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.ntau)))*(- ( ( ( prop.ninf ) ) / prop.ntau ) / ( ( ( ( - 1.0) ) ) / prop.ntau ) - prop.n)
-    prop.h = prop.h + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.htau)))*(- ( ( ( prop.hinf ) ) / prop.htau ) / ( ( ( ( - 1.0) ) ) / prop.htau ) - prop.h)
-        
+    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
+    prop.n=implicit_euler(prop.n,node.dt,prop.ntau,prop.ninf)
+    prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
+  
     prop.gna = prop.gnabar * prop.m^3 * prop.h
     prop.ina = prop.gna * (node.vars["v"] - node.vars["ena"])
     prop.gk = prop.gkbar * prop.n^4
@@ -88,6 +93,7 @@ function prop_init(prop::HH,node::Node)
     prop.m=prop.minf
     prop.h=prop.hinf
     prop.n=prop.ninf
+    nothing
 end
 
 function rates(prop::HH,node::Node)
@@ -115,6 +121,7 @@ function rates(prop::HH,node::Node)
     prop.ntau = 1/(q10*mysum)
     prop.ninf = alpha/mysum
 
+    nothing
 end
 
 function vtrap(x::Float64,y::Float64)
@@ -152,9 +159,10 @@ end
 
 function prop_calc(prop::Ca_HVA, node::Node)
     rates(prop,node)
-    prop.m = prop.m + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.mtau)))*(- ( ( ( prop.minf ) ) / prop.mtau ) / ( ( ( ( - 1.0) ) ) / prop.mtau ) - prop.m)
-    prop.h = prop.h + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.htau)))*(- ( ( ( prop.hinf ) ) / prop.htau ) / ( ( ( ( - 1.0) ) ) / prop.htau ) - prop.h)
 
+    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
+    prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
+    
     prop.gCa_HVA = prop.gCa_HVAbar*prop.m^2*prop.h
     prop.ica = prop.gCA_HVA*(node.vars["v"]-node.vars["eca"])
 end
