@@ -176,17 +176,19 @@ end
 
 function rates(prop::Ca_HVA, node::Node)
     if node.vars["v"] == -27.0
-        v=v+.0001
+        v=node.vars["v"]+.0001
+    else
+        v=node.vars["v"]
     end
 
-    mAlpha =  (0.055*(-27-node.vars["v"]))/(exp((-27-node.vars["v"])/3.8) - 1)        
-    mBeta  =  (0.94*exp((-75-node.vars["v"])/17))
+    mAlpha =  (0.055*(-27-v))/(exp((-27-v)/3.8) - 1)        
+    mBeta  =  (0.94*exp((-75-v)/17))
 
     prop.mInf = mAlpha/(mAlpha + mBeta)
     prop.mTau = 1/(mAlpha + mBeta)
 
-    hAlpha =  (0.000457*exp((-13-node.vars["v"])/50))
-    hBeta  =  (0.0065/(exp((-node.vars["v"]-15)/28)+1))
+    hAlpha =  (0.000457*exp((-13-v)/50))
+    hBeta  =  (0.0065/(exp((-v-15)/28)+1))
 
     prop.hInf = hAlpha/(hAlpha + hBeta)
     prop.hTau = 1/(hAlpha + hBeta)
@@ -215,7 +217,6 @@ type Ca_LVAst <: Prop
     htau::Float64
     qt::Float64
 end
-
 
 function Ca_LVAst()
     myvars=["v", "eca"]
@@ -247,6 +248,53 @@ function rates(prop::Ca_LVAst, node::Node)
     prop.mTau = (5.0000 + 20.0000/(1+exp((v - -25.000)/5)))/prop.qt
     prop.hInf = 1.0000/(1+ exp((v - -80.000)/6.4))
     prop.hTau = (20.0000 + 50.0000/(1+exp((v - -40.000)/7)))/prop.qt
+    
+    nothing
+end
+
+type Ih <: Prop
+    nodevar::Array{ASCIIString,1}
+    gIhbar::Float64
+    ehcn::Float64
+    gIh::Float64
+    m::Float64
+    minf::Float64
+    ihcn::Float64
+    mtau::Float64
+end
+
+function Ih()
+    myvars=["v"]
+    Ih(myvars,.00001, -45, zeros(Float64, 5)...)
+end
+
+function prop_calc(prop::Ih, node::Node)
+    rates(prop,node)
+
+    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
+    
+    prop.gIh = prop.gIhbar*prop.m
+    prop.ica = prop.gIh*(node.vars["v"]-prop.ehcn)
+end
+
+function prop_init(prop::Ih, node::Node)
+    rates(prop,node)
+    prop.m=prop.mInf
+    nothing
+end
+
+function rates(prop::Ih, node::Node)
+
+    if node.vars["v"] == -154.9
+        v=node.vars["v"] + .0001
+    else
+        v=node.vars["v"]
+    end
+    
+    mAlpha =  0.001*6.43*(v+154.9)/(exp((v+154.9)/11.9)-1)
+    mBeta  =  0.001*193*exp(v/33.1)
+    prop.mInf = mAlpha/(mAlpha + mBeta)
+    prop.mTau = 1/(mAlpha + mBeta)
     
     nothing
 end
