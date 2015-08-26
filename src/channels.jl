@@ -193,3 +193,61 @@ function rates(prop::Ca_HVA, node::Node)
     nothing
 end
 
+#=
+LVA ca channel
+
+Note: mtau is an approximation from the plots
+Avery and Johnston 1996, tau from Randall 1997
+shifted by -10 mv to correct for junction potential
+corrected rates using q10 = 2.3, target temperature 34, orginal 21
+=#
+
+type Ca_LVAst <: Prop
+    nodevar::Array{ASCIIString,1}
+    gCa_LVAstbar::Float64
+    gCA_LVAst::Float64
+    m::Float64
+    h::Float64
+    minf::Float64
+    hinf::Float64
+    ica::Float64
+    mtau::Float64
+    htau::Float64
+    qt::Float64
+end
+
+
+function Ca_LVAst()
+    myvars=["v", "eca"]
+    Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10))
+end
+
+function prop_calc(prop::Ca_LVAst, node::Node)
+    rates(prop,node)
+
+    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
+    prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
+    
+    prop.gCa_LVAst = prop.gCa_LVAstbar*prop.m^2*prop.h
+    prop.ica = prop.gCA_LVAst*(node.vars["v"]-node.vars["eca"])
+end
+
+function prop_init(prop::Ca_LVAst, node::Node)
+    rates(prop,node)
+    prop.m=prop.mInf
+    prop.h=prop.hInf
+    nothing
+end
+
+function rates(prop::Ca_LVAst, node::Node)
+
+    v=node.vars["v"]
+
+    prop.mInf = 1.0000/(1+ exp((v - -30.000)/-6))
+    prop.mTau = (5.0000 + 20.0000/(1+exp((v - -25.000)/5)))/prop.qt
+    prop.hInf = 1.0000/(1+ exp((v - -80.000)/6.4))
+    prop.hTau = (20.0000 + 50.0000/(1+exp((v - -40.000)/7)))/prop.qt
+    
+    nothing
+end
+
