@@ -118,8 +118,12 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
     #calculate root distance to each centroid
     #connect to closest centroid (first point in root)
     #add root as child to soma
-    for 1:length(rootind)
-
+    ds=zeros(Float64,length(somas))
+    for i=1:length(rootind)
+        for j=1:length(somas)
+            ds[j]=sqrt((centroid[j][1]-neuron.secstack[i].pt3d[1].x)^2 + (centroid[j][2]-neuron.secstack[i].pt3d[1].y)^2 + (centroid[j][3]-neuron.secstack[i].pt3d[1].y)^2)
+        end
+        push!(neuron.secstack[i].child,somas[indmin(ds)]) #add root as child of soma
     end
     
 end
