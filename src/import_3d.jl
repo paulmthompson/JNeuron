@@ -57,9 +57,13 @@ function instantiate(import3d::Import3D)
     neuron=Neuron()
 
     somaind=Array(Int64,0)
+    rootind=Array(Int64,0)
     #skip somas, we'll do them later
     for i=1:length(import3d.sections)
         if import3d.sections[i].mytype>1
+            if length(section3d.sections[i].parent)
+                push!(rootind,i)
+            end
             sec=Section(import3d.sections[i])
             add_sec(neuron,sec)
         elseif import3d.sections[i].mytype==1
@@ -67,20 +71,20 @@ function instantiate(import3d::Import3D)
         end
     end
     
-    connect2soma(import3d,neuron,somaind)
+    connect2soma(import3d,neuron,somaind,rootind)
     
     #connect them, making adjustments to 3d points as necessary
 end
 
-function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
+function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},rootind::Array{Int64,1})
 
     #We need to
     #1) determine how many somas are described in file
     #2) assign a sensical 3D shape to it
     #3) find the centroid of that 3D shape
-    #4) connect all roots to soma with the closest centroid (first point of root will be centroid)
 
     centroids=Array(Float64,3,0)
+    somas=Array(Section,0)
     #Determine how soma is described in this file
 
     if reduce(&, [mostly_constantz(import3d,somaind[i]) for i=1:length(somaind)])
@@ -89,7 +93,7 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
         if length(somaind)==1
             #approximate as sphere with diameter taken from section
 
-            hcat(centroids,sphere_approx(import3d, somaind[1]))
+            hcat(centroids,sphere_approx(import3d, somaind[1],somas))
             
         else
             overlaps=stack_overlap(import3d, somaind) #find which soma sections overlap
@@ -97,19 +101,27 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1})
                 if length(overlaps[i])==1 #if a soma doesn't overlap with any other sections
                     
                     #approximate as sphere
-                    hcat(centroids,sphere_approx(import3d, overlaps[i]))
+                    hcat(centroids,sphere_approx(import3d, overlaps[i],somas))
                 else
                     #multiple outlines of cell at different z positions - "stack of pancakes"
                     #find principle axis through stack
                     #approximate as "carrot" looking thing along principle axis
+                    #need to make new soma Section
                 end
             end
         end
 
     else
         #xyzd measurements along estimated centroid - "stack of frusta"
-    end    
+    end
 
+    #calculate root distance to each centroid
+    #connect to closest centroid (first point in root)
+    #add root as child to soma
+    for 1:length(rootind)
+
+    end
+    
 end
 
 function mostly_constantz(import3d::Import3D, ind::Int64)
@@ -163,7 +175,7 @@ function boundbox(import3d::Import3D, ind::Int64)
     
 end
 
-function sphere_approx(import3d::Import3D, ind::Int64)
+function sphere_approx(import3d::Import3D, ind::Int64,somas::Array{Section,1})
     #going to make 3 3D points to describe 1 constant z section through the soma as a cylinder with L=D
     #trace perimeter
     perimeter=0.0
@@ -179,12 +191,13 @@ function sphere_approx(import3d::Import3D, ind::Int64)
 
     centroid=[mean(import3d.sections[ind].raw[:,1]); mean(import3d.sections[ind].raw[:,2]); mean(import3d.sections[ind].raw[:,3])]
 
+    mypoints=[Pt3d(centroid[1]-radi,centroid[2]-radi,centroid[3],2*radi,0.0);
+    Pt3d(centroid...,2*radi,.5); Pt3d(centroid[1]+radi,centroid[2]+radi,centroid[3],2*radi,1.0)]
+
+
+    sec=Section(1,1,Array(Node,0),Array(Section,0),mypoints,0.0,0.0,2*radi)
+    push!(somas,sec)
     
-    import3d.sections[ind].raw=[centroid[1]-radi centroid[2]-radi centroid[3]; centroid';
-                                centroid[1]+radi centroid[2]+radi centroid[3]]
-
-    import3d.sections[ind].d=[2*radi; 2*radi; 2*radi]
-
     centroid
     
 end
