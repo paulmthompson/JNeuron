@@ -62,7 +62,7 @@ end
 
 function HH()
     myvars=["v", "ena", "ek"]
-    HH(.12,.036,.0003,-54.3,zeros(Float64,14)...)
+    HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,14)...)
 end
 
 function prop_calc(prop::HH,node::Node)
@@ -79,7 +79,7 @@ function prop_calc(prop::HH,node::Node)
     prop.ik = prop.gk * (node.vars["v"] - node.vars["ek"])
     prop.il = prop.gl * (node.vars["v"] - prop.el)
 
-    return prop.ina + prop.ik + prop.il
+    prop.ina + prop.ik + prop.il
     
 end
 
@@ -126,7 +126,62 @@ function vtrap(x::Float64,y::Float64)
     return trap
 end
 
+#=
+Ca_HVA
 
+Reuveni, Friedman, Amitai, and Gutnick, J.Neurosci. 1993
+=#
 
+type Ca_HVA <: Prop
+    nodevar::Array{ASCIIString,1}
+    gCa_HVAbar::Float64
+    gCA_HVA::Float64
+    m::Float64
+    h::Float64
+    minf::Float64
+    hinf::Float64
+    ica::Float64
+    mtau::Float64
+    htau::Float64
+end
 
+function Ca_HVA()
+    myvars=["v", "eca"]
+    Ca_HVA(myvars,.00001,zeros(Float64,7)...)
+end
+
+function prop_calc(prop::Ca_HVA, node::Node)
+    rates(prop,node)
+    prop.m = prop.m + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.mtau)))*(- ( ( ( prop.minf ) ) / prop.mtau ) / ( ( ( ( - 1.0) ) ) / prop.mtau ) - prop.m)
+    prop.h = prop.h + (1.0 - exp(node.dt*(( ( ( - 1.0 ) ) ) / prop.htau)))*(- ( ( ( prop.hinf ) ) / prop.htau ) / ( ( ( ( - 1.0) ) ) / prop.htau ) - prop.h)
+
+    prop.gCa_HVA = prop.gCa_HVAbar*prop.m^2*prop.h
+    prop.ica = prop.gCA_HVA*(node.vars["v"]-node.vars["eca"])
+end
+
+function prop_init(prop::Ca_HVA, node::Node)
+    rates(prop,node)
+    prop.m=prop.mInf
+    prop.h=prop.hInf
+    nothing
+end
+
+function rates(prop::Ca_HVA, node::Node)
+    if node.vars["v"] == -27.0
+        v=v+.0001
+    end
+
+    mAlpha =  (0.055*(-27-node.vars["v"]))/(exp((-27-node.vars["v"])/3.8) - 1)        
+    mBeta  =  (0.94*exp((-75-node.vars["v"])/17))
+
+    prop.mInf = mAlpha/(mAlpha + mBeta)
+    prop.mTau = 1/(mAlpha + mBeta)
+
+    hAlpha =  (0.000457*exp((-13-node.vars["v"])/50))
+    hBeta  =  (0.0065/(exp((-node.vars["v"]-15)/28)+1))
+
+    prop.hInf = hAlpha/(hAlpha + hBeta)
+    prop.hTau = 1/(hAlpha + hBeta)
+    nothing
+end
 
