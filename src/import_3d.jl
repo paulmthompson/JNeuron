@@ -61,7 +61,7 @@ function instantiate(import3d::Import3D)
     #skip somas, we'll do them later
     for i=1:length(import3d.sections)
         if import3d.sections[i].mytype>1
-            if length(section3d.sections[i].parent)
+            if length(import3d.sections[i].parent)==0
                 push!(rootind,i)
             end
             sec=Section(import3d.sections[i])
@@ -93,7 +93,7 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
         if length(somaind)==1
             #approximate as sphere with diameter taken from section
 
-            hcat(centroids,sphere_approx(import3d, somaind[1],somas))
+            centroids=hcat(centroids,sphere_approx(import3d, somaind[1],somas))
             
         else
             overlaps=stack_overlap(import3d, somaind) #find which soma sections overlap
@@ -101,7 +101,7 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
                 if length(overlaps[i])==1 #if a soma doesn't overlap with any other sections
                     
                     #approximate as sphere
-                    hcat(centroids,sphere_approx(import3d, overlaps[i],somas))
+                    centroids=hcat(centroids,sphere_approx(import3d, overlaps[i],somas))
                 else
                     #multiple outlines of cell at different z positions - "stack of pancakes"
                     #find principle axis through stack
@@ -121,7 +121,7 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
     ds=zeros(Float64,length(somas))
     for i=1:length(rootind)
         for j=1:length(somas)
-            ds[j]=sqrt((centroid[j][1]-neuron.secstack[i].pt3d[1].x)^2 + (centroid[j][2]-neuron.secstack[i].pt3d[1].y)^2 + (centroid[j][3]-neuron.secstack[i].pt3d[1].y)^2)
+            ds[j]=sqrt((centroids[1,j]-neuron.secstack[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secstack[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secstack[i].pt3d[1].z)^2)
         end
         push!(neuron.secstack[i].child,somas[indmin(ds)]) #add root as child of soma
     end
