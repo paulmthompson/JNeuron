@@ -58,6 +58,8 @@ function instantiate(import3d::Import3D)
 
     somaind=Array(Int64,0)
     rootind=Array(Int64,0)
+    childinds=Array(Array{Int64,1},0)
+    mapping=Dict{Int64,Int64}(0=>0)
     #skip somas, we'll do them later
     for i=1:length(import3d.sections)
         if import3d.sections[i].mytype>1
@@ -66,13 +68,26 @@ function instantiate(import3d::Import3D)
             end
             sec=Section(import3d.sections[i])
             add_sec(neuron,sec)
+            push!(childinds,import3d.sections[i].childind)
+            mapping[i]=length(neuron.secstack)
         elseif import3d.sections[i].mytype==1
             push!(somaind,i)
         end
     end
     
     connect2soma(import3d,neuron,somaind,rootind)
+
+    for i=1:length(childinds)
+        for j in childinds[i]
+            push!(neuron.secstack[i].child,neuron.secstack[mapping[j]])
+        end
+    end
     
+    for i=1:length(neuron.secstack)  
+        neuron.secstack[i].refcount=i
+    end
+    
+    neuron
     #connect them, making adjustments to 3d points as necessary
 end
 
@@ -119,12 +134,16 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
     #connect to closest centroid (first point in root)
     #add root as child to soma
     ds=zeros(Float64,length(somas))
-    for i=1:length(rootind)
+    for i in rootind
         for j=1:length(somas)
             ds[j]=sqrt((centroids[1,j]-neuron.secstack[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secstack[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secstack[i].pt3d[1].z)^2)
         end
         push!(neuron.secstack[i].child,somas[indmin(ds)]) #add root as child of soma
     end
+
+    append!(neuron.secstack,somas)
+
+    nothing
     
 end
 
@@ -311,6 +330,8 @@ function newchild(nlcda::nlcda3) #new branch off of main section
     nlcda.sections[end].d=[nlcda.sections[nlcda.opensecs[nlcda.depth-1]].d[end]]
 
     push!(nlcda.sections[nlcda.opensecs[nlcda.depth-1]].children,nlcda.sections[end]) #add as child to parent
+    push!(nlcda.sections[nlcda.opensecs[nlcda.depth-1]].childind,length(nlcda.sections))
+    
     push!(nlcda.sections[end].parent, nlcda.sections[nlcda.opensecs[nlcda.depth-1]]) #add as parent to child
     
     nlcda.curxyz=curxyz() #reset xyz container
