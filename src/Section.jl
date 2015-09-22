@@ -34,6 +34,10 @@ end
 
 type Neuron
     secstack::Array{Section,1}
+    A::Array{Float64,2}
+    V_new::Array{Float64,1}
+    V_old::Array{Float64,1}
+    rhs::Array{Float64,1}
 end
 
 function Node(sec::Section,x::Int64,nseg::Int64)
