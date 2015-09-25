@@ -61,25 +61,29 @@ function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     
-    #calculate di/dv and i
+    for i=1:length(neuron.nodes)
 
-    for i=1:length(neuron.secstack)
+        i1=0.0
+        i2=0.0
+        i=0.0
+            
+        for k=1:length(neuron.secstack[i].pnode[j].prop)
 
-        for j=1:length(neuron.secstack[i].pnode)
+            #calculate current
+            i1=cur_calc(neuron.node[i].prop[k],neuron.node[i],neuron.v_new[i])
 
-            for k=1:length(neuron.secstack[i].pnode[j].prop)
-
-                #calculate current
-                prop_calc(neuron.secstack[i].pnode[j].prop[k],neuron.secstack[i].pnode[j])
-
-                #add to A diagonal
-
-                #calculate dv/di
-
-                #add dv/di to rhs
+            i1=cur_calc(neuron.node[i].prop[k],neuron.node[i],neuron.v_new[i]+.001)
                 
-            end
+            #add -i to rhs
+            neuron.rhs[i]-=i1
+
+            #add dv/di to diagonal of A
+            neuron.diag[i]+=(i2-i1)
+                
         end
+
+            #calculate current entering node from parent and exiting to children
+            #add to rhs for that node
     end
 
     #solve A \ rhs to get delta_v
@@ -91,5 +95,7 @@ function main(neuron::Neuron)
     #t=tentry+dt for CN
 
     #find non voltage states (like gate variables for conductances)
+
+    
 
 end
