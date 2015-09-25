@@ -5,14 +5,13 @@ We start with the cable equation, spatially discretize it, then temporal discret
 
 The main matrix equation to go from one time step to another for an array of voltage values for all nodes, V_n
 
- A \ (V_n + w_(n+1)) = V_n+1
+ A \ (V_n - sum(i)) = delta_V
 
-Where A is basically the matrix of resistances between nodes, and w_n+1 is proportional to the conductance at the next time step.
+Where A is basically the matrix of resistances between nodes, and i is the current from each channel
 
-Only the diagonals of A change from iteration to iteration, by a factor proportional to the conductances of the active components.
+Only the diagonals of A change from iteration to iteration, by a factor proportional to the conductances of the active components (di/dv).
 
 =#
-
 
 function fillA!(neuron::Neuron)
 
@@ -22,19 +21,18 @@ function fillA!(neuron::Neuron)
 
         for j=1:length(neuron.secstack[i].pnode)
 
-            #find parent resistance parent_r=delta_t/(Rp_node*Cp_node)
-            parent_r=neuron.dt/((neuron.secstack[i].pnode[j].ri[1]+neuron.secstack[i].pnode[j].parent.ri[2])*(neuron.secstack[i].pnode[j].ci[1]+neuron.secstack[i].pnode[j].parent.ci[2]))
+            #find parent resistance parent_r=1/(Rp_node)
+            parent_r=1/(neuron.secstack[i].pnode[j].ri[1]+neuron.secstack[i].pnode[j].parent.ri[2])
             
-            #find children resistance children_r=delta_t/(Rc_node*Cc_node)
+            #find children resistance children_r=1/(Rc_node)
             children_r=zeros(Float64,length(neuron.secstack[i].pnode[j].children))
 
             for k=1:length(children_r)
-                children_r[k]=neuron.dt/((neuron.secstack[i].pnode[j].ri[2]+neuron.secstack[i].pnode[j].children[k].ri[1])*(neuron.secstack[i].pnode[j].ci[2]+neuron.secstack[i].pnode[j].children[k].ci[1]))
+                children_r[k]=1/(neuron.secstack[i].pnode[j].ri[2]+neuron.secstack[i].pnode[j].children[k].ri[1])
             end
-
-            
+           
             #populate diagonal
-            1+parent_r+sum(children_r)
+            C/neuron.dt+parent_r+sum(children_r)
 
             #populate parent
             -parent_r
