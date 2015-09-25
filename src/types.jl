@@ -40,4 +40,12 @@ type Neuron
     Ra::Float64
     Cm::Float64
     dt::Float64
+    nodestack=::Array{Node,1}
+end
+
+abstract 
+
+type Network
+    neur::Array{Neuron,1}
+    t::Float64
 end

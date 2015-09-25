@@ -48,21 +48,47 @@ function fillA!(neuron::Neuron)
     end
 end
 
-function main()
+function initialcon!(neuron::Neuron)
 
-    #t=tentry+dt/2
+    #fill matrix
+
+    #initial states of channels at nodes
+
+    
+end
+
+function main(neuron::Neuron)
+
+    #t=tentry+dt for euler, t=tentry+dt/2 for CN
     
     #calculate di/dv and i
-    
-    #add di/dv to A and -i to rhs
+
+    for i=1:length(neuron.secstack)
+
+        for j=1:length(neuron.secstack[i].pnode)
+
+            for k=1:length(neuron.secstack[i].pnode[j].prop)
+
+                #calculate current
+                prop_calc(neuron.secstack[i].pnode[j].prop[k],neuron.secstack[i].pnode[j])
+
+                #add to A diagonal
+
+                #calculate dv/di
+
+                #add dv/di to rhs
+                
+            end
+        end
+    end
 
     #solve A \ rhs to get delta_v
 
     #if second order correct, currents are updated?
 
-    #update voltages
+    #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
 
-    #t=tentry+dt
+    #t=tentry+dt for CN
 
     #find non voltage states (like gate variables for conductances)
 

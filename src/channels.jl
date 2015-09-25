@@ -26,10 +26,14 @@ function Passive()
     Passive(myvars,0.0,.001,.07)
 end
 
-function prop_calc(prop::Passive,node::Node)
-    prop.i=prop.g*(node.vars["v"]-prop.e)
+function con_calc(prop::Passive,node::Node)
+
 end
-    
+
+function cur_calc(prop::Passive,node::Node,v::Float64)
+    prop.i=prop.g*(v-prop.e)
+end
+
 #=
 HH
  This is the original Hodgkin-Huxley treatment for the set of sodium, 
@@ -70,8 +74,7 @@ function HH()
     HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,14)...)
 end
 
-function prop_calc(prop::HH,node::Node)
-
+function con_calc(prop::HH,node::Node)
     rates(prop,node)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
@@ -79,14 +82,20 @@ function prop_calc(prop::HH,node::Node)
     prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
   
     prop.gna = prop.gnabar * prop.m^3 * prop.h
-    prop.ina = prop.gna * (node.vars["v"] - node.vars["ena"])
     prop.gk = prop.gkbar * prop.n^4
-    prop.ik = prop.gk * (node.vars["v"] - node.vars["ek"])
-    prop.il = prop.gl * (node.vars["v"] - prop.el)
 
-    prop.ina + prop.ik + prop.il
+    nothing
     
 end
+
+function cur_calc(prop::HH,,node::Node,v::Float64)
+    prop.ina = prop.gna * (v - node.vars["ena"])
+    prop.ik = prop.gk * (v - node.vars["ek"])
+    prop.il = prop.gl * (v - prop.el)
+
+    prop.ina + prop.ik + prop.il
+end
+
 
 function prop_init(prop::HH,node::Node)
     rates(prop,node)
@@ -157,14 +166,22 @@ function Ca_HVA()
     Ca_HVA(myvars,.00001,zeros(Float64,7)...)
 end
 
-function prop_calc(prop::Ca_HVA, node::Node)
+function con_calc(prop::Ca_HVA,node::Node)
+
     rates(prop,node)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
-    
+
     prop.gCa_HVA = prop.gCa_HVAbar*prop.m^2*prop.h
-    prop.ica = prop.gCA_HVA*(node.vars["v"]-node.vars["eca"])
+
+    nothing
+end
+
+function cur_calc(prop::Ca_HVA,node::Node,v::Float64)
+
+    prop.ica = prop.gCA_HVA*(v-node.vars["eca"])
+    
 end
 
 function prop_init(prop::Ca_HVA, node::Node)
@@ -223,14 +240,22 @@ function Ca_LVAst()
     Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10))
 end
 
-function prop_calc(prop::Ca_LVAst, node::Node)
+function con_calc(prop::Ca_LVAst,node::Node)
+
     rates(prop,node)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
     
     prop.gCa_LVAst = prop.gCa_LVAstbar*prop.m^2*prop.h
-    prop.ica = prop.gCA_LVAst*(node.vars["v"]-node.vars["eca"])
+
+    nothing
+end
+
+function cur_calc(prop::Ca_LVAst,node::Node,v::Float64)
+
+    prop.ica = prop.gCA_LVAst*(v-node.vars["eca"])
+    
 end
 
 function prop_init(prop::Ca_LVAst, node::Node)
@@ -268,13 +293,21 @@ function Ih()
     Ih(myvars,.00001, -45, zeros(Float64, 5)...)
 end
 
-function prop_calc(prop::Ih, node::Node)
+function con_calc(prop::Ih,node::Node)
+
     rates(prop,node)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     
     prop.gIh = prop.gIhbar*prop.m
-    prop.ica = prop.gIh*(node.vars["v"]-prop.ehcn)
+
+    nothing
+end
+
+function cur_calc(prop::Ih,node::Node,v::Float64)
+
+    prop.ica = prop.gIh*(v-prop.ehcn)
+    
 end
 
 function prop_init(prop::Ih, node::Node)
