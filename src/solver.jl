@@ -17,24 +17,55 @@ Only the diagonals of A change from iteration to iteration, by a factor proporti
 function fillA!(neuron::Neuron)
 
     neuron.A=zeros(Float64,length(neuron.secstack),length(neuron.secstack))
-
-    #find parent resistance parent_r=delta_t/(Rp_node*Cp_node)
-
-    #find children resistance children_r=delta_t/(Rc_node*Cc_node)
-
     
     for i=1:length(neuron.secstack)
-        #populate diagonal
-        1+parent_r+sum(children_r)
 
-        #populate parent
-        -parent_r
+        for j=1:length(neuron.secstack[i].pnode)
 
-        #populate children (for each child)
-        for child_r in children_r
-            -child_r
+            #find parent resistance parent_r=delta_t/(Rp_node*Cp_node)
+            parent_r=neuron.dt/((neuron.secstack[i].pnode[j].ri[1]+neuron.secstack[i].pnode[j].parent.ri[2])*(neuron.secstack[i].pnode[j].ci[1]+neuron.secstack[i].pnode[j].parent.ci[2]))
+            
+            #find children resistance children_r=delta_t/(Rc_node*Cc_node)
+            children_r=zeros(Float64,length(neuron.secstack[i].pnode[j].children))
+
+            for k=1:length(children_r)
+                children_r[k]=neuron.dt/((neuron.secstack[i].pnode[j].ri[2]+neuron.secstack[i].pnode[j].children[k].ri[1])*(neuron.secstack[i].pnode[j].ci[2]+neuron.secstack[i].pnode[j].children[k].ci[1]))
+            end
+
+            
+            #populate diagonal
+            1+parent_r+sum(children_r)
+
+            #populate parent
+            -parent_r
+
+            #populate children (for each child)
+            for child_r in children_r
+                -child_r
+            end
+
         end
+        
           
     end
 end
 
+function main()
+
+    #t=tentry+dt/2
+    
+    #calculate di/dv and i
+    
+    #add di/dv to A and -i to rhs
+
+    #solve A \ rhs to get delta_v
+
+    #if second order correct, currents are updated?
+
+    #update voltages
+
+    #t=tentry+dt
+
+    #find non voltage states (like gate variables for conductances)
+
+end

@@ -8,6 +8,7 @@ type Node{T}
     vars::Dict{ASCIIString,Float64}
     area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
     ri::Array{Float64,1}  #internal resistance of left[1] and right[2] part of segment
+    parent::T
     children::Array{T,1} #Node(s) from other sections attached to this one
     prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 
 end
@@ -37,7 +38,11 @@ type Neuron
     A::Array{Float64,2}
     V_new::Array{Float64,1}
     V_old::Array{Float64,1}
+    delta_V::Array{Float64,1}
     rhs::Array{Float64,1}
+    Ra::Float64
+    Cm::Float64
+    dt::Float64
 end
 
 function Node(sec::Section,x::Int64,nseg::Int64)
