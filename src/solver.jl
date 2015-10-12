@@ -48,6 +48,41 @@ function fillA!(neuron::Neuron)
     end
 end
 
+
+#=
+Adapted from matlab script by Matt Fig
+=#
+function tridiagonalize(A::Array{Float64,2})
+    
+    lngth=size(A,2)
+    v=zeros(Float64,lngth)
+    I=eye(lngth)
+    Anew=zeros(Float64,size(A))
+    Aold=zeros(Float64,size(A))
+    
+    Aold[:]=A[:]
+
+    for jj=1:lngth-2
+        v[1:jj] = 0.0
+        S=ss(Aold,jj)
+        v[jj+1] = sqrt(.5.*(1+abs(Aold[jj+1,jj])/(S+2*eps()) ))
+        v[jj+2:lngth] = Aold[jj+2:lngth,jj]*sign(Aold[jj+1,jj]) / (2*v[jj+1]*S+2*eps())
+        P = I - 2*v*v'
+        Anew = P*Aold*P
+        Aold[:]=Anew[:]
+        
+    end
+
+    Anew[abs(Anew).<5e-14]=0.0
+
+    Anew
+
+end
+
+function ss(A::Array{Float64,2},jj::Int64)
+    sqrt(sum(A[(jj+1):end,jj].^2))
+end
+
 function initialcon!(neuron::Neuron)
 
     #fill matrix
