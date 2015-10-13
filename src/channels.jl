@@ -88,7 +88,7 @@ function con_calc(prop::HH,node::Node,v::Float64)
     
 end
 
-function cur_calc(prop::HH,,node::Node,v::Float64)
+function cur_calc(prop::HH,node::Node,v::Float64)
     prop.ina = prop.gna * (v - node.vars["ena"])
     prop.ik = prop.gk * (v - node.vars["ek"])
     prop.il = prop.gl * (v - prop.el)

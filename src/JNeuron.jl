@@ -1,6 +1,8 @@
 
 module JNeuron
 
+using ArrayViews
+
 include("types.jl")
 include("Section.jl")
 include("Neuron.jl")

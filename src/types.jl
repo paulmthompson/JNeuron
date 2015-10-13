@@ -101,6 +101,10 @@ type Neuron
     diag_old::Array{Float64,1}
 end
 
+function Neuron()
+    Neuron(Array(Section,0),zeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0))
+end
+
 type Network
     neur::Array{Neuron,1}
     t::FloatRange{Float64}
