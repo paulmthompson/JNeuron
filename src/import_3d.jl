@@ -74,7 +74,7 @@ function instantiate(import3d::Import3D)
             push!(somaind,i)
         end
     end
-    
+
     connect2soma(import3d,neuron,somaind,rootind)
 
     for i=1:length(childinds)
@@ -138,7 +138,8 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
         for j=1:length(somas)
             ds[j]=sqrt((centroids[1,j]-neuron.secstack[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secstack[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secstack[i].pt3d[1].z)^2)
         end
-        push!(neuron.secstack[i].child,somas[indmin(ds)]) #add root as child of soma
+        #push!(neuron.secstack[i].child,somas[indmin(ds)]) #add root as child of soma
+        push!(somas[indmin(ds)].child,neuron.secstack[i])
     end
 
     append!(neuron.secstack,somas)
