@@ -2,10 +2,10 @@
 #=
 Passive
 still needs range variables
-adapt for Julia by PMT
+adapted for Julia by PMT
 =#
 
-function prop_init(prop::Prop,node::Node)
+function prop_init(prop::Prop,node::Node,v::Float64)
 end
 
 function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
@@ -26,7 +26,7 @@ function Passive()
     Passive(myvars,0.0,.001,.07)
 end
 
-function con_calc(prop::Passive,node::Node)
+function con_calc(prop::Passive,node::Node,v::Float64)
 
 end
 
@@ -70,12 +70,12 @@ type HH <: Prop
 end
 
 function HH()
-    myvars=["v", "ena", "ek"]
+    myvars=["ena", "ek"]
     HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,14)...)
 end
 
-function con_calc(prop::HH,node::Node)
-    rates(prop,node)
+function con_calc(prop::HH,node::Node,v::Float64)
+    rates(prop,node,v)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     prop.n=implicit_euler(prop.n,node.dt,prop.ntau,prop.ninf)
@@ -97,15 +97,15 @@ function cur_calc(prop::HH,,node::Node,v::Float64)
 end
 
 
-function prop_init(prop::HH,node::Node)
-    rates(prop,node)
+function prop_init(prop::HH,node::Node,v::Float64)
+    rates(prop,node,v)
     prop.m=prop.minf
     prop.h=prop.hinf
     prop.n=prop.ninf
     nothing
 end
 
-function rates(prop::HH,node::Node)
+function rates(prop::HH,node::Node,v::Float64)
 
     q10 = 3^((node.temp - 6.3)/10)
     
@@ -162,13 +162,13 @@ type Ca_HVA <: Prop
 end
 
 function Ca_HVA()
-    myvars=["v", "eca"]
+    myvars=["eca"]
     Ca_HVA(myvars,.00001,zeros(Float64,7)...)
 end
 
-function con_calc(prop::Ca_HVA,node::Node)
+function con_calc(prop::Ca_HVA,node::Node,v::Float64)
 
-    rates(prop,node)
+    rates(prop,node,v)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
@@ -184,18 +184,17 @@ function cur_calc(prop::Ca_HVA,node::Node,v::Float64)
     
 end
 
-function prop_init(prop::Ca_HVA, node::Node)
-    rates(prop,node)
+function prop_init(prop::Ca_HVA, node::Node,v::Float64)
+    rates(prop,node,v)
     prop.m=prop.mInf
     prop.h=prop.hInf
     nothing
 end
 
-function rates(prop::Ca_HVA, node::Node)
-    if node.vars["v"] == -27.0
-        v=node.vars["v"]+.0001
+function rates(prop::Ca_HVA, node::Node,v::Float64)
+    if v == -27.0
+        v+=.0001
     else
-        v=node.vars["v"]
     end
 
     mAlpha =  (0.055*(-27-v))/(exp((-27-v)/3.8) - 1)        
@@ -236,13 +235,13 @@ type Ca_LVAst <: Prop
 end
 
 function Ca_LVAst()
-    myvars=["v", "eca"]
+    myvars=["eca"]
     Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10))
 end
 
-function con_calc(prop::Ca_LVAst,node::Node)
+function con_calc(prop::Ca_LVAst,node::Node,v::Float64)
 
-    rates(prop,node)
+    rates(prop,node,v)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
@@ -258,16 +257,14 @@ function cur_calc(prop::Ca_LVAst,node::Node,v::Float64)
     
 end
 
-function prop_init(prop::Ca_LVAst, node::Node)
-    rates(prop,node)
+function prop_init(prop::Ca_LVAst, node::Node,v::Float64)
+    rates(prop,node,v)
     prop.m=prop.mInf
     prop.h=prop.hInf
     nothing
 end
 
-function rates(prop::Ca_LVAst, node::Node)
-
-    v=node.vars["v"]
+function rates(prop::Ca_LVAst, node::Node,v::Float64)
 
     prop.mInf = 1.0000/(1+ exp((v - -30.000)/-6))
     prop.mTau = (5.0000 + 20.0000/(1+exp((v - -25.000)/5)))/prop.qt
@@ -289,13 +286,13 @@ type Ih <: Prop
 end
 
 function Ih()
-    myvars=["v"]
+    myvars=Array(ASCIIString,0)
     Ih(myvars,.00001, -45, zeros(Float64, 5)...)
 end
 
-function con_calc(prop::Ih,node::Node)
+function con_calc(prop::Ih,node::Node,v::Float64)
 
-    rates(prop,node)
+    rates(prop,node,v)
 
     prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
     
@@ -310,18 +307,17 @@ function cur_calc(prop::Ih,node::Node,v::Float64)
     
 end
 
-function prop_init(prop::Ih, node::Node)
-    rates(prop,node)
+function prop_init(prop::Ih, node::Node,v::Float64)
+    rates(prop,node,v)
     prop.m=prop.mInf
     nothing
 end
 
-function rates(prop::Ih, node::Node)
+function rates(prop::Ih, node::Node,v::Float64)
 
-    if node.vars["v"] == -154.9
-        v=node.vars["v"] + .0001
+    if v == -154.9
+        v=+ .0001
     else
-        v=node.vars["v"]
     end
     
     mAlpha =  0.001*6.43*(v+154.9)/(exp((v+154.9)/11.9)-1)
