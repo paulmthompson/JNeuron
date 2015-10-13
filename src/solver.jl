@@ -30,17 +30,21 @@ function fillA!(neuron::Neuron)
             end
            
             #populate diagonal
-            C/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
+            A[i,i]=neuron.C/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
 
             #populate parent
-            -neuron.nodes[i].parent_r
+            neuron.A[i,neuron.nodes[i].parent.ind]=-neuron.nodes[i].parent_r
 
             #populate children (for each child)
-            for child_r in neuron.nodes[i].children_r
-                -child_r
+            for j=1:length(neuron.nodes[i].children_r)
+                neuron.A[i,neuron.nodes[i].children[j].ind]=-neuron.nodes[i].children_r[j]
             end
                
     end
+
+    neuron.mydiag=diagview(A)
+    neuron.diag_old=diag(A)
+    
 end
 
 function initialcon!(neuron::Neuron)
@@ -112,7 +116,6 @@ function main(neuron::Neuron)
         end
     end
     
-
 end
 
 #=
