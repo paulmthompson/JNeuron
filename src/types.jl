@@ -55,9 +55,12 @@ These data containers don't help us to easily see the big picture of how the neu
 abstract Prop #Property of section (HH, passive etc). contains all of the stuff you need to calc things
 
 type Node{T}
+    ind::Int64
     vars::Dict{ASCIIString,Float64}
     area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
     ri::Array{Float64,1}  #internal resistance of left[1] and right[2] part of segment
+    parent_r::Float64
+    children_r::Array{Float64,1}
     parent::T
     children::Array{T,1} #Node(s) from other sections attached to this one
     prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 

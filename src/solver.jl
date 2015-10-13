@@ -17,37 +17,103 @@ function fillA!(neuron::Neuron)
 
     neuron.A=zeros(Float64,length(neuron.secstack),length(neuron.secstack))
     
-    for i=1:length(neuron.secstack)
-
-        for j=1:length(neuron.secstack[i].pnode)
+    for i=1:length(neuron.nodes)
 
             #find parent resistance parent_r=1/(Rp_node)
-            parent_r=1/(neuron.secstack[i].pnode[j].ri[1]+neuron.secstack[i].pnode[j].parent.ri[2])
+            neuron.nodes[i].parent_r=1/(neuron.nodes[i].ri[1]+neuron.nodes[i].parent.ri[2])
             
             #find children resistance children_r=1/(Rc_node)
-            children_r=zeros(Float64,length(neuron.secstack[i].pnode[j].children))
+            neuron.nodes[i].children_r=zeros(Float64,length(neuron.nodes[i].children))
 
-            for k=1:length(children_r)
-                children_r[k]=1/(neuron.secstack[i].pnode[j].ri[2]+neuron.secstack[i].pnode[j].children[k].ri[1])
+            for k=1:length(neuron.nodes[i].children_r)
+                neuron.nodes[i].children_r[k]=1/(neuron.nodes[i].ri[2]+neuron.nodes[i].children[k].ri[1])
             end
            
             #populate diagonal
-            C/neuron.dt+parent_r+sum(children_r)
+            C/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
 
             #populate parent
-            -parent_r
+            -neuron.nodes[i].parent_r
 
             #populate children (for each child)
-            for child_r in children_r
+            for child_r in neuron.nodes[i].children_r
                 -child_r
             end
-
-        end
-        
-          
+               
     end
 end
 
+function initialcon!(neuron::Neuron)
+
+    #fill matrix
+
+    #initial states of channels at nodes
+
+    
+end
+
+function main(neuron::Neuron)
+
+    #t=tentry+dt for euler, t=tentry+dt/2 for CN
+    
+    for i=1:length(neuron.nodes)
+
+        i1=0.0
+        i2=0.0
+        i=0.0
+            
+        for k=1:length(neuron.nodes[i].prop)
+
+            #calculate current
+            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v_new[i])
+
+            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v_new[i]+.001)
+                
+            #add -i to rhs
+            neuron.rhs[i]-=i1
+
+            #add dv/di to diagonal of A
+            neuron.diag[i]+=(i2-i1)
+                
+        end
+
+        #calculate current entering node from parent and exiting to children
+        #add to rhs for that node
+        
+        #parent current
+        i_p=(neuron.vold[neuron.nodes[i].parent.ind]-neuron.vold[i])/neuron.nodes[i].parent_r
+
+        #children current
+        i_c=0.0
+        for j=1:length(neuron.nodes[i].children)
+            i_c+=(neuron.v_old[i]-neuron.v_old[neuron.nodes[i].children[j].ind])/neuron.nodes[i].children_r[j]
+        end
+
+        neuron.rhs[i]+=i_p
+        neuron.rhs[i]+=i_c
+            
+    end
+
+    #solve A \ rhs to get delta_v
+    neuron.delta_v = neuron.A \ neuron.rhs
+
+    #if second order correct, currents are updated?
+
+    #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
+    neuron.v_old=neuron.delta_v + neuron.v_old
+
+    #t=tentry+dt for CN
+
+    #find non voltage states (like gate variables for conductances)
+    
+    for i=1:length(neuron.nodes)
+        for j=1:length(neuron.nodes[i].prop)
+            con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],v[i])
+        end
+    end
+    
+
+end
 
 #=
 Adapted from matlab script by Matt Fig
@@ -81,56 +147,4 @@ end
 
 function ss(A::Array{Float64,2},jj::Int64)
     sqrt(sum(A[(jj+1):end,jj].^2))
-end
-
-function initialcon!(neuron::Neuron)
-
-    #fill matrix
-
-    #initial states of channels at nodes
-
-    
-end
-
-function main(neuron::Neuron)
-
-    #t=tentry+dt for euler, t=tentry+dt/2 for CN
-    
-    for i=1:length(neuron.nodes)
-
-        i1=0.0
-        i2=0.0
-        i=0.0
-            
-        for k=1:length(neuron.secstack[i].pnode[j].prop)
-
-            #calculate current
-            i1=cur_calc(neuron.node[i].prop[k],neuron.node[i],neuron.v_new[i])
-
-            i1=cur_calc(neuron.node[i].prop[k],neuron.node[i],neuron.v_new[i]+.001)
-                
-            #add -i to rhs
-            neuron.rhs[i]-=i1
-
-            #add dv/di to diagonal of A
-            neuron.diag[i]+=(i2-i1)
-                
-        end
-
-            #calculate current entering node from parent and exiting to children
-            #add to rhs for that node
-    end
-
-    #solve A \ rhs to get delta_v
-
-    #if second order correct, currents are updated?
-
-    #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
-
-    #t=tentry+dt for CN
-
-    #find non voltage states (like gate variables for conductances)
-
-    
-
 end
