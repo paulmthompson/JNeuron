@@ -30,7 +30,7 @@ function fillA!(neuron::Neuron)
             end
            
             #populate diagonal
-            A[i,i]=neuron.C/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
+            A[i,i]=neuron.Cm/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
 
             #populate parent
             neuron.A[i,neuron.nodes[i].parent.ind]=-neuron.nodes[i].parent_r
@@ -42,7 +42,7 @@ function fillA!(neuron::Neuron)
                
     end
 
-    neuron.mydiag=diagview(A)
+    neuron.diag=diagview(A)
     neuron.diag_old=diag(A)
     
 end
@@ -50,9 +50,17 @@ end
 function initialcon!(neuron::Neuron)
 
     #fill matrix
+    fillA!(neuron)
 
+    #initial V?
+    neuron.v=neuron.vi.*ones(Float64,length(neuron.v))
+    
     #initial states of channels at nodes
-
+    for i=1:length(neuron.nodes)
+        for j=1:length(neuron.nodes[i].prop)
+            prop_init(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i])
+        end
+    end
     
 end
 
@@ -69,9 +77,9 @@ function main(neuron::Neuron)
         for k=1:length(neuron.nodes[i].prop)
 
             #calculate current
-            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v_new[i])
+            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i])
 
-            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v_new[i]+.001)
+            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i]+.001)
                 
             #add -i to rhs
             neuron.rhs[i]-=i1
@@ -85,12 +93,12 @@ function main(neuron::Neuron)
         #add to rhs for that node
         
         #parent current
-        i_p=(neuron.vold[neuron.nodes[i].parent.ind]-neuron.vold[i])/neuron.nodes[i].parent_r
+        i_p=(neuron.v[neuron.nodes[i].parent.ind]-neuron.v[i])/neuron.nodes[i].parent_r
 
         #children current
         i_c=0.0
         for j=1:length(neuron.nodes[i].children)
-            i_c+=(neuron.v_old[i]-neuron.v_old[neuron.nodes[i].children[j].ind])/neuron.nodes[i].children_r[j]
+            i_c+=(neuron.v[i]-neuron.v[neuron.nodes[i].children[j].ind])/neuron.nodes[i].children_r[j]
         end
 
         neuron.rhs[i]+=i_p
@@ -115,39 +123,8 @@ function main(neuron::Neuron)
             con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],v[i])
         end
     end
+
+    #reset diagonal
+    neuron.diag[:]=neuron.diag_old[:]
     
-end
-
-#=
-Adapted from matlab script by Matt Fig
-=#
-function tridiagonalize(A::Array{Float64,2})
-    
-    lngth=size(A,2)
-    v=zeros(Float64,lngth)
-    I=eye(lngth)
-    Anew=zeros(Float64,size(A))
-    Aold=zeros(Float64,size(A))
-    
-    Aold[:]=A[:]
-
-    for jj=1:lngth-2
-        v[1:jj] = 0.0
-        S=ss(Aold,jj)
-        v[jj+1] = sqrt(.5.*(1+abs(Aold[jj+1,jj])/(S+2*eps()) ))
-        v[jj+2:lngth] = Aold[jj+2:lngth,jj]*sign(Aold[jj+1,jj]) / (2*v[jj+1]*S+2*eps())
-        P = I - 2*v*v'
-        Anew = P*Aold*P
-        Aold[:]=Anew[:]
-        
-    end
-
-    Anew[abs(Anew).<5e-14]=0.0
-
-    Anew
-
-end
-
-function ss(A::Array{Float64,2},jj::Int64)
-    sqrt(sum(A[(jj+1):end,jj].^2))
 end

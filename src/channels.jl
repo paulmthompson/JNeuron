@@ -22,7 +22,7 @@ type Passive <: Prop
 end
 
 function Passive()
-    myvars=["v"]
+    myvars=Array(ASCIIString,0)
     Passive(myvars,0.0,.001,.07)
 end
 

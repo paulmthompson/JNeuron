@@ -89,19 +89,19 @@ end
 type Neuron
     secstack::Array{Section,1}
     A::Array{Float64,2}
-    v_new::Array{Float64,1}
-    v_old::Array{Float64,1}
+    v::Array{Float64,1}
     delta_V::Array{Float64,1}
     rhs::Array{Float64,1}
     diag::Array{Float64,1}
     Ra::Float64
     Cm::Float64
     dt::Float64
+    vi::Float64
     nodes::Array{Node,1}
     diag_old::Array{Float64,1}
 end
 
 type Network
     neur::Array{Neuron,1}
-    t::Float64
+    t::FloatRange{Float64}
 end
