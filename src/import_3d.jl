@@ -386,8 +386,8 @@ function Section(section3d::Section3D) #like new_section
     for i=1:length(section3d.d)
         if i>1
             mylength=sqrt((section3d.raw[i,1]-section3d.raw[i-1,1])^2+(section3d.raw[i,2]-section3d.raw[i-1,2])^2+(section3d.raw[i,3]-section3d.raw[i-1,3])^2)
-            sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],mylength)
-            sec.length+=sec.pt3d[i].arc
+            sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],mylength+sec.pt3d[i-1].arc)
+            sec.length+=mylength
         else
             sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],0.0)
         end
