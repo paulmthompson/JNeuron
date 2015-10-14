@@ -1,5 +1,11 @@
 #=
 Methods to construct and act on Section type, which mirrors the functions of Neuron's Section type
+
+Inputs:
+sec - section containing node
+x - ID of node to be created (range of 1 to nseg)
+nseg - number of total segments in section
+
 =#
 
 function Node(sec::Section,x::Int64,nseg::Int64)
@@ -8,7 +14,7 @@ function Node(sec::Section,x::Int64,nseg::Int64)
         myvars=sec.pnode[i].vars
         myprops=sec.pnode[i].prop
     else
-        myvars=Dict{ASCIIString,Float64}("v"=>0.0)
+        myvars=Dict{ASCIIString,Float64}()
         myprops=Array(Prop,0)
     end
 
@@ -79,7 +85,7 @@ function Node(sec::Section,x::Int64,nseg::Int64)
         end
     end
     
-    Node(myvars, area, ri, child, myprops)
+    Node(0,myvars, area, ri, 0.0,Array(Float64,0),par,child, myprops)
      
 end
 
