@@ -8,16 +8,8 @@ nseg - number of total segments in section
 
 =#
 
-function Node(sec::Section,x::Int64,nseg::Int64)
+function r_a_calc(sec::Section,x::Int64,nseg::Int64)
     
-    if length(sec.pnode)>0 #existing nodes
-        myvars=sec.pnode[i].vars
-        myprops=sec.pnode[i].prop
-    else
-        myvars=Dict{ASCIIString,Float64}()
-        myprops=Array(Prop,0)
-    end
-
     #find location of other nodes on section in normalized units
     
     cent=(2*x-1)/(2*nseg)
@@ -73,19 +65,8 @@ function Node(sec::Section,x::Int64,nseg::Int64)
 
     area[2]+=frustrum_area(sec.pt3d[last].d,diam,height)
     ri[2]+=frustrum_resistance(sec.pt3d[last].d,diam,height,sec.Ra)
-     
-    #Children are sections where this node is closest to child sections parentx
-    child=Array(section,0)
 
-    for i=1:length(sec.child)
-        if (sec.child[i].parentx==1.0) & (x==nseg)
-            push!(child,sec.child[i])
-        elseif sec.child[i].parentx <=interval[2] & sec.child[i].parentx > interval[1] 
-            push!(child,sec.child[i])
-        end
-    end
-    
-    Node(0,myvars, area, ri, 0.0,Array(Float64,0),par,child, myprops)
+    (area, ri)
      
 end
 

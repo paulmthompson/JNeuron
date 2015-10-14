@@ -9,26 +9,54 @@ end
 
 function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
 
+    nodesec=zeros(Int64,length(neuron.secstack))
+    nseglist=zeros(Int64,length(neuron.secstack)+1)
+    nodesec[1]=1
+
+    #find total number of segments
     for i=1:length(neuron.secstack)
+        
         lambda=lambda_f(frequency, neuron.secstack[i], neuron)
         nseg=round(Int64, neuron.secstack[i].length / (d_lambda * lambda) + .9)
 
-        newstart=length(neuron.nodes)+1
-        #create the appropriate number of nodes
-        for j=1:nseg
+        nodesec[i+1]=nodesec[i]+nseg
+        
+        nseglist[i]=nseg
+        
+    end
+    
+    for i=1:length(neuron.secstack)
 
-            #add to main node matrix
-            push!(neuron.nodes,Node(neuron.secstack[i],j,nseg))
+        if neuron.secstack[i].mtype>1
 
-            neuron.nodes[end].ind=length(neuron.nodes)
-            
+            for j=1:nseglist[i]
+
+                if j==1
+                    parent=
+                    children=Int64[length(neuron.nodes)+2]
+                elseif j==nseglist[i]
+                    parent=length(neuron.nodes)
+                    children=Int64[nodesec[neuron.secstack[i].child[j].refcount] for j=1:length(neuron.secstack[i].child)]
+                else
+                    parent=length(neuron.nodes)
+                    children=Int64[length(neuron.nodes)+2]
+                end
+
+                (area, ri) = r_a_calc(neuron.secstack[i],j,nseglist[i])
+                myvars=Dict{ASCIIString,Float64}()
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,zeros(Float64,length(children)),parent,children,Array(Prop,0))) 
+                
+            end
+
+        else
+
         end
 
         #map pnode of this section to newly created nodes            
         neuron.secstack[i].pnode=view(neuron.nodes,newstart:(newstart+nseg))
-        
+               
     end
-    
+      
 end
 
 function lambda_f(frequency::Float64,sec::Section,neuron::Neuron)
