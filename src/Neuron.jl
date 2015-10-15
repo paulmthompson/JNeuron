@@ -9,8 +9,8 @@ end
 
 function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
 
-    nodesec=zeros(Int64,length(neuron.secstack))
-    nseglist=zeros(Int64,length(neuron.secstack)+1)
+    nodesec=zeros(Int64,length(neuron.secstack)+1)
+    nseglist=zeros(Int64,length(neuron.secstack))
     nodesec[1]=1
     parents=zeros(Int64,length(neuron.secstack))
 
@@ -32,13 +32,12 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
     
     for i=1:length(neuron.secstack)
 
-        for j=1:nodesec[i]
-
+        for j=1:nseglist[i]
 
             if neuron.secstack[i].mtype>1
                 
                 if j==1
-                    parent=nseglist[parents[i]+1]-1
+                    parent=nodesec[parents[i]+1]-1
                     children=Int64[length(neuron.nodes)+2]
                 elseif j==nseglist[i]
                     parent=length(neuron.nodes)
@@ -50,7 +49,7 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
 
             else
                 
-                middle=round(Int64,(1+nodesec[i])/2)
+                middle=round(Int64,(1+nseglist[i])/2)
 
                 if j<middle
                     parent=length(neuron.nodes)+1
@@ -74,9 +73,11 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
         end
 
         #map pnode of this section to newly created nodes            
-        neuron.secstack[i].pnode=view(neuron.nodes,)
+        #neuron.secstack[i].pnode=view(neuron.nodes,nodesec[i]:nodesec[i+1])
                
     end
+
+    nothing
       
 end
 

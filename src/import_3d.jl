@@ -82,10 +82,15 @@ function instantiate(import3d::Import3D)
             push!(neuron.secstack[i].child,neuron.secstack[mapping[j]])
         end
     end
-    
+
+    #set default Ra, Cm
     for i=1:length(neuron.secstack)  
         neuron.secstack[i].refcount=i
+        neuron.secstack[i].Ra=35.4
     end
+
+    neuron.Cm=1.0
+    neuron.Ra=35.4
     
     neuron
     #connect them, making adjustments to 3d points as necessary
