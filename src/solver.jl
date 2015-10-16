@@ -20,24 +20,21 @@ function fillA!(neuron::Neuron)
     for i=1:length(neuron.nodes)
 
             #find parent resistance parent_r=1/(Rp_node)
-            neuron.nodes[i].parent_r=1/(neuron.nodes[i].ri[1]+neuron.nodes[i].parent.ri[2])
-            
-            #find children resistance children_r=1/(Rc_node)
-            neuron.nodes[i].children_r=zeros(Float64,length(neuron.nodes[i].children))
+            neuron.nodes[i].parent_r=1/(neuron.nodes[i].ri[1]+neuron.nodes[neuron.nodes[i].parent].ri[2])
 
             for k=1:length(neuron.nodes[i].children_r)
-                neuron.nodes[i].children_r[k]=1/(neuron.nodes[i].ri[2]+neuron.nodes[i].children[k].ri[1])
+                neuron.nodes[i].children_r[k]=1/(neuron.nodes[i].ri[2]+neuron.nodes[neuron.nodes[i].children[k]].ri[1])
             end
            
             #populate diagonal
             A[i,i]=neuron.Cm/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
 
             #populate parent
-            neuron.A[i,neuron.nodes[i].parent.ind]=-neuron.nodes[i].parent_r
+            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].parent_r
 
             #populate children (for each child)
             for j=1:length(neuron.nodes[i].children_r)
-                neuron.A[i,neuron.nodes[i].children[j].ind]=-neuron.nodes[i].children_r[j]
+                neuron.A[i,neuron.nodes[i].children[j]]=-neuron.nodes[i].children_r[j]
             end
                
     end
@@ -93,12 +90,12 @@ function main(neuron::Neuron)
         #add to rhs for that node
         
         #parent current
-        i_p=(neuron.v[neuron.nodes[i].parent.ind]-neuron.v[i])/neuron.nodes[i].parent_r
+        i_p=(neuron.v[neuron.nodes[i].parent]-neuron.v[i])/neuron.nodes[i].parent_r
 
         #children current
         i_c=0.0
         for j=1:length(neuron.nodes[i].children)
-            i_c+=(neuron.v[i]-neuron.v[neuron.nodes[i].children[j].ind])/neuron.nodes[i].children_r[j]
+            i_c+=(neuron.v[i]-neuron.v[neuron.nodes[i].children[j]])/neuron.nodes[i].children_r[j]
         end
 
         neuron.rhs[i]+=i_p
