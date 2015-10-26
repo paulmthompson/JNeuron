@@ -73,7 +73,7 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
         end
 
         #map pnode of this section to newly created nodes            
-        neuron.secstack[i].pnode=view(neuron.nodes,nodesec[i]:nodesec[i+1])
+        neuron.secstack[i].pnode=sub(neuron.nodes,nodesec[i]:(nodesec[i+1]-1))
                
     end
 
