@@ -18,7 +18,7 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
     for i=1:length(neuron.secstack)
         
         lambda=lambda_f(frequency, neuron.secstack[i], neuron)
-        nseg=round(Int64, neuron.secstack[i].length / (d_lambda * lambda) + .9)
+        nseg=floor(Int64, (neuron.secstack[i].length / (d_lambda * lambda) + .9) /2 )*2+1
 
         nodesec[i+1]=nodesec[i]+nseg
         
