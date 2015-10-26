@@ -210,11 +210,11 @@ function sphere_approx(import3d::Import3D, ind::Int64,somas::Array{Section,1})
     perimeter=0.0
     for i=2:size(import3d.sections[ind].raw,1)
         perimeter+=sqrt((import3d.sections[ind].raw[i,1]-import3d.sections[ind].raw[i-1,1])^2 +
-                        (import3d.sections[ind].raw[i,2]-import3d.sections[ind].raw[i-1,1])^2)
+                        (import3d.sections[ind].raw[i,2]-import3d.sections[ind].raw[i-1,2])^2)
     end
 
     perimeter+=sqrt((import3d.sections[ind].raw[1,1]-import3d.sections[ind].raw[end,1])^2 +
-                    (import3d.sections[ind].raw[1,2]-import3d.sections[ind].raw[end,1])^2)
+                    (import3d.sections[ind].raw[1,2]-import3d.sections[ind].raw[end,2])^2)
 
     radi=perimeter/(2*pi)
 
