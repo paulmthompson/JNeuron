@@ -66,6 +66,13 @@ type Node
     prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 
 end
 
+type Node_ext
+    ind::Int64
+    ri::Array{Float64,1}
+    parent_r::Float64
+    children_r::Array{Float64,1}
+end
+
 #associated 3d point
 type Pt3d
     x::Float64
@@ -89,15 +96,24 @@ end
 type Neuron
     secstack::Array{Section,1}
     A::Array{Float64,2}
-    v::Array{Float64,1}
-    delta_V::Array{Float64,1}
+    v::Array{Float64,1} #intracellular voltage
+    delta_V::Array{Float64,1} #change in membrane voltage
     rhs::Array{Float64,1}
     diag::Array{Float64,1}
     Ra::Float64
     Cm::Float64
     dt::Float64
-    vi::Float64
+    vi::Float64 #initial intracellular voltage
     nodes::Array{Node,1}
+    #enodes::Array{Node_ext,1}
+    #vext::Array{Float64,1}
+    #delta_vext::Array{Float64,1}
+    #A_ext::Array{Float64,2}
+    #rhs_ext::Array{Float64,1}
+    #diag_ext::Array{Float64,1}
+    #diag_ext_old::Array{Float64,1}
+    #i_vm::Array{Float64,1}
+    #divm::Array{Float64,1}
     diag_old::Array{Float64,1}
 end
 
