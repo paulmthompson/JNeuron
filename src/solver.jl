@@ -32,8 +32,13 @@ function fillA!(neuron::Neuron)
         if neuron.nodes[i].parent==0
             neuron.nodes[i].parent_r=0.0
         else
+
+
+            mya=myneuron.nodes[i].area[1]+myneuron.nodes[myneuron.nodes[i].parent].area[2]
+            myr=myneuron.nodes[i].ri[1]+myneuron.nodes[myneuron.nodes[i].parent].ri[2]
             
-            neuron.nodes[i].parent_r=1/(neuron.nodes[i].ri[1]+neuron.nodes[neuron.nodes[i].parent].ri[2])
+            neuron.nodes[i].parent_r=100/(mya*myr)
+            
             #populate parent
             neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].parent_r
         end
