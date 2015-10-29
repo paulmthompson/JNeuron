@@ -99,12 +99,18 @@ type Neuron
     v::Array{Float64,1} #intracellular voltage
     delta_V::Array{Float64,1} #change in membrane voltage
     rhs::Array{Float64,1}
-    diag::Array{Float64,1}
+    #diag::Array{Float64,1}
+    diag::StridedView{Float64,1,0,Array{Float64,2}}
     Ra::Float64
     Cm::Float64
     dt::Float64
     vi::Float64 #initial intracellular voltage
     nodes::Array{Node,1}
+    i_vm::Array{Float64,1}
+    divm::Array{Float64,1}
+    diag_old::Array{Float64,1}
+
+    #extracellular data structures (where to put these? different type probably)
     #enodes::Array{Node_ext,1}
     #vext::Array{Float64,1}
     #delta_vext::Array{Float64,1}
@@ -112,13 +118,10 @@ type Neuron
     #rhs_ext::Array{Float64,1}
     #diag_ext::Array{Float64,1}
     #diag_ext_old::Array{Float64,1}
-    #i_vm::Array{Float64,1}
-    #divm::Array{Float64,1}
-    diag_old::Array{Float64,1}
 end
 
 function Neuron()
-    Neuron(Array(Section,0),zeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0))
+    Neuron(Array(Section,0),zeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),diagview(zeros(Float64,0,0)),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
 end
 
 type Network

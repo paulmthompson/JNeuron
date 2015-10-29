@@ -15,22 +15,35 @@ Only the diagonals of A change from iteration to iteration, by a factor proporti
 
 function fillA!(neuron::Neuron)
 
-    neuron.A=zeros(Float64,length(neuron.secstack),length(neuron.secstack))
+    ext=false
+
+    nodelen=length(neuron.nodes)
+    
+    neuron.A=zeros(Float64,nodelen,nodelen)
+    neuron.v=zeros(Float64,nodelen)
+    neuron.delta_V=zeros(Float64,nodelen)
+    neuron.rhs=zeros(Float64,nodelen)
+    neuron.i_vm=zeros(Float64,nodelen)
+    neuron.divm=zeros(Float64,nodelen)
     
     for i=1:length(neuron.nodes)
 
         #find parent resistance parent_r=1/(Rp_node)
-        neuron.nodes[i].parent_r=1/(neuron.nodes[i].ri[1]+neuron.nodes[neuron.nodes[i].parent].ri[2])
-        
+        if neuron.nodes[i].parent==0
+            neuron.nodes[i].parent_r=0.0
+        else
+            
+            neuron.nodes[i].parent_r=1/(neuron.nodes[i].ri[1]+neuron.nodes[neuron.nodes[i].parent].ri[2])
+            #populate parent
+            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].parent_r
+        end
+                
         for k=1:length(neuron.nodes[i].children_r)
             neuron.nodes[i].children_r[k]=1/(neuron.nodes[i].ri[2]+neuron.nodes[neuron.nodes[i].children[k]].ri[1])
         end
            
         #populate diagonal
         neuron.A[i,i]=neuron.Cm/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
-
-        #populate parent
-        neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].parent_r
 
         #populate children (for each child)
         for j=1:length(neuron.nodes[i].children_r)
@@ -96,23 +109,28 @@ function main(neuron::Neuron)
     
     for i=1:length(neuron.nodes)
 
+        neuron.i_vm[i]=0.0
+        neuron.divm[i]=0.0
         i1=0.0
         i2=0.0
             
         for k=1:length(neuron.nodes[i].prop)
 
             #calculate current
-            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i])
+            il=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i])
 
             i2=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i]+.001)
-                
-            #add -i to rhs
-            neuron.rhs[i]-=i1
 
-            #add dv/di to diagonal
+            neuron.i_vm[i]+=i1
             neuron.diag[i]+=(i2-i1)/.001
-                
+                               
         end
+
+        #add -i to rhs
+        neuron.rhs-=neuron.i_vm[i]
+
+        #add dv/di to diagonal
+        neuron.diag[i]+=neuron.divm[i]
 
         #calculate current entering node from parent and exiting to children
         #add to rhs for that node
@@ -161,6 +179,9 @@ function main(neuron::Neuron)
 
     #reset diagonal
     neuron.diag[:]=neuron.diag_old[:]
+
+    #reset rhs
+    neuron.rhs[:]=0.0
     
 end
 
