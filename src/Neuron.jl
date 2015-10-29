@@ -65,7 +65,7 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
                     children=Int64[nodesec[neuron.secstack[i].child[j].refcount] for j=1:length(neuron.secstack[i].child)]
                 end
             end         
-
+            
             (area, ri) = r_a_calc(neuron.secstack[i],j,nseglist[i])
             myvars=Dict{ASCIIString,Float64}()
             push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,zeros(Float64,length(children)),parent,children,Array(Prop,0))) 

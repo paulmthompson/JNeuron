@@ -88,7 +88,9 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
     ri[2]+=frustrum_resistance(sec.pt3d[last].d,diam,height,sec.Ra)
 
     end
-        
+
+    ri*=.01
+    
     (area, ri)
      
 end
