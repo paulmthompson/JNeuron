@@ -33,7 +33,6 @@ function fillA!(neuron::Neuron)
             neuron.nodes[i].parent_r=0.0
         else
 
-
             mya=neuron.nodes[i].area[1]+neuron.nodes[neuron.nodes[i].parent].area[2]
             myr=neuron.nodes[i].ri[1]+neuron.nodes[neuron.nodes[i].parent].ri[2]
             
@@ -84,6 +83,13 @@ function fillA!(neuron::Neuron)
         
         end
         
+    end
+
+    #correct for boundary conditions
+
+    for i=1:length(myneuron.secstack)
+	neuron.secstack[i].pnode[1].parent_r=1/neuron.secstack[i].pnode[1].ri[1]
+	neuron.secstack[i].pnode[1].children_r[1]=100/(2*neuron.secstack[i].pnode[1].ri[1]*neuron.secstack[i].pnode[1].area[1])
     end
     
     neuron.diag=diagview(neuron.A)
