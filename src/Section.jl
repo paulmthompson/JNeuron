@@ -24,16 +24,23 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
     #get all of the arc lengths into one data structures
     arc3d=collect(Float64[sec.pt3d[i].arc for i=1:length(sec.pt3d)])
 
-    if length(arc3d)<4     
-        
-    else
-        
-
     #Find the first 3d points 1) before the segment, 2) after the middle of the segment and 3) before the end of the segment
     first=findfirst(arc3d.>interval[1])-1
     mid=findfirst(arc3d.>cent)-1
     last=findnext(arc3d.>=interval[2],first)-1
 
+    if length(arc3d)<4
+        #If just a few points, whole thing is just modeled as a cylinder
+        myarea=2*pi*sec.pt3d[1].d/2*sec.length*(interval[2]-interval[1])
+
+        area[1]=myarea/2
+        area[2]=myarea/2
+
+        ri[1]=frustrum_resistance(sec.pt3d[1].d,sec.pt3d[1].d,sec.length*(interval[2]-interval[1])/2,sec.Ra)
+        ri[2]=ri[1]
+            
+    else
+        
 
     #=
         Area of a segment is modeled as a series of truncated cones between the 3d points. The diameter of the top and bottom of the frustrum is taken to be the average of the diameters of the nearest 3d points
