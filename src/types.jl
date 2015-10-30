@@ -97,7 +97,7 @@ type Neuron
     secstack::Array{Section,1}
     A::Array{Float64,2}
     v::Array{Float64,1} #intracellular voltage
-    delta_V::Array{Float64,1} #change in membrane voltage
+    delta_v::Array{Float64,1} #change in membrane voltage
     rhs::Array{Float64,1}
     #diag::Array{Float64,1}
     diag::StridedView{Float64,1,0,Array{Float64,2}}

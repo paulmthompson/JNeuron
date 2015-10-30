@@ -21,7 +21,7 @@ function fillA!(neuron::Neuron)
     
     neuron.A=zeros(Float64,nodelen,nodelen)
     neuron.v=zeros(Float64,nodelen)
-    neuron.delta_V=zeros(Float64,nodelen)
+    neuron.delta_v=zeros(Float64,nodelen)
     neuron.rhs=zeros(Float64,nodelen)
     neuron.i_vm=zeros(Float64,nodelen)
     neuron.divm=zeros(Float64,nodelen)
@@ -128,11 +128,12 @@ end
 function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
+    ext=false
     
     for i=1:length(neuron.nodes)
 
-        neuron.i_vm[i]=0.0
-        neuron.divm[i]=0.0
+        neuron.i_vm[i] = 0.0
+        neuron.divm[i] = 0.0
         i1=0.0
         i2=0.0
             
@@ -144,7 +145,7 @@ function main(neuron::Neuron)
             i2=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i]+.001)
 
             neuron.i_vm[i]+=i1
-            neuron.diag[i]+=(i2-i1)/.001
+            neuron.divm[i]+=(i2-i1)/.001
                                
         end
 
@@ -158,7 +159,11 @@ function main(neuron::Neuron)
         #add to rhs for that node
         
         #parent current
-        i_p=(neuron.v[neuron.nodes[i].parent]-neuron.v[i])/neuron.nodes[i].parent_r
+        if neuron.nodes[i].parent!=0
+            i_p=(neuron.v[neuron.nodes[i].parent]-neuron.v[i])/neuron.nodes[i].parent_r
+        else
+            i_p=0.0
+        end
 
         #children current
         i_c=0.0
@@ -195,7 +200,7 @@ function main(neuron::Neuron)
     
     for i=1:length(neuron.nodes)
         for j=1:length(neuron.nodes[i].prop)
-            con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],v[i])
+            con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i],neuron.dt)
         end
     end
 
@@ -204,6 +209,8 @@ function main(neuron::Neuron)
 
     #reset rhs
     neuron.rhs[:]=0.0
+
+    nothing
     
 end
 

@@ -26,7 +26,7 @@ function Passive()
     Passive(myvars,0.0,.001,.07)
 end
 
-function con_calc(prop::Passive,node::Node,v::Float64)
+function con_calc(prop::Passive,node::Node,v::Float64,dt::Float64)
 
 end
 
@@ -74,12 +74,12 @@ function HH()
     HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,14)...)
 end
 
-function con_calc(prop::HH,node::Node,v::Float64)
+function con_calc(prop::HH,node::Node,v::Float64,dt::Float64)
     rates(prop,node,v)
 
-    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
-    prop.n=implicit_euler(prop.n,node.dt,prop.ntau,prop.ninf)
-    prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
+    prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
+    prop.n=implicit_euler(prop.n,dt,prop.ntau,prop.ninf)
+    prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
   
     prop.gna = prop.gnabar * prop.m^3 * prop.h
     prop.gk = prop.gkbar * prop.n^4
@@ -107,10 +107,11 @@ end
 
 function rates(prop::HH,node::Node,v::Float64)
 
-    q10 = 3^((node.temp - 6.3)/10)
+    #q10 = 3^((node.temp - 6.3)/10)
+    q10 = 3^((37.0 - 6.3)/10)
     
     #"m" sodium activation system
-    alpha = .1 * vtrap(-(v+40),10)
+    alpha = .1 * vtrap(-(v+40),10.0)
     beta =  4 * exp(-(v+65)/18)
     mysum = alpha + beta
     prop.mtau = 1/(q10*mysum)
@@ -124,7 +125,7 @@ function rates(prop::HH,node::Node,v::Float64)
     prop.hinf = alpha/mysum
     
     #"n" potassium activation system
-    alpha = .01*vtrap(-(v+55),10) 
+    alpha = .01*vtrap(-(v+55),10.0) 
     beta = .125*exp(-(v+65)/80)
     mysum = alpha + beta
     prop.ntau = 1/(q10*mysum)
@@ -166,12 +167,12 @@ function Ca_HVA()
     Ca_HVA(myvars,.00001,zeros(Float64,7)...)
 end
 
-function con_calc(prop::Ca_HVA,node::Node,v::Float64)
+function con_calc(prop::Ca_HVA,node::Node,v::Float64,dt::Float64)
 
     rates(prop,node,v)
 
-    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
-    prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
+    prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
+    prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
 
     prop.gCa_HVA = prop.gCa_HVAbar*prop.m^2*prop.h
 
@@ -239,12 +240,12 @@ function Ca_LVAst()
     Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10))
 end
 
-function con_calc(prop::Ca_LVAst,node::Node,v::Float64)
+function con_calc(prop::Ca_LVAst,node::Node,v::Float64,dt::Float64)
 
     rates(prop,node,v)
 
-    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
-    prop.h=implicit_euler(prop.h,node.dt,prop.htau,prop.hinf)
+    prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
+    prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
     
     prop.gCa_LVAst = prop.gCa_LVAstbar*prop.m^2*prop.h
 
@@ -290,11 +291,11 @@ function Ih()
     Ih(myvars,.00001, -45, zeros(Float64, 5)...)
 end
 
-function con_calc(prop::Ih,node::Node,v::Float64)
+function con_calc(prop::Ih,node::Node,v::Float64,dt::Float64)
 
     rates(prop,node,v)
 
-    prop.m=implicit_euler(prop.m,node.dt,prop.mtau,prop.minf)
+    prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     
     prop.gIh = prop.gIhbar*prop.m
 
