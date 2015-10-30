@@ -34,8 +34,8 @@ function fillA!(neuron::Neuron)
         else
 
 
-            mya=myneuron.nodes[i].area[1]+myneuron.nodes[myneuron.nodes[i].parent].area[2]
-            myr=myneuron.nodes[i].ri[1]+myneuron.nodes[myneuron.nodes[i].parent].ri[2]
+            mya=neuron.nodes[i].area[1]+neuron.nodes[neuron.nodes[i].parent].area[2]
+            myr=neuron.nodes[i].ri[1]+neuron.nodes[neuron.nodes[i].parent].ri[2]
             
             neuron.nodes[i].parent_r=100/(mya*myr)
             
@@ -44,7 +44,12 @@ function fillA!(neuron::Neuron)
         end
                 
         for k=1:length(neuron.nodes[i].children_r)
-            neuron.nodes[i].children_r[k]=1/(neuron.nodes[i].ri[2]+neuron.nodes[neuron.nodes[i].children[k]].ri[1])
+
+            mya=neuron.nodes[i].area[2]+neuron.nodes[neuron.nodes[i].children[k]].area[1]
+            myr=neuron.nodes[i].ri[2]+neuron.nodes[neuron.nodes[i].children[k]].ri[1]
+            
+            neuron.nodes[i].children_r[k]=100/(mya*myr)
+            
         end
            
         #populate diagonal
