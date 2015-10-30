@@ -121,7 +121,7 @@ function add_prop!(node::Node,prop::Prop)
 
     if sum([typeof(node.prop[i])==typeof(prop) for i=1:length(node.prop)])==0
 
-        push!(node.prop,prop)
+        push!(node.prop,typeof(prop)())
         
         for i=1:length(prop.nodevar)
             if !haskey(node.vars,prop.nodevar[i])
@@ -133,6 +133,28 @@ function add_prop!(node::Node,prop::Prop)
     end
            
     nothing        
+end
+
+function add_prop!(neuron::Neuron,prop::Prop)
+
+    for j=1:length(neuron.nodes)
+    
+        if sum([typeof(neuron.nodes[j].prop[i])==typeof(prop) for i=1:length(neuron.nodes[j].prop)])==0
+
+            push!(neuron.nodes[j].prop,typeof(prop)())
+        
+            for i=1:length(prop.nodevar)
+                if !haskey(neuron.nodes[j].vars,prop.nodevar[i])
+                    neuron.nodes[j].vars[prop.nodevar[i]]=0.0
+                end
+            end
+        else
+            println("Property also exists in node. Not inserting")
+        end
+
+    end
+             
+    nothing
 end
 
 function change_nseg!(sec::Section,nseg::Int64)
