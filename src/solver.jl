@@ -32,25 +32,25 @@ function fillA!(neuron::Neuron)
         for j=1:length(neuron.secstack[i].pnode)
             #boundary conditions
             if j==1
-                neuron.secstack[i].pnode[1].parent_r=1/neuron.secstack[i].pnode[1].ri[1]
-	        neuron.secstack[i].pnode[1].children_r[1]=100/(2*neuron.secstack[i].pnode[1].ri[1]*neuron.secstack[i].pnode[1].area[1])
+                neuron.secstack[i].pnode[1].a=1/neuron.secstack[i].pnode[1].ri[1]
+	        neuron.secstack[i].pnode[1].b=100/(2*neuron.secstack[i].pnode[1].ri[1]*neuron.secstack[i].pnode[1].area[1])
             else
                 if neuron.secstack[i].pnode[j].parent==0
-                    neuron.secstack[i].pnode[j].parent_r=1/neuron.secstack[i].pnode[j].ri[1]
+                    neuron.secstack[i].pnode[j].b=1/neuron.secstack[i].pnode[j].ri[1]
                 else
-                    mya=neuron.secstack[i].pnode[j].area[1]+neuron.nodes[neuron.secstack[i].pnode[j].parent].area[2]
-                    myr=neuron.secstack[i].pnode[j].ri[1]+neuron.nodes[neuron.secstack[i].pnode[j].parent].ri[2]
-            
-                    neuron.secstack[i].pnode[j].parent_r=100/(mya*myr)
 
+                    #parent
                     
-                    for k=1:length(neuron.secstack[i].pnode[j].children_r)
+                    mya=sum(neuron.secstack[i].pnode[j].area)
+                    myr=neuron.secstack[i].pnode[j].ri[1]+neuron.nodes[neuron.secstack[i].pnode[j].parent].ri[2]
+                    neuron.secstack[i].pnode[j].b=100/(mya*myr)
 
-                        mya=neuron.secstack[i].pnode[j].area[2]+neuron.nodes[neuron.secstack[i].pnode[j].children[k]].area[1]
-                        myr=neuron.secstack[i].pnode[j].ri[2]+neuron.nodes[neuron.secstack[i].pnode[j].children[k]].ri[1]
+                    #child
+                    
+                    mya=sum(neuron.nodes[neuron.secstack[i].pnode[j].parent].area)
             
-                        neuron.secstack[i].pnode[j].children_r[k]=100/(mya*myr)            
-                    end
+                    neuron.secstack[i].pnode[j].a=100/(mya*myr)
+                    
                 end
                 
             end
@@ -61,17 +61,18 @@ function fillA!(neuron::Neuron)
 
         #populate parent
         if neuron.nodes[i].parent!=0
-            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].parent_r
+            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
         end
-         
-        #populate diagonal
-        neuron.A[i,i]=neuron.Cm/neuron.dt+neuron.nodes[i].parent_r+sum(neuron.nodes[i].children_r)
 
         #populate children (for each child)
-        for j=1:length(neuron.nodes[i].children_r)
-            neuron.A[i,neuron.nodes[i].children[j]]=-neuron.nodes[i].children_r[j]
+        for j=1:length(neuron.nodes[i].children)
+            neuron.A[i,neuron.nodes[i].children[j]]=-neuron.nodes[neuron.nodes[i].children[j]].a
         end
 
+        #populate diagonal       
+        neuron.A[i,i]=.001*neuron.Cm/neuron.dt-sum(neuron.A[i,:])
+ 
+    
         if ext==true
             #find parent resistance parent_r=1/(Rp_node)
             neuron.enodes[i].parent_r=1/(neuron.enodes[i].ri[1]+neuron.enodes[neuron.nodes[i].parent].ri[2])
