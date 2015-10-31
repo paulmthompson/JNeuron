@@ -99,7 +99,6 @@ type Neuron
     v::Array{Float64,1} #intracellular voltage
     delta_v::Array{Float64,1} #change in membrane voltage
     rhs::Array{Float64,1}
-    #diag::Array{Float64,1}
     diag::StridedView{Float64,1,0,Array{Float64,2}}
     Ra::Float64
     Cm::Float64
@@ -128,3 +127,5 @@ type Network
     neur::Array{Neuron,1}
     t::FloatRange{Float64}
 end
+
+myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)

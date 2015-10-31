@@ -87,7 +87,7 @@ function fillA!(neuron::Neuron)
 
         else
                 
-            neuron.A[i,i]=.001*neuron.Cm/neuron.dt-sum(neuron.A[i,:])
+            neuron.A[i,i]=.001*neuron.Cm/neuron.dt+sum(abs(neuron.A[i,:]))
         end
         
         if ext==true
@@ -139,6 +139,12 @@ function initialcon!(neuron::Neuron)
         for j=1:length(neuron.nodes[i].prop)
             prop_init(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i])
         end
+
+        mykeys=keys(neuron.nodes[i].vars)
+        for mykey in mykeys
+            neuron.nodes[i].vars[mykey]=myconstants[mykey]
+        end
+        
     end
     
 end
@@ -147,38 +153,43 @@ function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
-    
+
+    #reset diagonal
+    neuron.diag[:]=neuron.diag_old[:]
+
+    #reset rhs
+    neuron.rhs[:]=0.0
+
     for i=1:length(neuron.nodes)
 
         neuron.i_vm[i] = 0.0
         neuron.divm[i] = 0.0
-        i1=0.0
-        i2=0.0
             
         for k=1:length(neuron.nodes[i].prop)
 
             #calculate current
-            il=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i])
+            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i])
 
             i2=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i]+.001)
-
-            neuron.i_vm[i]+=i1
-            neuron.divm[i]+=(i2-i1)/.001
+            
+            neuron.i_vm[i] += i1
+            neuron.divm[i] += (i2-i1)/.001
                                
         end
 
         #add -i to rhs
-        neuron.rhs-=neuron.i_vm[i]
+        neuron.rhs[i] -= neuron.i_vm[i]
 
         #add dv/di to diagonal
-        neuron.diag[i]+=neuron.divm[i]
+        neuron.diag[i] += neuron.divm[i]
 
         #calculate current entering node from parent and exiting to children
         #add to rhs for that node
         
         #parent current
+        #=
         if neuron.nodes[i].parent!=0
-            i_p=(neuron.v[neuron.nodes[i].parent]-neuron.v[i])/neuron.nodes[i].parent_r
+            i_p=(neuron.v[neuron.nodes[i].parent]-neuron.v[i])*neuron.nodes[i].b
         else
             i_p=0.0
         end
@@ -186,12 +197,19 @@ function main(neuron::Neuron)
         #children current
         i_c=0.0
         for j=1:length(neuron.nodes[i].children)
-            i_c+=(neuron.v[i]-neuron.v[neuron.nodes[i].children[j]])/neuron.nodes[i].children_r[j]
+            i_c+=(neuron.v[i]-neuron.v[neuron.nodes[i].children[j]])*neuron.nodes[neuron.nodes[i].children[j]].a
         end
 
         neuron.rhs[i]+=i_p
         neuron.rhs[i]+=i_c
-            
+        =#
+
+        if neuron.nodes[i].parent!=0
+            dv=neuron.v[neuron.nodes[i].parent]-neuron.v[i]
+            neuron.rhs[i] += neuron.nodes[i].b*dv
+            neuron.rhs[neuron.nodes[i].parent] -= neuron.nodes[i].a*dv
+        end
+                                 
     end
 
     #solve A \ rhs to get delta_v
@@ -221,12 +239,6 @@ function main(neuron::Neuron)
             con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i],neuron.dt)
         end
     end
-
-    #reset diagonal
-    neuron.diag[:]=neuron.diag_old[:]
-
-    #reset rhs
-    neuron.rhs[:]=0.0
 
     nothing
     

@@ -102,13 +102,17 @@ function prop_init(prop::HH,node::Node,v::Float64)
     prop.m=prop.minf
     prop.h=prop.hinf
     prop.n=prop.ninf
+
+    prop.gna = prop.gnabar * prop.m^3 * prop.h
+    prop.gk = prop.gkbar * prop.n^4
+    
     nothing
 end
 
 function rates(prop::HH,node::Node,v::Float64)
 
     #q10 = 3^((node.temp - 6.3)/10)
-    q10 = 3^((37.0 - 6.3)/10)
+    q10 = 3^((6.3 - 6.3)/10)
     
     #"m" sodium activation system
     alpha = .1 * vtrap(-(v+40),10.0)
@@ -140,7 +144,7 @@ function vtrap(x::Float64,y::Float64)
     else
         trap = x/(exp(x/y) - 1)
     end
-    return trap
+    trap
 end
 
 #=
