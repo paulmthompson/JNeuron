@@ -38,10 +38,19 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
                 
                 if j==1
                     parent=nodesec[parents[i]+1]-1
-                    children=Int64[length(neuron.nodes)+2]
+                    if nseglist[i]==1
+                        if length(neuron.secstack[i].child)==0
+                            children=Array(Int64,0)
+                        else
+                            children=Int64[nodesec[neuron.secstack[i].child[k].refcount] for k=1:length(neuron.secstack[i].child)]
+                        end
+                        
+                    else
+                        children=Int64[length(neuron.nodes)+2]
+                    end
                 elseif j==nseglist[i]
                     parent=length(neuron.nodes)
-                    children=Int64[nodesec[neuron.secstack[i].child[j].refcount] for j=1:length(neuron.secstack[i].child)]
+                    children=Int64[nodesec[neuron.secstack[i].child[k].refcount] for k=1:length(neuron.secstack[i].child)]
                 else
                     parent=length(neuron.nodes)
                     children=Int64[length(neuron.nodes)+2]

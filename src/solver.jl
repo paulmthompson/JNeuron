@@ -69,10 +69,27 @@ function fillA!(neuron::Neuron)
             neuron.A[i,neuron.nodes[i].children[j]]=-neuron.nodes[neuron.nodes[i].children[j]].a
         end
 
-        #populate diagonal       
-        neuron.A[i,i]=.001*neuron.Cm/neuron.dt-sum(neuron.A[i,:])
- 
-    
+        #populate diagonal
+        #don't really understand this
+        if length(neuron.nodes[i].children)==0
+            if length(neuron.nodes[neuron.nodes[i].parent].children)>1
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            else
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
+            end
+            
+        elseif (length(neuron.nodes[i].children)>1)&&(neuron.nodes[i].parent!=0)
+            if length(neuron.nodes[neuron.nodes[i].parent].children)>1
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            else
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
+            end
+
+        else
+                
+            neuron.A[i,i]=.001*neuron.Cm/neuron.dt-sum(neuron.A[i,:])
+        end
+        
         if ext==true
             #find parent resistance parent_r=1/(Rp_node)
             neuron.enodes[i].parent_r=1/(neuron.enodes[i].ri[1]+neuron.enodes[neuron.nodes[i].parent].ri[2])
