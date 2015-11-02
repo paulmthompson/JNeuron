@@ -71,6 +71,7 @@ function fillA!(neuron::Neuron)
 
         #populate diagonal
         #don't really understand this
+        #Not right for no child case
         if length(neuron.nodes[i].children)==0
             if length(neuron.nodes[neuron.nodes[i].parent].children)>1
                 neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
@@ -204,7 +205,7 @@ function main(neuron::Neuron)
         neuron.rhs[i]+=i_c
         =#
 
-        if neuron.nodes[i].parent!=0
+        if neuron.nodes[i].parent != 0
             dv=neuron.v[neuron.nodes[i].parent]-neuron.v[i]
             neuron.rhs[i] += neuron.nodes[i].b*dv
             neuron.rhs[neuron.nodes[i].parent] -= neuron.nodes[i].a*dv
