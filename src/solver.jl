@@ -80,8 +80,24 @@ function fillA!(neuron::Neuron)
             end
             
         elseif (length(neuron.nodes[i].children)>1)&&(neuron.nodes[i].parent!=0)
+
+            totalsplit=1
+                              
+            for child in neuron.nodes[i].children
+                if length(neuron.nodes[child].children)>1
+                    for newchild in neuron.nodes[child].children
+                        if length(neuron.nodes[newchild].children)>1
+                            totalsplit+=1
+                        end
+                    end
+                    totalsplit+=1                
+                end
+            end
+
             if length(neuron.nodes[neuron.nodes[i].parent].children)>1
                 neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            elseif totalsplit>1
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+totalsplit*neuron.nodes[i].b
             else
                 neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
             end
