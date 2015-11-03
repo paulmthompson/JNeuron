@@ -75,7 +75,7 @@ function instantiate(import3d::Import3D)
         end
     end
 
-    connect2soma(import3d,neuron,somaind,rootind)
+    connect2soma(import3d,neuron,somaind,rootind,mapping)
 
     for i=1:length(childinds)
         for j in childinds[i]
@@ -96,7 +96,7 @@ function instantiate(import3d::Import3D)
     #connect them, making adjustments to 3d points as necessary
 end
 
-function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},rootind::Array{Int64,1})
+function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},rootind::Array{Int64,1},mapping::Dict{Int64,Int64})
 
     #We need to
     #1) determine how many somas are described in file
@@ -139,7 +139,7 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
     #connect to closest centroid (first point in root)
     #add root as child to soma
     ds=zeros(Float64,length(somas))
-    for i in rootind
+    for i in [mapping[k] for k in rootind]
         for j=1:length(somas)
             ds[j]=sqrt((centroids[1,j]-neuron.secstack[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secstack[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secstack[i].pt3d[1].z)^2)
         end

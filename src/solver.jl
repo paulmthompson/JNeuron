@@ -27,7 +27,42 @@ function fillA!(neuron::Neuron)
     neuron.divm=zeros(Float64,nodelen)
     neuron.diag_old=zeros(Float64,nodelen)
 
+<<<<<<< HEAD
     for i=1:length(neuron.nodes)
+=======
+    #find resistances between nodes
+
+    for i=1:length(neuron.secstack)
+        for j=1:length(neuron.secstack[i].pnode)
+            #boundary conditions
+            if j==1
+                neuron.secstack[i].pnode[1].a=1/neuron.secstack[i].pnode[1].ri[1]
+	        neuron.secstack[i].pnode[1].b=100/(2*neuron.secstack[i].pnode[1].ri[1]*neuron.secstack[i].pnode[1].area[1])
+            else
+                if neuron.secstack[i].pnode[j].parent==0
+                    neuron.secstack[i].pnode[j].b=1/neuron.secstack[i].pnode[j].ri[1]
+                else
+
+                    #parent
+                    
+                    mya=sum(neuron.secstack[i].pnode[j].area)
+                    myr=neuron.secstack[i].pnode[j].ri[1]+neuron.nodes[neuron.secstack[i].pnode[j].parent].ri[2]
+                    neuron.secstack[i].pnode[j].b=100/(mya*myr)
+
+                    #child
+                    
+                    mya=sum(neuron.nodes[neuron.secstack[i].pnode[j].parent].area)
+            
+                    neuron.secstack[i].pnode[j].a=100/(mya*myr)
+                    
+                end
+                
+            end
+        end   
+    end
+        
+    for i=1:(length(neuron.nodes)-1)
+>>>>>>> a029ec4bb6e20ee7d1d2627a6320bc374e14823e
 
         if neuron.nodes[i].parent != 0
             
@@ -38,6 +73,7 @@ function fillA!(neuron::Neuron)
             neuron.nodes[i].b=100/(r_p*area_n)
             neuron.nodes[i].a=100/(r_p*area_p)
 
+<<<<<<< HEAD
             neuron.diag_old[i]=100/(r_p*area_n)+.001*neuron.Cm/neuron.dt
         
             for j in neuron.nodes[i].children
@@ -49,6 +85,81 @@ function fillA!(neuron::Neuron)
             neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
             neuron.A[i,i]=neuron.diag_old[i]
             
+=======
+        splits=copy(neuron.nodes[neuron.nodes[i].parent].children)
+
+        if length(splits)>1
+
+            parentsplit=1
+            
+            for j in splits
+                if length(neuron.nodes[j].children)>1
+                    parentsplit+=1
+                    append!(splits,neuron.nodes[j].children)
+                elseif length(neuron.nodes[j].children)==0
+                    parentsplit-=1
+                end
+                
+            end
+
+        else
+            parentsplit=0
+        end
+        
+
+        splits=copy(neuron.nodes[i].children)
+
+        if length(splits)>1
+            
+            nodesplit=1
+                              
+            for j in splits
+                if length(neuron.nodes[j].children)>1
+                    nodesplit+=1
+                    append!(splits,neuron.nodes[j].children)
+                elseif length(neuron.nodes[j].children)==0
+                    nodesplit-=1
+                end
+                
+            end
+
+        else
+            nodesplit=0
+        end
+        
+        
+        #populate diagonal
+        if length(neuron.nodes[i].children)==0
+            if parentsplit>0
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            elseif parentsplit<0
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            else
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
+            end
+            
+        elseif (length(neuron.nodes[i].children)>1)&&(neuron.nodes[i].parent!=length(neuron.nodes))
+
+            if (length(neuron.nodes[neuron.nodes[i].parent].children)>1)
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            elseif nodesplit>2
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+nodesplit*neuron.nodes[i].b            
+            else
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
+            end
+
+        elseif neuron.nodes[i].parent==length(neuron.nodes)
+            
+            if nodesplit>2
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+nodesplit*neuron.nodes[i].b
+            else
+                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
+            end
+            
+        else
+       
+            neuron.A[i,i]=.001*neuron.Cm/neuron.dt+sum(abs(neuron.A[i,:]))
+>>>>>>> a029ec4bb6e20ee7d1d2627a6320bc374e14823e
         end
         
     end
