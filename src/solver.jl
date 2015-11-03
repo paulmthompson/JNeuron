@@ -19,7 +19,7 @@ function fillA!(neuron::Neuron)
 
     nodelen=length(neuron.nodes)
     
-    neuron.A=zeros(Float64,nodelen,nodelen)
+    neuron.A=spzeros(Float64,nodelen,nodelen)
     neuron.v=zeros(Float64,nodelen)
     neuron.delta_v=zeros(Float64,nodelen)
     neuron.rhs=zeros(Float64,nodelen)
@@ -60,8 +60,6 @@ function fillA!(neuron::Neuron)
             neuron.A[i,j]=-neuron.nodes[j].a
         end
     end
-                  
-    neuron.diag=diagview(neuron.A)
 
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)
@@ -98,13 +96,13 @@ function main(neuron::Neuron)
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
 
-    #reset diagonal
-    neuron.diag[:]=neuron.diag_old[:]
-
     #reset rhs
     neuron.rhs[:]=0.0
 
     for i=1:length(neuron.nodes)
+
+        #reset diagonal
+        neuron.A[i,i]=neuron.diag_old[i]
 
         neuron.i_vm[i] = 0.0
         neuron.divm[i] = 0.0
@@ -125,7 +123,7 @@ function main(neuron::Neuron)
         neuron.rhs[i] -= neuron.i_vm[i]
 
         #add dv/di to diagonal
-        neuron.diag[i] += neuron.divm[i]
+        neuron.A[i,i] += neuron.divm[i]
 
         if neuron.nodes[i].parent != 0
             dv=neuron.v[neuron.nodes[i].parent]-neuron.v[i]

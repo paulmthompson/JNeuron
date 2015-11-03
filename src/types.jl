@@ -96,7 +96,7 @@ end
 
 type Neuron
     secstack::Array{Section,1}
-    A::Array{Float64,2}
+    A::SparseMatrixCSC{Float64,Int64}
     v::Array{Float64,1} #intracellular voltage
     delta_v::Array{Float64,1} #change in membrane voltage
     rhs::Array{Float64,1}
@@ -121,7 +121,7 @@ type Neuron
 end
 
 function Neuron()
-    Neuron(Array(Section,0),zeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),diagview(zeros(Float64,0,0)),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
+    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),diagview(zeros(Float64,0,0)),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
 end
 
 type Network
