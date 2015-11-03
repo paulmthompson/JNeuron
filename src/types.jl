@@ -100,7 +100,6 @@ type Neuron
     v::Array{Float64,1} #intracellular voltage
     delta_v::Array{Float64,1} #change in membrane voltage
     rhs::Array{Float64,1}
-    diag::StridedView{Float64,1,0,Array{Float64,2}}
     Ra::Float64
     Cm::Float64
     dt::Float64
@@ -121,7 +120,7 @@ type Neuron
 end
 
 function Neuron()
-    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),diagview(zeros(Float64,0,0)),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
+    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
 end
 
 type Network
