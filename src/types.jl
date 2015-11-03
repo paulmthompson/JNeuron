@@ -127,4 +127,13 @@ type Network
     t::FloatRange{Float64}
 end
 
+function Network(neuron::Neuron,tstop::Float64)
+    Network([neuron],0.0:neuron.dt:tstop)
+end
+
+function run(network::Network)
+
+end
+
+
 myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)

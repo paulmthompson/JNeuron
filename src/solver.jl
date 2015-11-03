@@ -27,7 +27,6 @@ function fillA!(neuron::Neuron)
     neuron.divm=zeros(Float64,nodelen)
     neuron.diag_old=zeros(Float64,nodelen)
 
-
     for i=1:length(neuron.nodes)
 
         if neuron.nodes[i].parent != 0
@@ -38,7 +37,6 @@ function fillA!(neuron::Neuron)
 
             neuron.nodes[i].b=100/(r_p*area_n)
             neuron.nodes[i].a=100/(r_p*area_p)
-
 
             neuron.diag_old[i]=100/(r_p*area_n)+.001*neuron.Cm/neuron.dt
         
@@ -68,14 +66,14 @@ function fillA!(neuron::Neuron)
        
 end
 
-function initialcon!(neuron::Neuron, vi::Float64,dt::Float64)
+function initialcon!(neuron::Neuron, vi::Float64, dt::Float64)
 
     neuron.dt=dt
     
     #fill matrix
     fillA!(neuron)
 
-    #initial V?
+    #initial V
     neuron.v=vi.*ones(Float64,length(neuron.v))
     
     #initial states of channels at nodes
@@ -93,7 +91,7 @@ function initialcon!(neuron::Neuron, vi::Float64,dt::Float64)
     
 end
 
-function main(neuron::Neuron)
+function main(neuron::Neuron,Is::Float64,loc::Int64)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
@@ -135,6 +133,11 @@ function main(neuron::Neuron)
                                  
     end
 
+    #if stimulation
+    if Is != 0.0
+        neuron.rhs[loc] += Is
+    end
+    
     #solve A \ rhs to get delta_v
     neuron.delta_v = neuron.A \ neuron.rhs
 
