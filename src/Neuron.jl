@@ -13,6 +13,7 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
     nseglist=zeros(Int64,length(neuron.secstack))
     nodesec[1]=1
     parents=zeros(Int64,length(neuron.secstack))
+    internodes=Array(Node,length(neuron.secstack))
 
     #find total number of segments
     for i=1:length(neuron.secstack)
@@ -77,14 +78,44 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
             
             (area, ri) = r_a_calc(neuron.secstack[i],j,nseglist[i])
             myvars=Dict{ASCIIString,Float64}()
-            push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,Array(Prop,0))) 
+
+            if (j==1)&&(j==nseglist[i])
                 
+                #create internode at end of section
+                internodes[i]=Node(nodesec[end]+i,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes)+1,children,Array(Prop,0))
+
+                #create regular node
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,nodesec[end]+parents[i]-1,[nodesec[end]+i-1],Array(Prop,0)))
+                
+            elseif j==1
+
+                #create regular node
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,nodesec[end]+parents[i]-1,children,Array(Prop,0)))
+                            
+            elseif j==nseglist[i]
+
+                #create internode at end of section
+                internodes[i]=Node(nodesec[end]+i,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes)+1,children,Array(Prop,0))
+
+                #create regular node
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[nodesec[end]+i-1],Array(Prop,0)))
+
+            else
+                
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,Array(Prop,0)))
+
+            end
+                    
         end
 
         #map pnode of this section to newly created nodes            
         neuron.secstack[i].pnode=sub(neuron.nodes,nodesec[i]:(nodesec[i+1]-1))
                
     end
+
+    #Now add nodes add intersections
+
+    append!(neuron.nodes,internodes)
 
     nothing
       

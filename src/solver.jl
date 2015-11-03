@@ -25,100 +25,41 @@ function fillA!(neuron::Neuron)
     neuron.rhs=zeros(Float64,nodelen)
     neuron.i_vm=zeros(Float64,nodelen)
     neuron.divm=zeros(Float64,nodelen)
+    neuron.diag_old=zeros(Float64,nodelen)
 
-    #find resistances between nodes
-
-    for i=1:length(neuron.secstack)
-        for j=1:length(neuron.secstack[i].pnode)
-            #boundary conditions
-            if j==1
-                neuron.secstack[i].pnode[1].a=1/neuron.secstack[i].pnode[1].ri[1]
-	        neuron.secstack[i].pnode[1].b=100/(2*neuron.secstack[i].pnode[1].ri[1]*neuron.secstack[i].pnode[1].area[1])
-            else
-                if neuron.secstack[i].pnode[j].parent==0
-                    neuron.secstack[i].pnode[j].b=1/neuron.secstack[i].pnode[j].ri[1]
-                else
-
-                    #parent
-                    
-                    mya=sum(neuron.secstack[i].pnode[j].area)
-                    myr=neuron.secstack[i].pnode[j].ri[1]+neuron.nodes[neuron.secstack[i].pnode[j].parent].ri[2]
-                    neuron.secstack[i].pnode[j].b=100/(mya*myr)
-
-                    #child
-                    
-                    mya=sum(neuron.nodes[neuron.secstack[i].pnode[j].parent].area)
-            
-                    neuron.secstack[i].pnode[j].a=100/(mya*myr)
-                    
-                end
-                
-            end
-        end   
-    end
-        
     for i=1:length(neuron.nodes)
 
-        #populate parent
-        if neuron.nodes[i].parent!=0
-            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
-        end
-
-        #populate children (for each child)
-        for j=1:length(neuron.nodes[i].children)
-            neuron.A[i,neuron.nodes[i].children[j]]=-neuron.nodes[neuron.nodes[i].children[j]].a
-        end
-
-        #populate diagonal
-        #don't really understand this
-        #Not right for no child case
-        if length(neuron.nodes[i].children)==0
-            if length(neuron.nodes[neuron.nodes[i].parent].children)>1
-                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
-            else
-                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
-            end
+        if neuron.nodes[i].parent != 0
             
-        elseif (length(neuron.nodes[i].children)>1)&&(neuron.nodes[i].parent!=0)
-            if length(neuron.nodes[neuron.nodes[i].parent].children)>1
-                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b
-            else
-                neuron.A[i,i]=.001*neuron.Cm/neuron.dt+2*neuron.nodes[i].b+neuron.nodes[neuron.nodes[i].parent].a
-            end
+            r_p=neuron.nodes[neuron.nodes[i].parent].ri[2]+neuron.nodes[i].ri[1]
+            area_p=sum(neuron.nodes[neuron.nodes[i].parent].area)
+            area_n=sum(neuron.nodes[i].area)
 
-        else
+            neuron.nodes[i].b=100/(r_p*area_n)
+            neuron.nodes[i].a=100/(r_p*area_p)
+
+            neuron.diag_old[i]=100/(r_p*area_n)+.001*neuron.Cm/neuron.dt
+        
+            for j in neuron.nodes[i].children
+                r_c=neuron.nodes[i].ri[2]+neuron.nodes[j].ri[1]
+                neuron.diag_old[i] += 100/(r_c*area_n)
                 
-            neuron.A[i,i]=.001*neuron.Cm/neuron.dt+sum(abs(neuron.A[i,:]))
-        end
-        
-        if ext==true
-            #find parent resistance parent_r=1/(Rp_node)
-            neuron.enodes[i].parent_r=1/(neuron.enodes[i].ri[1]+neuron.enodes[neuron.nodes[i].parent].ri[2])
-
-            for k=1:length(neuron.nodes[i].children_r)
-                neuron.enodes[i].children_r[k]=1/(neuron.enodes[i].ri[2]+neuron.enodes[neuron.nodes[i].children[k]].ri[1])
             end
 
-            #populate diagonal
-            neuron.A_ext[i,i]=neuron.Cx/neuron.dt+neuron.enodes[i].parent_r+sum(neuron.enodes[i].children_r)
-
-            #because the extracellular node has passive membrane dynamics, di/dvx term is constant
-            neuron.A_ext[i,i]+=1/neuron.xg
-
-            #populate parent
-            neuron.A_ext[i,neuron.nodes[i].parent]=-neuron.enodes[i].parent_r
-
-            #populate children (for each child)
-            for j=1:length(neuron.enodes[i].children_r)
-                neuron.A_ext[i,neuron.nodes[i].children[j]]=-neuron.enodes[i].children_r[j]
-            end
-        
+            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
+            neuron.A[i,i]=neuron.diag_old[i]
+            
         end
         
     end
-  
+
+    for i=1:length(neuron.nodes)
+        for j in neuron.nodes[i].children
+            neuron.A[i,j]=-neuron.nodes[j].a
+        end
+    end
+                  
     neuron.diag=diagview(neuron.A)
-    neuron.diag_old=diag(neuron.A)
 
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)
