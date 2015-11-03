@@ -103,7 +103,6 @@ type Neuron
     Ra::Float64
     Cm::Float64
     dt::Float64
-    vi::Float64 #initial intracellular voltage
     nodes::Array{Node,1}
     i_vm::Array{Float64,1}
     divm::Array{Float64,1}
@@ -120,7 +119,7 @@ type Neuron
 end
 
 function Neuron()
-    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
+    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
 end
 
 type Network

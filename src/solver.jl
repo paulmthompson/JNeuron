@@ -68,13 +68,15 @@ function fillA!(neuron::Neuron)
        
 end
 
-function initialcon!(neuron::Neuron)
+function initialcon!(neuron::Neuron, vi::Float64,dt::Float64)
 
+    neuron.dt=dt
+    
     #fill matrix
     fillA!(neuron)
 
     #initial V?
-    neuron.v=neuron.vi.*ones(Float64,length(neuron.v))
+    neuron.v=vi.*ones(Float64,length(neuron.v))
     
     #initial states of channels at nodes
     for i=1:length(neuron.nodes)
