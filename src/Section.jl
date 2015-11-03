@@ -138,20 +138,24 @@ end
 function add_prop!(neuron::Neuron,prop::Prop)
 
     for j=1:length(neuron.nodes)
+
+        if neuron.nodes[j].internal==true
     
-        if sum([typeof(neuron.nodes[j].prop[i])==typeof(prop) for i=1:length(neuron.nodes[j].prop)])==0
+            if sum([typeof(neuron.nodes[j].prop[i])==typeof(prop) for i=1:length(neuron.nodes[j].prop)])==0
 
-            push!(neuron.nodes[j].prop,typeof(prop)())
+                push!(neuron.nodes[j].prop,typeof(prop)())
         
-            for i=1:length(prop.nodevar)
-                if !haskey(neuron.nodes[j].vars,prop.nodevar[i])
+                for i=1:length(prop.nodevar)
+                    if !haskey(neuron.nodes[j].vars,prop.nodevar[i])
                     neuron.nodes[j].vars[prop.nodevar[i]]=0.0
+                    end
                 end
+            else
+                println("Property also exists in node. Not inserting")
             end
-        else
-            println("Property also exists in node. Not inserting")
-        end
 
+        end
+        
     end
              
     nothing

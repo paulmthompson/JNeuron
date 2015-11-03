@@ -127,27 +127,6 @@ function main(neuron::Neuron)
         #add dv/di to diagonal
         neuron.diag[i] += neuron.divm[i]
 
-        #calculate current entering node from parent and exiting to children
-        #add to rhs for that node
-        
-        #parent current
-        #=
-        if neuron.nodes[i].parent!=0
-            i_p=(neuron.v[neuron.nodes[i].parent]-neuron.v[i])*neuron.nodes[i].b
-        else
-            i_p=0.0
-        end
-
-        #children current
-        i_c=0.0
-        for j=1:length(neuron.nodes[i].children)
-            i_c+=(neuron.v[i]-neuron.v[neuron.nodes[i].children[j]])*neuron.nodes[neuron.nodes[i].children[j]].a
-        end
-
-        neuron.rhs[i]+=i_p
-        neuron.rhs[i]+=i_c
-        =#
-
         if neuron.nodes[i].parent != 0
             dv=neuron.v[neuron.nodes[i].parent]-neuron.v[i]
             neuron.rhs[i] += neuron.nodes[i].b*dv

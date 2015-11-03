@@ -63,6 +63,7 @@ type Node
     a::Float64 #resistance between node and each child node
     parent::Int64 #index in node array of parent
     children::Array{Int64,1} #Node(s) from other sections attached to this one
+    internal::Bool
     prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 
 end
 

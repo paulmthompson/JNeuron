@@ -82,27 +82,27 @@ function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
             if (j==1)&&(j==nseglist[i])
                 
                 #create internode at end of section
-                internodes[i]=Node(nodesec[end]+i,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes)+1,children,Array(Prop,0))
+                internodes[i]=Node(nodesec[end]+i-1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes)+1,children,false,Array(Prop,0))
 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,nodesec[end]+parents[i]-1,[nodesec[end]+i-1],Array(Prop,0)))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,nodesec[end]+parents[i]-1,[nodesec[end]+i-1],true,Array(Prop,0)))
                 
             elseif j==1
 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,nodesec[end]+parents[i]-1,children,Array(Prop,0)))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,nodesec[end]+parents[i]-1,children,true,Array(Prop,0)))
                             
             elseif j==nseglist[i]
 
                 #create internode at end of section
-                internodes[i]=Node(nodesec[end]+i,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes)+1,children,Array(Prop,0))
+                internodes[i]=Node(nodesec[end]+i-1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes)+1,children,false,Array(Prop,0))
 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[nodesec[end]+i-1],Array(Prop,0)))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[nodesec[end]+i-1],true,Array(Prop,0)))
 
             else
                 
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,Array(Prop,0)))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,Array(Prop,0)))
 
             end
                     
