@@ -9,12 +9,14 @@ sigma: extracellular conductivity
 
 #Linesource
 
-function extracellular(xyz::Array{Float64,1},sigma::Float64)
+function extracellular(neuron::Neuron,xyz::Array{Float64,1},sigma::Float64)
 
-    coeffs=zeros(Float64,length(neuron.nodes))
+    coeffs=zeros(Float64,0)
     
     for i=1:length(neuron.nodes)
 
+        if neuron.nodes[i].internal == true
+            
             (unit_ds, delta_s)=pt3d_vec(neuron.nodes[i].pt3d[end],neuron.nodes[i].pt3d[1])
 
             dist1=pt3d_xyz_vec(neuron.nodes[i].pt3d[1],xyz)
@@ -26,9 +28,14 @@ function extracellular(xyz::Array{Float64,1},sigma::Float64)
             a=sqrt(sum(dist1.^2))-hn
             b=sqrt(sum(dist2.^2))-ln
 
-            coeffs[i]=(1/(delta_s*4*pi*sigma))*log(abs(a/b))
+            push!(coeffs,(1/(delta_s*4*pi*sigma))*log(abs(a/b)))
             
+        else
+        end
+
     end
+    
+    coeffs  
 
 end
 
@@ -60,7 +67,7 @@ function pt3d_vec(pt3d1::Pt3d,pt3d2::Pt3d)
     mynorm[2]=(pt3d2.y-pt3d1.y)
     mynorm[3]=(pt3d2.z-pt3d1.z)
 
-    mag=pt3d_dist(pt3d1,pt3d2)
+    mag=dist(pt3d1,pt3d2)
 
     mynorm /= mag
 
