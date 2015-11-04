@@ -12,5 +12,6 @@ include("mod2j.jl")
 include("solver.jl")
 include("extracellular.jl")
 include("network.jl")
+include("visualization.jl")
 
 end
