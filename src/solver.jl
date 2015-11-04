@@ -66,9 +66,9 @@ function fillA!(neuron::Neuron)
        
 end
 
-function initialcon!(neuron::Neuron, vi::Float64, dt::Float64)
+function initialcon!(neuron::Neuron, vi::Float64,dt::Float64)
 
-    neuron.dt=dt
+    neuron.dt=dt #default
     
     #fill matrix
     fillA!(neuron)
@@ -91,13 +91,10 @@ function initialcon!(neuron::Neuron, vi::Float64, dt::Float64)
     
 end
 
-function main(neuron::Neuron,Is::Float64,loc::Int64)
+function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
-
-    #reset rhs
-    neuron.rhs[:]=0.0
 
     for i=1:length(neuron.nodes)
 
@@ -132,11 +129,6 @@ function main(neuron::Neuron,Is::Float64,loc::Int64)
         end
                                  
     end
-
-    #if stimulation
-    if Is != 0.0
-        neuron.rhs[loc] += Is
-    end
     
     #solve A \ rhs to get delta_v
     neuron.delta_v = neuron.A \ neuron.rhs
@@ -155,8 +147,6 @@ function main(neuron::Neuron,Is::Float64,loc::Int64)
     else   
         neuron.v += neuron.delta_v
     end
-    
-    #t=tentry+dt for CN
 
     #find non voltage states (like gate variables for conductances)
     
@@ -165,6 +155,9 @@ function main(neuron::Neuron,Is::Float64,loc::Int64)
             con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i],neuron.dt)
         end
     end
+
+    #reset rhs
+    neuron.rhs[:]=0.0
 
     nothing
     

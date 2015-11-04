@@ -120,21 +120,49 @@ type Neuron
 end
 
 function Neuron()
-    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.0,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
+    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
+end
+
+type Extra_coeffs
+    c::Array{Float64,1}
+end
+
+type Extracellular
+    xyz::Array{Float64,1}
+    coeffs::Array{Extra_coeffs,1}
+    v::Array{Float64,1}
+end
+
+function Extracellular(xyz::Array{Float64,1})
+    Extracellular(xyz,Array(Extra_coeffs,0),Array(Float64,0))
+end
+
+type Stim
+    Is::Array{Float64,1}
+    neur::Int64
+    node::Int64   
+end
+
+type Intracellular
+    neur::Int64
+    node::Int64
+    v::Array{Float64,1}
+end
+
+function Intracellular(neur::Int64,node::Int64)
+    Intracellular(neur,node,Array(Float64,0))
 end
 
 type Network
     neur::Array{Neuron,1}
     t::FloatRange{Float64}
+    extra::Array{Extracellular,1}
+    intra::Array{Intracellular,1}
+    stim::Array{Stim,1}
 end
 
 function Network(neuron::Neuron,tstop::Float64)
-    Network([neuron],0.0:neuron.dt:tstop)
+    Network([neuron],0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
 end
-
-function run(network::Network)
-
-end
-
 
 myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)
