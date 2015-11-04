@@ -54,6 +54,15 @@ These data containers don't help us to easily see the big picture of how the neu
 
 abstract Prop #Property of section (HH, passive etc). contains all of the stuff you need to calc things
 
+#associated 3d point
+type Pt3d
+    x::Float64
+    y::Float64
+    z::Float64
+    d::Float64
+    arc::Float64 #normalized distance from 0 to end
+end
+
 type Node
     ind::Int64
     vars::Dict{ASCIIString,Float64}
@@ -72,15 +81,6 @@ type Node_ext
     ri::Array{Float64,1}
     parent_r::Float64
     children_r::Array{Float64,1}
-end
-
-#associated 3d point
-type Pt3d
-    x::Float64
-    y::Float64
-    z::Float64
-    d::Float64
-    arc::Float64 #normalized distance from 0 to end
 end
 
 type Section
