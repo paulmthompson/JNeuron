@@ -30,6 +30,7 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
     last=findnext(arc3d.>=interval[2],first)-1
 
     if length(arc3d)<4
+        
         #If just a few points, whole thing is just modeled as a cylinder
         myarea=2*pi*sec.pt3d[1].d/2*sec.length*(interval[2]-interval[1])
 
@@ -38,6 +39,9 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
 
         ri[1]=frustrum_resistance(sec.pt3d[1].d,sec.pt3d[1].d,sec.length*(interval[2]-interval[1])/2,sec.Ra)
         ri[2]=ri[1]
+
+        first=1
+        last=length(arc3d)
             
     else
         
@@ -46,59 +50,58 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
         Area of a segment is modeled as a series of truncated cones between the 3d points. The diameter of the top and bottom of the frustrum is taken to be the average of the diameters of the nearest 3d points
     =#
 
+        #left side to first point before center
+        frac=interp_area(arc3d[first],interval[1],arc3d[first+1])
 
-    #left side to first point before center
-    frac=interp_area(arc3d[first],interval[1],arc3d[first+1])
-
-    diam=frac[1]*sec.pt3d[first].d+frac[2]*sec.pt3d[first+1].d
-    height=(arc3d[first+1]-interval[1])*sec.length
+        diam=frac[1]*sec.pt3d[first].d+frac[2]*sec.pt3d[first+1].d
+        height=(arc3d[first+1]-interval[1])*sec.length
     
-    for i=(first+1):mid
-        area[1]+=frustrum_area(diam, sec.pt3d[i].d,height)
-        ri[1]+=frustrum_resistance(diam,sec.pt3d[i].d,height,sec.Ra)
-        diam=sec.pt3d[i].d
-        height=(arc3d[i+1]-arc3d[i])*sec.length
-    end
+        for i=(first+1):mid
+            area[1]+=frustrum_area(diam, sec.pt3d[i].d,height)
+            ri[1]+=frustrum_resistance(diam,sec.pt3d[i].d,height,sec.Ra)
+            diam=sec.pt3d[i].d
+            height=(arc3d[i+1]-arc3d[i])*sec.length
+        end
 
-    #First point before center to center
-    frac=interp_area(arc3d[mid], cent, arc3d[mid+1])
+        #First point before center to center
+        frac=interp_area(arc3d[mid], cent, arc3d[mid+1])
 
-    diam=frac[1]*sec.pt3d[mid].d+frac[2]*sec.pt3d[mid+1].d
-    height=(cent-arc3d[mid])*sec.length
+        diam=frac[1]*sec.pt3d[mid].d+frac[2]*sec.pt3d[mid+1].d
+        height=(cent-arc3d[mid])*sec.length
 
-    area[1]+=frustrum_area(sec.pt3d[mid].d,diam,height)
-    ri[1]+=frustrum_resistance(sec.pt3d[mid].d,diam,height,sec.Ra)
+        area[1]+=frustrum_area(sec.pt3d[mid].d,diam,height)
+        ri[1]+=frustrum_resistance(sec.pt3d[mid].d,diam,height,sec.Ra)
 
-    #first point after center    
-    height=(arc3d[mid+1]-cent)*sec.length
+        #first point after center    
+        height=(arc3d[mid+1]-cent)*sec.length
 
-    area[2]+=frustrum_area(diam,sec.pt3d[mid+1].d,height)
-    ri[2]+=frustrum_resistance(diam,sec.pt3d[mid+1].d,height,sec.Ra)
+        area[2]+=frustrum_area(diam,sec.pt3d[mid+1].d,height)
+        ri[2]+=frustrum_resistance(diam,sec.pt3d[mid+1].d,height,sec.Ra)
 
-    diam=sec.pt3d[mid+1].d
-    height=(arc3d[mid+2]-arc3d[mid+1])*sec.length
+        diam=sec.pt3d[mid+1].d
+        height=(arc3d[mid+2]-arc3d[mid+1])*sec.length
 
-    for i=(mid+2):last
-        area[2]+=frustrum_area(diam,sec.pt3d[i].d,height)
-        ri[2]+=frustrum_resistance(diam,sec.pt3d[i].d,height,sec.Ra)
-        diam=sec.pt3d[i].d
-        height=(arc3d[i+1]-arc3d[i])*sec.length
-    end
+        for i=(mid+2):last
+            area[2]+=frustrum_area(diam,sec.pt3d[i].d,height)
+            ri[2]+=frustrum_resistance(diam,sec.pt3d[i].d,height,sec.Ra)
+            diam=sec.pt3d[i].d
+            height=(arc3d[i+1]-arc3d[i])*sec.length
+        end
 
-    #Final point
-    frac=interp_area(arc3d[last], interval[2], arc3d[last+1])
+        #Final point
+        frac=interp_area(arc3d[last], interval[2], arc3d[last+1])
 
-    diam=frac[1]*sec.pt3d[last].d+frac[2]*sec.pt3d[last+1].d
-    height=(interval[2]-arc3d[last])*sec.length
+        diam=frac[1]*sec.pt3d[last].d+frac[2]*sec.pt3d[last+1].d
+        height=(interval[2]-arc3d[last])*sec.length
 
-    area[2]+=frustrum_area(sec.pt3d[last].d,diam,height)
-    ri[2]+=frustrum_resistance(sec.pt3d[last].d,diam,height,sec.Ra)
+        area[2]+=frustrum_area(sec.pt3d[last].d,diam,height)
+        ri[2]+=frustrum_resistance(sec.pt3d[last].d,diam,height,sec.Ra)
 
     end
 
     ri*=.01
     
-    (area, ri)
+    (area, ri,sec.pt3d[first:last])
      
 end
 
