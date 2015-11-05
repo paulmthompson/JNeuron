@@ -49,6 +49,29 @@ end
 
 #Mixed Source (Soma as a point, everything else as line)
 
+function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
+
+    coeffs=zeros(Float64,0)
+    
+    for i=1:length(neuron.nodes)
+
+        if neuron.nodes[i].internal == true
+
+            if neuron.nodes[i].parent==0
+                
+                push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
+            else
+                push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
+            end
+ 
+        else
+        end
+
+    end
+    
+    coeffs  
+
+end
 
 function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
     
