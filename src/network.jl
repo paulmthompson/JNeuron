@@ -1,13 +1,21 @@
 
 
-function add_neuron!(network::Network,neuron::Neuron)
+#=
+Add neuron to network
+=#
+
+function add!(network::Network,neuron::Neuron)
     
     push!(network.neur,neuron)
 
     nothing
 end
 
-function add_electrode!(network::Network,extra::Extracellular)
+#=
+Add extracellular electrode to network
+=#
+
+function add!(network::Network,extra::Extracellular)
 
     coeffs=Array(Extra_coeffs,0)
     
@@ -22,7 +30,11 @@ function add_electrode!(network::Network,extra::Extracellular)
     nothing
 end
 
-function add_stim!(network::Network,Is::Float64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
+#=
+Add Intracellular Stimulation to network
+=#
+
+function add!(network::Network,Is::Float64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
     myis=zeros(Float64,length(network.t))
 
     startind=findfirst(network.t.>tstart)
