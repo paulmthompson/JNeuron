@@ -15,11 +15,7 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
 
         if neuron.nodes[i].internal == true
 
-            middle=round(length(neuron.nodes[i].pt3d)/2)
-            
-            dist1=pt3d_xyz_vec(neuron.nodes[i].pt3d[middle],extra.xyz)
-
-            push!(coeffs,(1/(delta_s*4*pi*sigma))*1/(dist1))
+            push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
             
         else
         end
@@ -40,18 +36,7 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
 
         if neuron.nodes[i].internal == true
             
-            (unit_ds, delta_s)=pt3d_vec(neuron.nodes[i].pt3d[end],neuron.nodes[i].pt3d[1])
-
-            dist1=pt3d_xyz_vec(neuron.nodes[i].pt3d[1],extra.xyz)
-            dist2=pt3d_xyz_vec(neuron.nodes[i].pt3d[end],extra.xyz)
-
-            ln=dot(unit_ds,dist1)
-            hn=dot(unit_ds,dist2)
-
-            a=sqrt(sum(dist1.^2))-hn
-            b=sqrt(sum(dist2.^2))-ln
-
-            push!(coeffs,(1/(delta_s*4*pi*sigma))*log(abs(a/b)))
+            push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
             
         else
         end
@@ -64,6 +49,34 @@ end
 
 #Mixed Source (Soma as a point, everything else as line)
 
+
+function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
+    
+    (unit_ds, delta_s)=pt3d_vec(pt3d[end],pt3d[1])
+
+    dist1=pt3d_xyz_vec(pt3d[1],xyz)
+    dist2=pt3d_xyz_vec(pt3d[end],xyz)
+
+    ln=dot(unit_ds,dist1)
+    hn=dot(unit_ds,dist2)
+
+    a=sqrt(sum(dist1.^2))-hn
+    b=sqrt(sum(dist2.^2))-ln
+
+    1/delta_s*log(abs(a/b))
+    
+end
+
+function point_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
+
+    middle=round(length(pt3d)/2)
+            
+    dist1=pt3d_xyz_vec(pt3d[middle],xyz)
+
+    1/(dist1)
+            
+    
+end
 
 #distance between two 3d points
 function dist(pt3d1::Pt3d, pt3d2::Pt3d)
