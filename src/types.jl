@@ -68,8 +68,8 @@ type Node
     vars::Dict{ASCIIString,Float64}
     area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
     ri::Array{Float64,1}  #internal resistance of left[1] and right[2] part of segment
-    b::Float64 #resistance between node and parent node
-    a::Float64 #resistance between node and each child node
+    b::Float64 #resistance between node and parent node divided by area of node
+    a::Float64 #resistance between node and aprent node divided by area of parent
     parent::Int64 #index in node array of parent
     children::Array{Int64,1} #Node(s) from other sections attached to this one
     internal::Bool
@@ -127,14 +127,30 @@ type Extra_coeffs
     c::Array{Float64,1}
 end
 
-type Extracellular
+abstract Source
+
+type Point <: Source
+end
+
+type Line <: Source
+end
+
+type Mixed <: Source
+end
+
+type Extracellular{S<:Source}
     xyz::Array{Float64,1}
     coeffs::Array{Extra_coeffs,1}
     v::Array{Float64,1}
 end
 
+#Default Line Sources for extracellular Electrodes
 function Extracellular(xyz::Array{Float64,1})
-    Extracellular(xyz,Array(Extra_coeffs,0),Array(Float64,0))
+    Extracellular{Line}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
+end
+
+function Extracellular(source::Source,xyz::Array{Float64,1})
+    Extracellular{typeof(source)}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
 end
 
 type Stim

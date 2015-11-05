@@ -5,11 +5,11 @@ Extracellular
 sigma: extracellular conductivity
 =#
 
-#Soma as a point
+#Point Source
 
-#Linesource
+#Line Source
 
-function extracellular(neuron::Neuron,xyz::Array{Float64,1},sigma::Float64)
+function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
 
     coeffs=zeros(Float64,0)
     
@@ -19,8 +19,8 @@ function extracellular(neuron::Neuron,xyz::Array{Float64,1},sigma::Float64)
             
             (unit_ds, delta_s)=pt3d_vec(neuron.nodes[i].pt3d[end],neuron.nodes[i].pt3d[1])
 
-            dist1=pt3d_xyz_vec(neuron.nodes[i].pt3d[1],xyz)
-            dist2=pt3d_xyz_vec(neuron.nodes[i].pt3d[end],xyz)
+            dist1=pt3d_xyz_vec(neuron.nodes[i].pt3d[1],extra.xyz)
+            dist2=pt3d_xyz_vec(neuron.nodes[i].pt3d[end],extra.xyz)
 
             ln=dot(unit_ds,dist1)
             hn=dot(unit_ds,dist2)
@@ -39,7 +39,7 @@ function extracellular(neuron::Neuron,xyz::Array{Float64,1},sigma::Float64)
 
 end
 
-#Point Source
+#Mixed Source (Soma as a point, everything else as line)
 
 
 #distance between two 3d points
