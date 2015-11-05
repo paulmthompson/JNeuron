@@ -7,6 +7,29 @@ sigma: extracellular conductivity
 
 #Point Source
 
+function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
+
+    coeffs=zeros(Float64,0)
+
+    for i=1:length(neuron.nodes)
+
+        if neuron.nodes[i].internal == true
+
+            middle=round(length(neuron.nodes[i].pt3d)/2)
+            
+            dist1=pt3d_xyz_vec(neuron.nodes[i].pt3d[middle],extra.xyz)
+
+            push!(coeffs,(1/(delta_s*4*pi*sigma))*1/(dist1))
+            
+        else
+        end
+
+    end
+    
+    coeffs  
+    
+end
+
 #Line Source
 
 function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
