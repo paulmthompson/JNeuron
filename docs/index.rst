@@ -14,7 +14,9 @@ JNeuron - Multicompartmental Neuronal Models in Julia
   GettingStarted.rst
   Theory.rst
   Types.rst
-  Extracellular.rst
+  Recording.rst
+  Stimulation.rst
+  3Dmorphology.rst
   
 
 .. Indices and tables
