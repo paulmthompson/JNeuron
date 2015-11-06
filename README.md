@@ -17,12 +17,12 @@ This is a toolbox for detailed multicompartmental neuronal models, and related c
 * Mod to Julia
 
 ### Extracellular Potentials
-* Line source
-* Point source
+* Finite Size Electrode
 
 ### Computation
 * synapses
 * Variable Time Step
+* Parallel
 
 
 
