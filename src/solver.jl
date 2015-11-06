@@ -63,6 +63,8 @@ function fillA!(neuron::Neuron)
         neuron.diag_ext=diagview(neuron.A_ext)
         neuron.diag_ext_old=diag(neuron.A_ext)
     end
+
+    nothing
        
 end
 
@@ -159,7 +161,7 @@ function main(neuron::Neuron)
     #reset rhs
     neuron.rhs[:]=0.0
 
-    nothing
+    neuron
     
 end
 

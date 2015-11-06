@@ -61,11 +61,10 @@ function run(network::Network)
         for j=1:length(network.stim)
             network.neur[network.stim[j].neur].rhs[network.stim[j].node]+=network.stim[j].Is[i]
         end
+
+        map(main,network.neur)
         
         for j=1:length(network.neur)
-
-            #run simulation
-            main(network.neur[j])
 
             #get extracellular potential if needed
             for k=1:length(network.extra)

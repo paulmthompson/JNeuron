@@ -1,7 +1,7 @@
 
 module JNeuron
 
-using ArrayViews
+using ArrayViews, DistributedArrays
 
 include("types.jl")
 include("Section.jl")
