@@ -170,11 +170,11 @@ function Intracellular(neur::Int64,node::Int64)
 end
 
 type Network{T <: AbstractArray{Neuron,1}}
-    neur::T
-    t::FloatRange{Float64}
-    extra::Array{Extracellular,1}
-    intra::Array{Intracellular,1}
-    stim::Array{Stim,1}
+    neur::T #Array of Neurons for simulation
+    t::FloatRange{Float64} #time range for simulation
+    extra::Array{Extracellular,1} #Extracellular Recording
+    intra::Array{Intracellular,1} #Intracellular Recording
+    stim::Array{Stim,1} #Intracellular Stimulation
 end
 
 
