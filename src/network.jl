@@ -34,15 +34,18 @@ end
 Add Intracellular Stimulation to network
 =#
 
-function add!(network::Network,Is::Float64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
+function add!(network::Network,stim::Stim)
+
     myis=zeros(Float64,length(network.t))
 
-    startind=findfirst(network.t.>tstart)
-    endind=findfirst(network.t.>tstop)
+    startind=findfirst(network.t.>stim.tstart)
+    endind=findfirst(network.t.>stim.tstop)
 
-    myis[startind:endind]=Is
+    myis[startind:endind]=stim.Is[1]
 
-    push!(network.stim,Stim(myis,neur,node))
+    stim.Is=myis
+
+    push!(network.stim,stim)
 
     nothing
     

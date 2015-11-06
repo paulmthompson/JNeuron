@@ -156,7 +156,13 @@ end
 type Stim
     Is::Array{Float64,1}
     neur::Int64
-    node::Int64   
+    node::Int64
+    tstart::Float64
+    tstop::Float64
+end
+
+function Stim(Is::Float64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
+    Stim([Is],neur,node,tstart,tstop)
 end
 
 type Intracellular
