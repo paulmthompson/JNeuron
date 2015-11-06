@@ -7,7 +7,7 @@ function add_sec(neuron::Neuron, sec::Section) #Add section to workspace
     push!(neuron.secstack,sec)
 end
 
-function set_nsegs(neuron::Neuron,frequency::Float64,d_lambda::Float64)
+function set_nsegs!(neuron::Neuron,frequency::Float64,d_lambda::Float64)
 
     nodesec=zeros(Int64,length(neuron.secstack)+1)
     nseglist=zeros(Int64,length(neuron.secstack))
