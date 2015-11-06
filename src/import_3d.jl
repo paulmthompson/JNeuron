@@ -52,6 +52,14 @@ function input(morphology::ASCIIString)
     #should then "instantiate" to create Neuron object and return it
 end
 
+function instantiate(morphology::ASCIIString)
+
+    import3d=input(morphology)
+
+    instantiate(import3d)
+    
+end
+
 function instantiate(import3d::Import3D)
 
     neuron=Neuron()
