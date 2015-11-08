@@ -54,10 +54,11 @@ end
 function run(network::Network)
 
     #get initial conditions
-    for i=1:length(network.neur)
-        JNeuron.initialcon!(network.neur[i],-65.0,network.t.step/network.t.divisor)
-    end
-                   
+
+    map(initialcon!,network.neur)
+
+    cur_inds=get_current(network.neur)
+                             
     for i=1:length(network.t)
 
         #stimulate if appropriate
@@ -71,7 +72,7 @@ function run(network::Network)
 
             #get extracellular potential if needed
             for k=1:length(network.extra)
-                network.extra[k].v[i]+=sum(network.extra[k].coeffs[j].c.*network.neur[j].i_vm[1:size(network.extra[k].coeffs[j].c,1)])
+                network.extra[k].v[i]+=sum(network.extra[k].coeffs[j].c.*fetch_current(cur_inds[j])[1:size(network.extra[k].coeffs[j].c,1)])
             end
             
         end
@@ -86,3 +87,31 @@ function run(network::Network)
     nothing
         
 end
+
+function get_current(neur::DArray{Neuron,1})
+
+    myind=Array(RemoteRef,length(neur))
+
+    count=1
+    
+    for i=1:length(neur.indexes)
+        for j in neur.indexes[i][1]
+            myind[count] = @spawnat neur.pids[i] view(neur[j].i_vm,:)
+            count+=1
+        end
+
+    end
+
+    myind
+
+end
+
+function fetch_current(myind::RemoteRef)
+    fetch(myind)
+end
+
+function get_current(neur::Array{Neuron,1})
+    
+end
+
+                   

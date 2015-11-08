@@ -68,7 +68,7 @@ function fillA!(neuron::Neuron)
        
 end
 
-function initialcon!(neuron::Neuron, vi::Float64,dt::Float64)
+function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
 
     neuron.dt=dt #default
     
@@ -90,6 +90,8 @@ function initialcon!(neuron::Neuron, vi::Float64,dt::Float64)
         end
         
     end
+
+    neuron
     
 end
 

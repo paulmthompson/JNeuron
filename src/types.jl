@@ -179,22 +179,22 @@ type Network{T <: AbstractArray{Neuron,1}}
     neur::T #Array of Neurons for simulation
     t::FloatRange{Float64} #time range for simulation
     extra::Array{Extracellular,1} #Extracellular Recording
+    #extracellular Stimulation
     intra::Array{Intracellular,1} #Intracellular Recording
     stim::Array{Stim,1} #Intracellular Stimulation
 end
-
 
 function Network(neuron::Neuron,tstop::Float64; par=false)
     if par==false
         Network([neuron],0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
     else
-        Network(distribute([neuron]),0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
+        Network(distribute([neuron]),0.0:0.025:tstop,DArray(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
     end
 end
 
 function Network(neurons::Array{Neuron,1},tstop::Float64; par=false)
     if par==false
-        Network(neurons,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
+        Network(neurons,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),mytotal)  
     else
         Network(distribute(neurons),0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
     end
