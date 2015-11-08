@@ -112,6 +112,12 @@ end
 
 function get_current(neur::Array{Neuron,1})
     
+    [view(neur[i].i_vm,1:neur[i].internal_nodes) for i=1:length(neur)]
+       
+end
+
+function fetch_current(myind::ContiguousView)
+    myind
 end
 
                    

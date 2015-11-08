@@ -195,7 +195,7 @@ end
 
 function Network(neurons::Array{Neuron,1},tstop::Float64; par=false)
     if par==false
-        Network(neurons,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),mytotal)  
+        Network(neurons,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))  
     else
         Network(distribute(neurons),0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
     end
