@@ -51,6 +51,16 @@ function add!(network::Network,stim::Stim)
     
 end
 
+function add!(network::Network,intra::Intracellular)
+
+    intra.v=zeros(Float64,length(network.t))
+
+    push!(network.intra,intra)
+
+    nothing
+    
+end
+
 function run(network::Network)
 
     #get initial conditions
@@ -59,6 +69,7 @@ function run(network::Network)
 
     cur_inds=get_current(network.neur)
     stim_inds=get_stim(network)
+    v_inds=get_voltage(network)
                              
     for i=1:length(network.t)
 
@@ -78,7 +89,7 @@ function run(network::Network)
                                                                                        
         #get intracellular potentials
         for j=1:length(network.intra)
-            network.intra[j].v[i]=network.neur[network.intra[j].neur].nodes[network.intra[j].node].v
+            network.intra[j].v[i]=fetch_voltage(v_inds[j])
         end
                
     end
@@ -153,5 +164,34 @@ function add_stim(myind::SubArray,Is::Float64)
 
     myind[1]+=Is
     
+end
+
+function get_voltage{T <: DArray{Neuron,1}}(network::Network{T})
+
+    myind=Array(RemoteRef,length(network.intra))
+
+    #get voltage at particular location
+    for j=1:length(network.intra)
+        
+        thisneur=network.intra[j].neur
+        neurid=findfirst(thisneur.>=network.neur.cuts[1])
+        myind[j] = @spawnat network.neur.pids[neurid] sub(network.neur[thisneur].v, network.intra[j].node:network.intra[j].node)
+        
+    end
+
+    myind
+    
+end
+
+function fetch_voltage(myind::RemoteRef)
+    fetch(myind[1])
+end
+
+function get_voltage{T <: Array{Neuron,1}}(network::Network{T})
+    myind=[sub(network.neur[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.stim)]
+end
+
+function fetch_voltage(myind::SubArray)
+    myind[1]
 end
 

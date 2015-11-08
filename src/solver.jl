@@ -146,10 +146,10 @@ function main(neuron::Neuron)
 
     #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
     if ext==true
-        neuron.vext += neuron.delta_vext
-        neuron.v += neuron.delta_v + neuron.delta_vext
+        neuron.vext[:] += neuron.delta_vext
+        neuron.v[:] += neuron.delta_v + neuron.delta_vext
     else   
-        neuron.v += neuron.delta_v
+        neuron.v[:] += neuron.delta_v
     end
 
     #find non voltage states (like gate variables for conductances)
