@@ -119,7 +119,7 @@ function fetch_current(myind::ContiguousView)
     myind
 end
 
-function get_stim(network::Network)
+function get_stim{T <: DArray{Neuron,1}}(network::Network{T})
 
     myind=Array(RemoteRef,length(network.stim))
     
@@ -141,5 +141,17 @@ function add_stim(myind::RemoteRef,Is::Float64)
     @spawn fetch(myind)[1]+=Is
 
     nothing
+end
+
+function get_stim{T <: Array{Neuron,1}}(network::Network{T})
+
+    myind=[sub(network.neur[network.stim[i].neur].rhs, network.stim[i].node:network.stim[i].node) for i=1:length(network.stim)]
+    
+end
+
+function add_stim(myind::SubArray,Is::Float64)
+
+    myind[1]+=Is
+    
 end
 
