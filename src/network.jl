@@ -55,7 +55,7 @@ function run(network::Network)
 
     #get initial conditions
 
-    map(initialcon!,network.neur)
+    map!(initialcon!,network.neur)
 
     cur_inds=get_current(network.neur)
                              
@@ -66,7 +66,7 @@ function run(network::Network)
             network.neur[network.stim[j].neur].rhs[network.stim[j].node]+=network.stim[j].Is[i]
         end
 
-        map(main,network.neur)
+        map!(main,network.neur)
         
         for j=1:length(network.neur)
 
