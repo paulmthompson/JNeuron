@@ -58,23 +58,22 @@ function run(network::Network)
     map!(initialcon!,network.neur)
 
     cur_inds=get_current(network.neur)
+    stim_inds=get_stim(network)
                              
     for i=1:length(network.t)
 
         #stimulate if appropriate
         for j=1:length(network.stim)
-            network.neur[network.stim[j].neur].rhs[network.stim[j].node]+=network.stim[j].Is[i]
+            add_stim(stim_inds[j],network.stim[j].Is[i])
         end
 
         map!(main,network.neur)
         
         for j=1:length(network.neur)
-
             #get extracellular potential if needed
             for k=1:length(network.extra)
                 network.extra[k].v[i]+=sum(network.extra[k].coeffs[j].c.*fetch_current(cur_inds[j]))
-            end
-            
+            end            
         end
                                                                                        
         #get intracellular potentials
@@ -120,4 +119,27 @@ function fetch_current(myind::ContiguousView)
     myind
 end
 
-                   
+function get_stim(network::Network)
+
+    myind=Array(RemoteRef,length(network.stim))
+    
+    #stimulate if appropriate
+    for j=1:length(network.stim)
+        
+        thisneur=network.stim[j].neur
+        neurid=findfirst(thisneur.>=network.neur.cuts[1])
+        myind[j] = @spawnat network.neur.pids[neurid] sub(network.neur[thisneur].rhs,network.stim[j].node:network.stim[j].node)
+        
+    end
+
+    myind
+    
+end
+
+function add_stim(myind::RemoteRef,Is::Float64)
+    
+    @spawn fetch(myind)[1]+=Is
+
+    nothing
+end
+
