@@ -72,7 +72,7 @@ function run(network::Network)
 
             #get extracellular potential if needed
             for k=1:length(network.extra)
-                network.extra[k].v[i]+=sum(network.extra[k].coeffs[j].c.*fetch_current(cur_inds[j])[1:size(network.extra[k].coeffs[j].c,1)])
+                network.extra[k].v[i]+=sum(network.extra[k].coeffs[j].c.*fetch_current(cur_inds[j]))
             end
             
         end
@@ -96,7 +96,7 @@ function get_current(neur::DArray{Neuron,1})
     
     for i=1:length(neur.indexes)
         for j in neur.indexes[i][1]
-            myind[count] = @spawnat neur.pids[i] view(neur[j].i_vm,:)
+            myind[count] = @spawnat neur.pids[i] view(neur[j].i_vm,1:neur[j].internal_nodes)
             count+=1
         end
 

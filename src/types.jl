@@ -108,6 +108,7 @@ type Neuron
     i_vm::Array{Float64,1}
     divm::Array{Float64,1}
     diag_old::Array{Float64,1}
+    internal_nodes::Int64
 
     #extracellular data structures (where to put these? different type probably)
     #enodes::Array{Node_ext,1}
@@ -120,7 +121,7 @@ type Neuron
 end
 
 function Neuron()
-    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0))
+    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0)
 end
 
 type Extra_coeffs

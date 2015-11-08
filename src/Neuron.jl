@@ -113,6 +113,7 @@ function set_nsegs!(neuron::Neuron,frequency::Float64,d_lambda::Float64)
                
     end
 
+    neuron.internal_nodes=length(neuron.nodes)
     #Now add nodes add intersections
 
     append!(neuron.nodes,internodes)
