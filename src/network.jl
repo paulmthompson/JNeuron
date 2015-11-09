@@ -61,7 +61,7 @@ function add!(network::Network,intra::Intracellular)
     
 end
 
-function run(network::Network)
+function Base.run(network::Network)
 
     #get initial conditions
 
