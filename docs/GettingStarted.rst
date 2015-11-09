@@ -113,25 +113,71 @@ If you don't need the 3D information in Import3D, you can just call instantiate 
 Discretization
 ----------------
 
-In JNeuron, the cable equation is discretized so that voltages are solved at certain points, or nodes (see Theory section). 
+In JNeuron, the cable equation is discretized so that voltages are solved at certain points, or nodes (see Theory section). We have to decide for a given neuron shape, what is the appropriate number of nodes? By default, JNeuron uses the lambda-rule (see Theory). 
+
+.. code-block:: julia
+
+	set_nsegs!(myneuron)
 
 ----------------
 Adding Channels
 ----------------
 
+Neurons can have a variety of ion channels. Many from the literature are already defined in JNeuron (see Channels). If channels are present everywhere in the neuron, they can easily be added as follows:
+
+.. code-block:: julia
+
+	add!(myneuron,HH()) #add hodgkin huxley channels
+
+For channels distributed non-uniforming:
+
 ========================
 Extracellular Recording
 ========================
+
+JNeuron supports detecting the extracellular potential at 3D locations in a network of neurons. Electrodes are initialized by their 3D position and then can be added to the network:
+
+.. code-block:: julia
+
+	myelectrode=Extracellular([400.0,200.0,0.0])
+	add!(mynetwork,myelectrode)
+
+All of the necessary relationships between the collection of neurons in the network and the 3D position are calculated when the extracellular potential is added to the network. Multiple methods of calculating the extracellular potential, as well as different electrode shape approximates are supported (see Recording).
 
 =========================
 Extracellular Stimulation
 =========================
 
+Coming soon
+
 ========================
 Intracellular Recording
 ========================
 
+The intracellular potentials over the course of the simulation at particular locations in the neuron can be saved. To place an intracellular recording, you must specify the index of the neuron in your network, as well as the particular node of interest.
+
+.. code-block:: julia
+
+	myintra=Intracellular(1,100)
+	add!(mynetwork,myintra)
+
 =========================
 Intracellular Stimulation
 =========================
+
+A period of intracellular stimulation is defined by its 1) magnitude 2) time window of activity 3) and location. Once these are specified, a stimulation instance can be added to a network
+
+.. code-block:: julia
+
+	amp=2.0 #stimulation amplitude in nA
+	neuron_num=1 #index of neuron receiving stimulation
+	node=40 #node of above neuron to input current
+	tstart=1.0 #in ms
+	tstop=2.0 #in ms
+	mystim=Stim(amp,neuron_num,node,tstart,tstop)
+	add!(mynetwork,mystim)
+
+
+
+
 
