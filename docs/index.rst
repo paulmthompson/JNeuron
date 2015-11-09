@@ -17,6 +17,7 @@ JNeuron - Multicompartmental Neuronal Models in Julia
   Recording.rst
   Stimulation.rst
   3Dmorphology.rst
+  Channels.rst
   
 
 .. Indices and tables
