@@ -4,9 +4,10 @@ module JNeuron
 using ArrayViews, DistributedArrays
 
 #types
-export Neuron,Network,Intracellular,Extracellular,Stim
+export Neuron, Network, Intracellular, Extracellular, Stim
 
-export input,instantiate,set_nsegs!,add!
+#functions
+export input, instantiate, set_nsegs!, add!
 
 include("types.jl")
 include("Section.jl")

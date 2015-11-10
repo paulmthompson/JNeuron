@@ -52,7 +52,22 @@ These data containers don't help us to easily see the big picture of how the neu
 =#
 
 
-abstract Prop #Property of section (HH, passive etc). contains all of the stuff you need to calc things
+#abstract Prop #Property of section (HH, passive etc). contains all of the stuff you need to calc things
+
+abstract Channel
+
+type Prop{A<:Channel,B<:Channel,C<:Channel,D<:Channel,E<:Channel}
+    num::Int64
+    a::A
+    b::B
+    c::C
+    d::D
+    e::E
+end
+
+function Prop()
+    Prop(0,NoCh(),NoCh(),NoCh(),NoCh(),NoCh())
+end
 
 #associated 3d point
 type Pt3d
@@ -74,7 +89,7 @@ type Node
     children::Array{Int64,1} #Node(s) from other sections attached to this one
     internal::Bool
     pt3d::Array{Pt3d,1}
-    prop::Array{Prop,1} #Array of abstract types (yucky!), each a subtype of 
+    prop::Prop #Array of abstract types (yucky!), each a subtype of 
 end
 
 type Node_ext

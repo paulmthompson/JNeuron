@@ -5,14 +5,11 @@ still needs range variables
 adapted for Julia by PMT
 =#
 
-function prop_init(prop::Prop,node::Node,v::Float64)
-end
-
 function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
     x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
 end
 
-
+#=
 type Passive <: Prop
     nodevar::Array{ASCIIString,1}
     v::Float64
@@ -33,7 +30,7 @@ end
 function cur_calc(prop::Passive,node::Node,v::Float64)
     prop.i=prop.g*(v-prop.e)
 end
-
+=#
 #=
 HH
  This is the original Hodgkin-Huxley treatment for the set of sodium, 
@@ -47,7 +44,19 @@ SW Jaslove  6 March, 1992
 adapted for Julia by PMT
 =#
 
-type HH <: Prop
+type NoCh <: Channel
+end
+
+function con_calc(prop::NoCh,v::Float64,dt::Float64)
+end
+
+function cur_calc(prop::NoCh,vars::Dict{ASCIIString,Float64},v::Float64)
+end
+
+function prop_init(prop::NoCh,v::Float64)
+end
+
+type HH <: Channel
     nodevar::Array{ASCIIString,1}
     gnabar::Float64
     gkbar::Float64
@@ -74,8 +83,8 @@ function HH()
     HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,14)...)
 end
 
-function con_calc(prop::HH,node::Node,v::Float64,dt::Float64)
-    rates(prop,node,v)
+function con_calc(prop::HH,v::Float64,dt::Float64)
+    rates(prop,v)
 
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     prop.n=implicit_euler(prop.n,dt,prop.ntau,prop.ninf)
@@ -88,17 +97,18 @@ function con_calc(prop::HH,node::Node,v::Float64,dt::Float64)
     
 end
 
-function cur_calc(prop::HH,node::Node,v::Float64)
-    prop.ina = prop.gna * (v - node.vars["ena"])
-    prop.ik = prop.gk * (v - node.vars["ek"])
+function cur_calc(prop::HH,vars::Dict{ASCIIString,Float64},v::Float64)
+    
+    prop.ina = prop.gna * (v - vars["ena"])
+    prop.ik = prop.gk * (v - vars["ek"])
     prop.il = prop.gl * (v - prop.el)
 
     prop.ina + prop.ik + prop.il
 end
 
 
-function prop_init(prop::HH,node::Node,v::Float64)
-    rates(prop,node,v)
+function prop_init(prop::HH,v::Float64)
+    rates(prop,v)
     prop.m=prop.minf
     prop.h=prop.hinf
     prop.n=prop.ninf
@@ -109,7 +119,7 @@ function prop_init(prop::HH,node::Node,v::Float64)
     nothing
 end
 
-function rates(prop::HH,node::Node,v::Float64)
+function rates(prop::HH,v::Float64)
 
     #q10 = 3^((node.temp - 6.3)/10)
     q10 = 3^((6.3 - 6.3)/10)
@@ -153,7 +163,7 @@ Ca_HVA
 Reuveni, Friedman, Amitai, and Gutnick, J.Neurosci. 1993
 =#
 
-type Ca_HVA <: Prop
+type Ca_HVA <: Channel
     nodevar::Array{ASCIIString,1}
     gCa_HVAbar::Float64
     gCA_HVA::Float64
@@ -171,9 +181,9 @@ function Ca_HVA()
     Ca_HVA(myvars,.00001,zeros(Float64,7)...)
 end
 
-function con_calc(prop::Ca_HVA,node::Node,v::Float64,dt::Float64)
+function con_calc(prop::Ca_HVA,v::Float64,dt::Float64)
 
-    rates(prop,node,v)
+    rates(prop,v)
 
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
@@ -183,20 +193,20 @@ function con_calc(prop::Ca_HVA,node::Node,v::Float64,dt::Float64)
     nothing
 end
 
-function cur_calc(prop::Ca_HVA,node::Node,v::Float64)
+function cur_calc(prop::Ca_HVA,vars::Dict{ASCIIString,Float64},v::Float64)
 
-    prop.ica = prop.gCA_HVA*(v-node.vars["eca"])
+    prop.ica = prop.gCA_HVA*(v-vars["eca"])
     
 end
 
-function prop_init(prop::Ca_HVA, node::Node,v::Float64)
-    rates(prop,node,v)
+function prop_init(prop::Ca_HVA,v::Float64)
+    rates(prop,v)
     prop.m=prop.mInf
     prop.h=prop.hInf
     nothing
 end
 
-function rates(prop::Ca_HVA, node::Node,v::Float64)
+function rates(prop::Ca_HVA,v::Float64)
     if v == -27.0
         v+=.0001
     else
@@ -225,7 +235,7 @@ shifted by -10 mv to correct for junction potential
 corrected rates using q10 = 2.3, target temperature 34, orginal 21
 =#
 
-type Ca_LVAst <: Prop
+type Ca_LVAst <: Channel
     nodevar::Array{ASCIIString,1}
     gCa_LVAstbar::Float64
     gCA_LVAst::Float64
@@ -244,9 +254,9 @@ function Ca_LVAst()
     Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10))
 end
 
-function con_calc(prop::Ca_LVAst,node::Node,v::Float64,dt::Float64)
+function con_calc(prop::Ca_LVAst,v::Float64,dt::Float64)
 
-    rates(prop,node,v)
+    rates(prop,v)
 
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
@@ -256,20 +266,20 @@ function con_calc(prop::Ca_LVAst,node::Node,v::Float64,dt::Float64)
     nothing
 end
 
-function cur_calc(prop::Ca_LVAst,node::Node,v::Float64)
+function cur_calc(prop::Ca_LVAst,vars::Dict{ASCIIString,Float64},v::Float64)
 
-    prop.ica = prop.gCA_LVAst*(v-node.vars["eca"])
+    prop.ica = prop.gCA_LVAst*(v-vars["eca"])
     
 end
 
-function prop_init(prop::Ca_LVAst, node::Node,v::Float64)
-    rates(prop,node,v)
+function prop_init(prop::Ca_LVAst,v::Float64)
+    rates(prop,v)
     prop.m=prop.mInf
     prop.h=prop.hInf
     nothing
 end
 
-function rates(prop::Ca_LVAst, node::Node,v::Float64)
+function rates(prop::Ca_LVAst,v::Float64)
 
     prop.mInf = 1.0000/(1+ exp((v - -30.000)/-6))
     prop.mTau = (5.0000 + 20.0000/(1+exp((v - -25.000)/5)))/prop.qt
@@ -279,7 +289,7 @@ function rates(prop::Ca_LVAst, node::Node,v::Float64)
     nothing
 end
 
-type Ih <: Prop
+type Ih <: Channel
     nodevar::Array{ASCIIString,1}
     gIhbar::Float64
     ehcn::Float64
@@ -295,9 +305,9 @@ function Ih()
     Ih(myvars,.00001, -45, zeros(Float64, 5)...)
 end
 
-function con_calc(prop::Ih,node::Node,v::Float64,dt::Float64)
+function con_calc(prop::Ih,v::Float64,dt::Float64)
 
-    rates(prop,node,v)
+    rates(prop,v)
 
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     
@@ -306,19 +316,19 @@ function con_calc(prop::Ih,node::Node,v::Float64,dt::Float64)
     nothing
 end
 
-function cur_calc(prop::Ih,node::Node,v::Float64)
+function cur_calc(prop::Ih,vars::Dict{ASCIIString,Float64},v::Float64)
 
     prop.ica = prop.gIh*(v-prop.ehcn)
     
 end
 
-function prop_init(prop::Ih, node::Node,v::Float64)
-    rates(prop,node,v)
+function prop_init(prop::Ih,v::Float64)
+    rates(prop,v)
     prop.m=prop.mInf
     nothing
 end
 
-function rates(prop::Ih, node::Node,v::Float64)
+function rates(prop::Ih,v::Float64)
 
     if v == -154.9
         v=+ .0001

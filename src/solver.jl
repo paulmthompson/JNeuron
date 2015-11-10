@@ -19,7 +19,7 @@ function fillA!(neuron::Neuron)
 
     nodelen=length(neuron.nodes)
     
-    neuron.A=spzeros(Float64,nodelen,nodelen)
+    A=zeros(Float64,nodelen,nodelen)
     neuron.v=zeros(Float64,nodelen)
     neuron.delta_v=zeros(Float64,nodelen)
     neuron.rhs=zeros(Float64,nodelen)
@@ -46,8 +46,8 @@ function fillA!(neuron::Neuron)
                 
             end
 
-            neuron.A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
-            neuron.A[i,i]=neuron.diag_old[i]
+            A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
+            A[i,i]=neuron.diag_old[i]
             
         end
         
@@ -55,10 +55,12 @@ function fillA!(neuron::Neuron)
 
     for i=1:length(neuron.nodes)
         for j in neuron.nodes[i].children
-            neuron.A[i,j]=-neuron.nodes[j].a
+            A[i,j]=-neuron.nodes[j].a
         end
     end
 
+    neuron.A=sparse(A)
+    
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)
         neuron.diag_ext_old=diag(neuron.A_ext)
@@ -76,12 +78,12 @@ function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
     fillA!(neuron)
 
     #initial V
-    neuron.v=vi.*ones(Float64,length(neuron.v))
+    neuron.v[:]=vi
     
     #initial states of channels at nodes
     for i=1:length(neuron.nodes)
-        for j=1:length(neuron.nodes[i].prop)
-            prop_init(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i])
+        for j=1:neuron.nodes[i].prop.num
+            prop_init(getfield(neuron.nodes[i].prop,j+1),neuron.v[i])
         end
 
         mykeys=keys(neuron.nodes[i].vars)
@@ -100,6 +102,10 @@ function main(neuron::Neuron)
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
 
+    i1=0.0
+    i2=0.0
+    dv=0.0
+    
     for i=1:length(neuron.nodes)
 
         #reset diagonal
@@ -107,13 +113,13 @@ function main(neuron::Neuron)
 
         neuron.i_vm[i] = 0.0
         neuron.divm[i] = 0.0
-            
-        for k=1:length(neuron.nodes[i].prop)
+
+        for k=1:neuron.nodes[i].prop.num
 
             #calculate current
-            i1=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i])
+            i1=cur_calc(getfield(neuron.nodes[i].prop,k+1),neuron.nodes[i].vars,neuron.v[i])
 
-            i2=cur_calc(neuron.nodes[i].prop[k],neuron.nodes[i],neuron.v[i]+.001)
+            i2=cur_calc(getfield(neuron.nodes[i].prop,k+1),neuron.nodes[i].vars,neuron.v[i]+.001)
             
             neuron.i_vm[i] += i1
             neuron.divm[i] += (i2-i1)/.001
@@ -135,7 +141,7 @@ function main(neuron::Neuron)
     end
     
     #solve A \ rhs to get delta_v
-    neuron.delta_v = neuron.A \ neuron.rhs
+    neuron.delta_v[:] = neuron.A \ neuron.rhs
 
     if ext==true
         main_ext(neuron)
@@ -155,8 +161,8 @@ function main(neuron::Neuron)
     #find non voltage states (like gate variables for conductances)
     
     for i=1:length(neuron.nodes)
-        for j=1:length(neuron.nodes[i].prop)
-            con_calc(neuron.nodes[i].prop[j],neuron.nodes[i],neuron.v[i],neuron.dt)
+        for j=1:neuron.nodes[i].prop.num
+            con_calc(getfield(neuron.nodes[i].prop,j+1),neuron.v[i],neuron.dt)
         end
     end
 

@@ -120,7 +120,7 @@ function interp_area(x1::Float64, x2::Float64, x3::Float64)
     [frac1,frac2]
 end
 
-function add!(node::Node,prop::Prop)
+function add!(node::Node,prop::Channel)
 
     if sum([typeof(node.prop[i])==typeof(prop) for i=1:length(node.prop)])==0
 
@@ -138,15 +138,15 @@ function add!(node::Node,prop::Prop)
     nothing        
 end
 
-function add!(neuron::Neuron,prop::Prop)
+function add!(neuron::Neuron,prop::Channel)
 
     for j=1:length(neuron.nodes)
 
         if neuron.nodes[j].internal==true
-    
-            if sum([typeof(neuron.nodes[j].prop[i])==typeof(prop) for i=1:length(neuron.nodes[j].prop)])==0
 
-                push!(neuron.nodes[j].prop,typeof(prop)())
+            if sum([typeof(prop)==getfield(neuron.nodes[j].prop,i) for i=2:5])==0
+
+                neuron.nodes[j].prop=Prop(neuron.nodes[j].prop.num+1,typeof(prop)(),NoCh(),NoCh(),NoCh(),NoCh())
         
                 for i=1:length(prop.nodevar)
                     if !haskey(neuron.nodes[j].vars,prop.nodevar[i])
