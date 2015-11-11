@@ -50,6 +50,7 @@ function fillA!(neuron::Neuron)
             A[i,i]=neuron.diag_old[i]
             
         end
+        #need calculation for root node
         
     end
 

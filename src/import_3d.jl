@@ -62,7 +62,7 @@ end
 
 function instantiate(import3d::Import3D)
 
-    neuron=Neuron()
+    neuron=Neuron0()
 
     somaind=Array(Int64,0)
     rootind=Array(Int64,0)

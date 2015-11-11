@@ -16,7 +16,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
     internodes=0
     first=0
     last=0
-    
 
     #find total number of segments
     for i=1:length(neuron.secstack)
@@ -90,10 +89,10 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 internodes+=1
 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[length(neuron.nodes)+2],true,mypt3d,Prop()))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[length(neuron.nodes)+2],true,mypt3d,Prop0()))
 
                 #create internode at end of section
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop()))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop0()))
                 
             elseif j==1
 
@@ -101,7 +100,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 neuron.internal_nodes+=1
                 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop()))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0()))
                             
             elseif j==nseglist[i]
 
@@ -110,16 +109,16 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 internodes+=1
                 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[length(neuron.nodes)+2],true,mypt3d,Prop()))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,[length(neuron.nodes)+2],true,mypt3d,Prop0()))
 
                 #create internode at end of section
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop()))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop0()))
 
             else
 
                 neuron.internal_nodes+=1
                 
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop()))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0()))
 
             end
                     

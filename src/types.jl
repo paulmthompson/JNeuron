@@ -56,17 +56,9 @@ These data containers don't help us to easily see the big picture of how the neu
 
 abstract Channel
 
-type Prop{A<:Channel,B<:Channel,C<:Channel,D<:Channel,E<:Channel}
-    num::Int64
-    a::A
-    b::B
-    c::C
-    d::D
-    e::E
-end
+abstract Prop
 
-function Prop()
-    Prop(0,NoCh(),NoCh(),NoCh(),NoCh(),NoCh())
+type Prop0<:Prop
 end
 
 #associated 3d point
@@ -78,7 +70,7 @@ type Pt3d
     arc::Float64 #normalized distance from 0 to end
 end
 
-type Node
+type Node{T<:Prop}
     ind::Int64
     vars::Dict{ASCIIString,Float64}
     area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
@@ -89,7 +81,7 @@ type Node
     children::Array{Int64,1} #Node(s) from other sections attached to this one
     internal::Bool
     pt3d::Array{Pt3d,1}
-    prop::Prop #Array of abstract types (yucky!), each a subtype of 
+    prop::T
 end
 
 type Node_ext
@@ -110,7 +102,14 @@ type Section
     length::Float64
 end
 
-type Neuron
+abstract Neuron
+
+type Neuron0 <: Neuron
+    
+    apical::Array{Prop0,1}
+    basal::Array{Prop0,1}
+    soma::Array{Prop0,1}
+    axon::Array{Prop0,1}
     secstack::Array{Section,1}
     A::SparseMatrixCSC{Float64,Int64}
     v::Array{Float64,1} #intracellular voltage
@@ -125,18 +124,10 @@ type Neuron
     diag_old::Array{Float64,1}
     internal_nodes::Int64
 
-    #extracellular data structures (where to put these? different type probably)
-    #enodes::Array{Node_ext,1}
-    #vext::Array{Float64,1}
-    #delta_vext::Array{Float64,1}
-    #A_ext::Array{Float64,2}
-    #rhs_ext::Array{Float64,1}
-    #diag_ext::Array{Float64,1}
-    #diag_ext_old::Array{Float64,1}
 end
 
-function Neuron()
-    Neuron(Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0)
+function Neuron0()
+    Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0)
 end
 
 type Extra_coeffs
@@ -218,3 +209,63 @@ end
 
 
 myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)
+
+
+#Combination of channels found
+function gen_prop(a::Array{Channel,1},k::Int64)
+
+    myfields=[:($(symbol("I_$i"))::($(typeof(a[i])))) for i=1:length(a)]
+
+    @eval begin
+        type $(symbol("Prop_$k")) <: Prop
+            num::Int64
+            $(myfields...)
+        end
+    end
+
+end
+
+#Neuron with particular combination of channels
+function gen_neuron(prop::Prop,k::Int64)
+
+    @eval begin
+        type $(symbol("Neuron_$k")) <: Neuron
+            apical::Array{($(typeof(prop))),1}
+            basal::Array{($(typeof(prop))),1}
+            soma::Array{($(typeof(prop))),1}
+            axon::Array{($(typeof(prop))),1}
+            secstack::Array{Section,1}
+            A::SparseMatrixCSC{Float64,Int64}
+            v::Array{Float64,1} #intracellular voltage
+            delta_v::Array{Float64,1} #change in membrane voltage
+            rhs::Array{Float64,1}
+            Ra::Float64
+            Cm::Float64
+            dt::Float64
+            nodes::Array{Node,1}
+            i_vm::Array{Float64,1}
+            divm::Array{Float64,1}
+            diag_old::Array{Float64,1}
+            internal_nodes::Int64
+        end
+    end   
+
+end
+
+#types of neurons found in network
+function gen_neuronpool(neur::Array{Neuron,1})
+    
+    myfields=[:($(symbol("N_$i"))::Array{($(typeof(neur[i]))),1}) for i=1:length(neur)]
+
+    @eval begin
+        type $(symbol("Pool"))
+            $(myfields...)
+        end
+    end
+end
+
+function test(prop::Channel,k::Int64)
+
+    
+    
+end

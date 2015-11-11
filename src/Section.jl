@@ -164,6 +164,32 @@ function add!(neuron::Neuron,prop::Channel)
     nothing
 end
 
+function add!(neuron::Neuron,prop::Channel,k::Int64)
+
+    myprop=Array(Channel,1)
+
+    myprop[1]=prop
+    
+    gen_prop(myprop,1)
+
+    ex = symbol("Prop_$k")
+
+    myprop=eval(Expr(:call,ex,0,myprop...))
+
+    gen_neuron(myprop,k)
+
+    ex = symbol("Neuron_$k")
+
+    newnodes=Array(Node{typeof(myprop)},length(neuron.nodes))
+
+    for i=1:length(neuron.nodes)
+        newnodes[i]=Node(neuron.nodes[i],myprop)
+    end
+    
+    myneuron=eval(Expr(:call,ex,Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),neuron.secstack,neuron.A,neuron.v,neuron.delta_v,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes))
+
+end
+
 function change_nseg!(sec::Section,nseg::Int64)
 
     newnodes=Array(Node,0)
@@ -176,6 +202,10 @@ function change_nseg!(sec::Section,nseg::Int64)
 
     nothing
     
+end
+
+function Node{T<:Prop}(node::Node{Prop0},myprop::T)
+    Node(node.ind,node.vars,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,deepcopy(myprop))
 end
 
 function define_shape!(neuron::Neuron)
