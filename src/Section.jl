@@ -164,7 +164,7 @@ function add!(neuron::Neuron,prop::Channel)
     nothing
 end
 
-function add!(neuron::Neuron,prop::Channel,k::Int64)
+function add(neuron::Neuron,prop::Channel,k::Int64)
 
     myprop=Array(Channel,1)
 
@@ -183,11 +183,37 @@ function add!(neuron::Neuron,prop::Channel,k::Int64)
     newnodes=Array(Node{typeof(myprop)},length(neuron.nodes))
 
     for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron.nodes[i],myprop)
+        newnodes[i]=Node(neuron.nodes[i],typeof(myprop)(i,prop))
+
+        for j=2:length(fieldnames(myprop))
+            for k=1:length(getfield(myprop,j).nodevar)
+                if !haskey(newnodes[i].vars,getfield(myprop,j).nodevar[k])
+                    newnodes[i].vars[getfield(myprop,j).nodevar[k]]=0.0
+                end
+            end
+        end
     end
     
     myneuron=eval(Expr(:call,ex,Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),neuron.secstack,neuron.A,neuron.v,neuron.delta_v,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes))
 
+    for i=1:length(myneuron.secstack)
+
+        first=myneuron.secstack[i].pnode[1].ind
+
+        for j=1:length(myneuron.secstack[i].pnode)
+            
+            push!(getfield(myneuron,myneuron.secstack[i].mtype),myneuron.nodes[myneuron.secstack[i].pnode[j].ind])
+            
+        end
+
+        last=myneuron.secstack[i].pnode[end].ind
+
+        myneuron.secstack[i].pnode=sub(myneuron.nodes,first:last)
+        
+    end
+
+    myneuron
+    
 end
 
 function change_nseg!(sec::Section,nseg::Int64)

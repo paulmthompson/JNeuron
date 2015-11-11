@@ -7,7 +7,7 @@ using ArrayViews, DistributedArrays
 export Neuron, Network, Intracellular, Extracellular, Stim
 
 #functions
-export input, instantiate, set_nsegs!, add!
+export input, instantiate, set_nsegs!, add!, add
 
 include("types.jl")
 include("Section.jl")

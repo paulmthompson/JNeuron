@@ -83,8 +83,8 @@ function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
     
     #initial states of channels at nodes
     for i=1:length(neuron.nodes)
-        for j=1:neuron.nodes[i].prop.num
-            prop_init(getfield(neuron.nodes[i].prop,j+1),neuron.v[i])
+        for j=2:length(fieldnames(neuron.nodes[i].prop))
+            prop_init(getfield(neuron.nodes[i].prop,j),neuron.v[i])
         end
 
         mykeys=keys(neuron.nodes[i].vars)
@@ -106,40 +106,69 @@ function main(neuron::Neuron)
     i1=0.0
     i2=0.0
     dv=0.0
+    i=0
+    sec=Int64[length(getfield(neuron,ind)) for ind=1:4]
     
-    for i=1:length(neuron.nodes)
+    for ind=1:4
 
-        #reset diagonal
-        neuron.A[i,i]=neuron.diag_old[i]
+        for j=1:sec[ind]
 
-        neuron.i_vm[i] = 0.0
-        neuron.divm[i] = 0.0
+            i1=0.0
+            i2=0.0
 
-        for k=1:neuron.nodes[i].prop.num
+	    if ind==1
+		i=neuron.soma[j].ind
+		mynode=getfield(neuron.soma[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
 
-            #calculate current
-            i1=cur_calc(getfield(neuron.nodes[i].prop,k+1),neuron.nodes[i].vars,neuron.v[i])
+		par=neuron.soma[j].parent
+		if par != 0
+                    dv=neuron.v[par]-neuron.v[i]
+                    neuron.rhs[i] += neuron.soma[j].b*dv
+                    neuron.rhs[par] -= neuron.soma[j].a*dv
+            	end
+	    elseif ind==2
+		i=neuron.axon[j].ind
+		mynode=getfield(neuron.axon[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+	
+		par=neuron.axon[j].parent
+                dv=neuron.v[par]-neuron.v[i]
+                neuron.rhs[i] += neuron.axon[j].b*dv
+                neuron.rhs[par] -= neuron.axon[j].a*dv
+            	
+	    elseif ind==3
+		i=neuron.dendrite[j].ind
+		mynode=getfield(neuron.dendrite[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+			
+		par=neuron.dendrite[j].parent			
+                dv=neuron.v[par]-neuron.v[i]
+                neuron.rhs[i] += neuron.dendrite[j].b*dv
+                neuron.rhs[par] -= neuron.dendrite[j].a*dv
+	    elseif ind==4
+		i=neuron.apical[j].ind
+		mynode=getfield(neuron.apical[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
 
-            i2=cur_calc(getfield(neuron.nodes[i].prop,k+1),neuron.nodes[i].vars,neuron.v[i]+.001)
+		par=neuron.apical[j].parent
+	
+                dv=neuron.v[par]-neuron.v[i]
+                neuron.rhs[i] += neuron.apical[j].b*dv
+                neuron.rhs[par] -= neuron.apical[j].a*dv
+	    end
             
-            neuron.i_vm[i] += i1
-            neuron.divm[i] += (i2-i1)/.001
-                               
-        end
+            neuron.i_vm[i] = i1
+            neuron.divm[i] = (i2-i1)/.001
 
-        #add -i to rhs
-        neuron.rhs[i] -= neuron.i_vm[i]
-
-        #add dv/di to diagonal
-        neuron.A[i,i] += neuron.divm[i]
-
-        if neuron.nodes[i].parent != 0
-            dv=neuron.v[neuron.nodes[i].parent]-neuron.v[i]
-            neuron.rhs[i] += neuron.nodes[i].b*dv
-            neuron.rhs[neuron.nodes[i].parent] -= neuron.nodes[i].a*dv
-        end
-                                 
+       	end         
     end
+
+    rhs_diag!(neuron)
     
     #solve A \ rhs to get delta_v
     neuron.delta_v[:] = neuron.A \ neuron.rhs
@@ -156,17 +185,33 @@ function main(neuron::Neuron)
         neuron.vext[:] += neuron.delta_vext
         neuron.v[:] += neuron.delta_v + neuron.delta_vext
     else   
-        neuron.v[:] += neuron.delta_v
+        add_delta!(neuron)
     end
 
     #find non voltage states (like gate variables for conductances)
-    
-    for i=1:length(neuron.nodes)
-        for j=1:neuron.nodes[i].prop.num
-            con_calc(getfield(neuron.nodes[i].prop,j+1),neuron.v[i],neuron.dt)
-        end
-    end
 
+    for k=1:4
+	for j=1:sec[k]
+	    if k==1
+		i=neuron.soma[j].ind
+		mynode=getfield(neuron.soma[j].prop,2)
+		con_calc(mynode,neuron.v[i],neuron.dt)
+	    elseif k==2
+		i=neuron.axon[j].ind
+		mynode=getfield(neuron.axon[j].prop,2)
+		con_calc(mynode,neuron.v[i],neuron.dt)
+	    elseif k==3
+		i=neuron.dendrite[j].ind
+		mynode=getfield(neuron.dendrite[j].prop,2)
+		con_calc(mynode,neuron.v[i],neuron.dt)
+	    elseif k==4
+		i=neuron.apical[j].ind
+		mynode=getfield(neuron.apical[j].prop,2)
+		con_calc(mynode,neuron.v[i],neuron.dt)
+	    end
+       	end
+    end
+    
     #reset rhs
     neuron.rhs[:]=0.0
 
@@ -203,4 +248,18 @@ function main_ext(neuron::Neuron)
          neuron.rhs_ext[i]+=i_c
             
      end
+end
+
+function add_delta!(neuron::Neuron)
+    @fastmath @inbounds @simd for i=1:length(neuron.v)
+        neuron.v[i] += neuron.delta_v[i]
+    end
+    nothing
+end
+
+function rhs_diag!(neuron::Neuron)
+    @fastmath @inbounds @simd for i=1:length(neuron.v)
+       neuron.A[i,i] = neuron.diag_old[i] + neuron.divm[i]
+       neuron.rhs[i] -= neuron.i_vm[i]
+    end
 end

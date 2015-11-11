@@ -106,10 +106,10 @@ abstract Neuron
 
 type Neuron0 <: Neuron
     
-    apical::Array{Prop0,1}
-    basal::Array{Prop0,1}
     soma::Array{Prop0,1}
     axon::Array{Prop0,1}
+    dendrite::Array{Prop0,1}
+    apical::Array{Prop0,1}
     secstack::Array{Section,1}
     A::SparseMatrixCSC{Float64,Int64}
     v::Array{Float64,1} #intracellular voltage
@@ -230,10 +230,10 @@ function gen_neuron(prop::Prop,k::Int64)
 
     @eval begin
         type $(symbol("Neuron_$k")) <: Neuron
-            apical::Array{($(typeof(prop))),1}
-            basal::Array{($(typeof(prop))),1}
-            soma::Array{($(typeof(prop))),1}
-            axon::Array{($(typeof(prop))),1}
+            soma::Array{Node{($(typeof(prop)))},1}
+            axon::Array{Node{($(typeof(prop)))},1}
+            dendrite::Array{Node{($(typeof(prop)))},1}
+            apical::Array{Node{($(typeof(prop)))},1}
             secstack::Array{Section,1}
             A::SparseMatrixCSC{Float64,Int64}
             v::Array{Float64,1} #intracellular voltage
