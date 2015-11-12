@@ -263,3 +263,4 @@ function rhs_diag!(neuron::Neuron)
        neuron.rhs[i] -= neuron.i_vm[i]
     end
 end
+

@@ -130,6 +130,8 @@ function Neuron0()
     Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0)
 end
 
+abstract NeuronPool
+
 type Extra_coeffs
     c::Array{Float64,1}
 end
@@ -182,7 +184,7 @@ function Intracellular(neur::Int64,node::Int64)
     Intracellular(neur,node,Array(Float64,0))
 end
 
-type Network{T <: AbstractArray{Neuron,1}}
+type Network{T <: NeuronPool}
     neur::T #Array of Neurons for simulation
     t::FloatRange{Float64} #time range for simulation
     extra::Array{Extracellular,1} #Extracellular Recording
@@ -192,11 +194,14 @@ type Network{T <: AbstractArray{Neuron,1}}
 end
 
 function Network(neuron::Neuron,tstop::Float64; par=false)
-    if par==false
-        Network([neuron],0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
-    else
-        Network(distribute([neuron]),0.0:0.025:tstop,DArray(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
-    end
+
+    #create neuron pool
+    gen_neuronpool([neuron],par)
+
+    pool=NeuronPool0([neuron],par)
+
+    Network(pool,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
+
 end
 
 function Network(neurons::Array{Neuron,1},tstop::Float64; par=false)
@@ -253,19 +258,51 @@ function gen_neuron(prop::Prop,k::Int64)
 end
 
 #types of neurons found in network
-function gen_neuronpool(neur::Array{Neuron,1})
-    
-    myfields=[:($(symbol("N_$i"))::Array{($(typeof(neur[i]))),1}) for i=1:length(neur)]
+function gen_neuronpool(neur::Array{Neuron,1}; par=false)
 
+    typeinds=Array(DataType,0)
+    mtypes=[typeof(neur[i]) for i=1:length(neur)]
+    #Determine types of neurons
+    for i=1:mtypes
+        if sum(mtypes[i].==typeinds)<1
+            push!(typeinds,mtypes[i])
+        end
+    end
+    
+    if par==false
+        myfields=[:($(symbol("N_$i"))::Array{($(typeinds[i])),1}) for i=1:length(typeinds)]
+    else
+        myfields=[:($(symbol("N_$i"))::DArray{($(typeinds[i])),1}) for i=1:length(typeinds)]
+    end
+    
     @eval begin
-        type $(symbol("Pool"))
+        type $(symbol("NeuronPool"))
             $(myfields...)
         end
     end
 end
 
-function test(prop::Channel,k::Int64)
+#types of neurons found in network
+function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
 
+    if par==false
+        myfields=[:($(symbol("N_1"))::Array{($(typeof(neur[1]))),1})]
+    else
+        myfields=[:($(symbol("N_1"))::DArray{($(typeof(neur[1]))),1})]
+    end
     
-    
+    @eval begin
+        type $(symbol("NeuronPool0")) <:NeuronPool
+            $(myfields...)
+        end
+
+        function NeuronPool0{T<:Neuron}(neur::Array{T,1}, par=false)
+            if par==false
+                NeuronPool0(neur)
+            else
+                NeuronPool(distribute(neur))
+            end
+        end
+        
+    end
 end
