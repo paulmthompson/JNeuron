@@ -204,12 +204,15 @@ function Network(neuron::Neuron,tstop::Float64; par=false)
 
 end
 
-function Network(neurons::Array{Neuron,1},tstop::Float64; par=false)
-    if par==false
-        Network(neurons,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))  
-    else
-        Network(distribute(neurons),0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
-    end
+function Network{T<:Neuron}(neurons::Array{T,1},tstop::Float64; par=false)
+
+    #create neuron pool
+    gen_neuronpool(neurons,par)
+
+    pool=NeuronPool0(neurons,par)
+
+    Network(pool,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))  
+
 end
 
 
@@ -258,12 +261,12 @@ function gen_neuron(prop::Prop,k::Int64)
 end
 
 #types of neurons found in network
-function gen_neuronpool(neur::Array{Neuron,1}; par=false)
+function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
 
     typeinds=Array(DataType,0)
     mtypes=[typeof(neur[i]) for i=1:length(neur)]
     #Determine types of neurons
-    for i=1:mtypes
+    for i=1:length(mtypes)
         if sum(mtypes[i].==typeinds)<1
             push!(typeinds,mtypes[i])
         end
@@ -276,32 +279,26 @@ function gen_neuronpool(neur::Array{Neuron,1}; par=false)
     end
     
     @eval begin
-        type $(symbol("NeuronPool"))
-            $(myfields...)
-        end
-    end
-end
-
-#types of neurons found in network
-function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
-
-    if par==false
-        myfields=[:($(symbol("N_1"))::Array{($(typeof(neur[1]))),1})]
-    else
-        myfields=[:($(symbol("N_1"))::DArray{($(typeof(neur[1]))),1})]
-    end
-    
-    @eval begin
-        type $(symbol("NeuronPool0")) <:NeuronPool
+        type $(symbol("NeuronPool0")) <: NeuronPool
             $(myfields...)
         end
 
-        function NeuronPool0{T<:Neuron}(neur::Array{T,1}, par=false)
-            if par==false
-                NeuronPool0(neur)
-            else
-                NeuronPool(distribute(neur))
+        function NeuronPool0{T<:Neuron}(neur::Array{T,1},par=false)
+
+            inds=Array(Array{Int64,1},0)
+            mtypes=[typeof(neur[i]) for i=1:length(neur)]
+
+            for i=1:length(fieldnames(NeuronPool0))
+                push!(inds,find(mtypes.==eltype(fieldtype(NeuronPool0,i))))
             end
+
+            if par==false
+                NeuronPool0([neur[inds[i]] for i=1:length(inds)]...)
+            else
+                NeuronPool0([distribute([neur[inds[i]]]) for i=1:length(inds)]...)
+            end
+            
+
         end
         
     end

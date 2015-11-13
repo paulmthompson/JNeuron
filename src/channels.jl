@@ -44,17 +44,7 @@ SW Jaslove  6 March, 1992
 adapted for Julia by PMT
 =#
 
-type NoCh <: Channel
-end
-
-function con_calc(prop::NoCh,v::Float64,dt::Float64)
-end
-
-function cur_calc(prop::NoCh,vars::Dict{ASCIIString,Float64},v::Float64)
-end
-
-function prop_init(prop::NoCh,v::Float64)
-end
+const q10 = 3^((6.3 - 6.3)/10)
 
 type HH <: Channel
     nodevar::Array{ASCIIString,1}
@@ -122,7 +112,7 @@ end
 function rates(prop::HH,v::Float64)
 
     #q10 = 3^((node.temp - 6.3)/10)
-    q10 = 3^((6.3 - 6.3)/10)
+    
     
     #"m" sodium activation system
     alpha = .1 * vtrap(-(v+40),10.0)
