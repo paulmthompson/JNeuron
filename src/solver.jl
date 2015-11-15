@@ -19,9 +19,11 @@ function fillA!(neuron::Neuron)
 
     nodelen=length(neuron.nodes)
     
-    A=zeros(Float64,nodelen,nodelen)
     neuron.v=zeros(Float64,nodelen)
-    neuron.delta_v=zeros(Float64,nodelen)
+    neuron.a=zeros(Float64,nodelen)
+    neuron.b=zeros(Float64,nodelen)
+    neuron.d=zeros(Float64,nodelen)
+    neuron.par=zeros(Int64,nodelen)
     neuron.rhs=zeros(Float64,nodelen)
     neuron.i_vm=zeros(Float64,nodelen)
     neuron.divm=zeros(Float64,nodelen)
@@ -45,22 +47,26 @@ function fillA!(neuron::Neuron)
                 neuron.diag_old[i] += 100/(r_c*area_n)
                 
             end
-
-            A[i,neuron.nodes[i].parent]=-neuron.nodes[i].b
-            A[i,i]=neuron.diag_old[i]
             
+        else
+
+            neuron.diag_old[i]=.001*neuron.Cm/neuron.dt
+
+            area_n=sum(neuron.nodes[i].area)
+            
+            for j in neuron.nodes[i].children
+                r_c=neuron.nodes[i].ri[2]+neuron.nodes[j].ri[1]
+                neuron.diag_old[i] += 100/(r_c*area_n)
+                
+            end
+
         end
-        #need calculation for root node
+
+        neuron.a[i]=neuron.nodes[i].a
+        neuron.b[i]=neuron.nodes[i].b
+        neuron.par[i]=neuron.nodes[i].parent
         
     end
-
-    for i=1:length(neuron.nodes)
-        for j in neuron.nodes[i].children
-            A[i,j]=-neuron.nodes[j].a
-        end
-    end
-
-    neuron.A=sparse(A)
     
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)
@@ -117,46 +123,68 @@ function main(neuron::Neuron)
             i2=0.0
 
 	    if ind==1
-		i=neuron.soma[j].ind
-		mynode=getfield(neuron.soma[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+
+                i=neuron.soma[j].ind
+                
+                if neuron.soma[j].internal==true
+                
+		    mynode=getfield(neuron.soma[j].prop,2)
+		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+                end
 
 		par=neuron.soma[j].parent
+                
 		if par != 0
                     dv=neuron.v[par]-neuron.v[i]
                     neuron.rhs[i] += neuron.soma[j].b*dv
                     neuron.rhs[par] -= neuron.soma[j].a*dv
             	end
+                
 	    elseif ind==2
-		i=neuron.axon[j].ind
-		mynode=getfield(neuron.axon[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-	
+
+                i=neuron.axon[j].ind
+                
+                if neuron.axon[j].internal==true
+                
+		    mynode=getfield(neuron.axon[j].prop,2)
+		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+                end
+
 		par=neuron.axon[j].parent
                 dv=neuron.v[par]-neuron.v[i]
                 neuron.rhs[i] += neuron.axon[j].b*dv
                 neuron.rhs[par] -= neuron.axon[j].a*dv
             	
 	    elseif ind==3
+
 		i=neuron.dendrite[j].ind
-		mynode=getfield(neuron.dendrite[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-			
+
+                if neuron.dendrite[j].internal==true
+                
+		    mynode=getfield(neuron.dendrite[j].prop,2)
+		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+                end
+                	
 		par=neuron.dendrite[j].parent			
                 dv=neuron.v[par]-neuron.v[i]
                 neuron.rhs[i] += neuron.dendrite[j].b*dv
                 neuron.rhs[par] -= neuron.dendrite[j].a*dv
+                
 	    elseif ind==4
+                
 		i=neuron.apical[j].ind
-		mynode=getfield(neuron.apical[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
 
+                if neuron.apical[j].internal==true
+                
+		    mynode=getfield(neuron.apical[j].prop,2)
+		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+                end
+                
 		par=neuron.apical[j].parent
-	
                 dv=neuron.v[par]-neuron.v[i]
                 neuron.rhs[i] += neuron.apical[j].b*dv
                 neuron.rhs[par] -= neuron.apical[j].a*dv
@@ -171,7 +199,7 @@ function main(neuron::Neuron)
     rhs_diag!(neuron)
     
     #solve A \ rhs to get delta_v
-    neuron.delta_v[:] = neuron.A \ neuron.rhs
+    hines_solve!(neuron)
 
     if ext==true
         main_ext(neuron)
@@ -252,15 +280,54 @@ end
 
 function add_delta!(neuron::Neuron)
     @fastmath @inbounds @simd for i=1:length(neuron.v)
-        neuron.v[i] += neuron.delta_v[i]
+        neuron.v[i] += neuron.rhs[i]
     end
     nothing
 end
 
 function rhs_diag!(neuron::Neuron)
     @fastmath @inbounds @simd for i=1:length(neuron.v)
-       neuron.A[i,i] = neuron.diag_old[i] + neuron.divm[i]
+       neuron.d[i] = neuron.diag_old[i] + neuron.divm[i]
        neuron.rhs[i] -= neuron.i_vm[i]
     end
 end
 
+function hines_solve!(neuron::Neuron)
+
+    p=0.0
+
+    for i=(length(neuron.d)-3):-1:1
+
+	p = -neuron.a[i] / neuron.d[i]
+	neuron.d[neuron.par[i]] -= p * -neuron.b[i]
+	neuron.rhs[neuron.par[i]] -= p * neuron.rhs[i]
+
+    end
+
+    i=length(neuron.d)-2
+
+    p = -neuron.a[i] / neuron.d[i]
+    neuron.d[neuron.par[i]] -= p * -neuron.b[i]
+    neuron.rhs[neuron.par[i]] -= p * neuron.rhs[i]
+
+    i=length(neuron.d)-2
+
+    p = -neuron.a[i] / neuron.d[i]
+    neuron.d[neuron.par[i]] -= p * -neuron.b[i]
+    neuron.rhs[neuron.par[i]] -= p * neuron.rhs[i]
+
+    neuron.rhs[length(neuron.d)-1] /= neuron.d[length(neuron.d)-1]
+	
+    i=length(neuron.d)
+
+    neuron.rhs[i] -= -neuron.b[i] * neuron.rhs[neuron.par[i]]
+    neuron.rhs[i] /= neuron.d[i]
+
+    for i=1:(length(neuron.d)-2)
+	neuron.rhs[i] -= -neuron.b[i] * neuron.rhs[neuron.par[i]]
+	neuron.rhs[i] /= neuron.d[i]
+    end
+
+nothing
+
+end

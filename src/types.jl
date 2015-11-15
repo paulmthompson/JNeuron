@@ -111,9 +111,10 @@ type Neuron0 <: Neuron
     dendrite::Array{Prop0,1}
     apical::Array{Prop0,1}
     secstack::Array{Section,1}
-    A::SparseMatrixCSC{Float64,Int64}
     v::Array{Float64,1} #intracellular voltage
-    delta_v::Array{Float64,1} #change in membrane voltage
+    a::Array{Float64,1}
+    b::Array{Float64,1}
+    d::Array{Float64,1}
     rhs::Array{Float64,1}
     Ra::Float64
     Cm::Float64
@@ -123,11 +124,12 @@ type Neuron0 <: Neuron
     divm::Array{Float64,1}
     diag_old::Array{Float64,1}
     internal_nodes::Int64
+    par::Array{Int64,1}
 
 end
 
 function Neuron0()
-    Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),spzeros(Float64,0,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0)
+    Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0,Array(Int64,0))
 end
 
 abstract NeuronPool
@@ -243,9 +245,10 @@ function gen_neuron(prop::Prop,k::Int64)
             dendrite::Array{Node{($(typeof(prop)))},1}
             apical::Array{Node{($(typeof(prop)))},1}
             secstack::Array{Section,1}
-            A::SparseMatrixCSC{Float64,Int64}
             v::Array{Float64,1} #intracellular voltage
-            delta_v::Array{Float64,1} #change in membrane voltage
+            a::Array{Float64,1}
+            b::Array{Float64,1}
+            d::Array{Float64,1}
             rhs::Array{Float64,1}
             Ra::Float64
             Cm::Float64
@@ -255,6 +258,7 @@ function gen_neuron(prop::Prop,k::Int64)
             divm::Array{Float64,1}
             diag_old::Array{Float64,1}
             internal_nodes::Int64
+            par::Array{Int64,1}
         end
     end   
 

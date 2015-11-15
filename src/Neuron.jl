@@ -113,31 +113,37 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
 
             first=length(neuron.nodes)+1
             last=length(neuron.nodes)+3
-            #approximate soma as 3 segments with everything connected at middle
+            #approximate soma as 1 segments with everything connected at middle
             
             for j=1:3
 
-                neuron.internal_nodes+=1
-                (area, ri,mypt3d) = r_a_calc(neuron.secstack[i],j,3)
                 myvars=Dict{ASCIIString,Float64}()
-
 
                 if j ==1 
                     parent=length(neuron.nodes)+2
-                    children=Array(Int64,0)                   
+                    children=Array(Int64,0)
+
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,parent,children,false,[neuron.secstack[end].pt3d[end]],Prop0()))
+                    
                 elseif j == 2
+                    neuron.internal_nodes+=1
                     parent=0
                     children=Int64[nodesec[neuron.secstack[i].child[k].refcount]+neuron.secstack[i].child[k].refcount-1 for k=1:length(neuron.secstack[i].child)]
+                    
+                    (area, ri, mypt3d) = r_a_calc(neuron.secstack[i],1,1)
                     push!(children,length(neuron.nodes))
                     push!(children,length(neuron.nodes)+2)
+
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0()))
+                    
                 else
                     parent=length(neuron.nodes)
                     children=Array(Int64,0)
+
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,parent,children,false,[neuron.secstack[end].pt3d[1]],Prop0()))
+                    
                 end
                 
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0()))
-
-
             end
                   
         end

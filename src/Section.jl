@@ -194,7 +194,7 @@ function add(neuron::Neuron,prop::Channel,k::Int64)
         end
     end
     
-    myneuron=eval(Expr(:call,ex,Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),neuron.secstack,neuron.A,neuron.v,neuron.delta_v,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes))
+    myneuron=eval(Expr(:call,ex,Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par))
 
     for i=1:length(myneuron.secstack)
 
