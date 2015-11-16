@@ -120,7 +120,6 @@ function main(neuron::Neuron)
 
     i1=0.0
     i2=0.0
-    dv=0.0
     i=0
     
     for ind=1:4
@@ -214,9 +213,6 @@ function main(neuron::Neuron)
        	end
     end
     
-    #reset rhs
-    neuron.rhs[:]=0.0
-
     neuron
     
 end
@@ -255,6 +251,7 @@ end
 function add_delta!(neuron::Neuron)
     @fastmath @inbounds @simd for i=1:length(neuron.v)
         neuron.v[i] += neuron.rhs[i]
+        neuron.rhs[i] = 0.0
     end
     nothing
 end
