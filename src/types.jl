@@ -123,13 +123,13 @@ type Neuron0 <: Neuron
     i_vm::Array{Float64,1}
     divm::Array{Float64,1}
     diag_old::Array{Float64,1}
-    internal_nodes::Int64
+    internal_nodes::Array{Array{Int64,1},1}
     par::Array{Int64,1}
 
 end
 
 function Neuron0()
-    Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0,Array(Int64,0))
+    Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),[Array(Int64,0) for i=1:4],Array(Int64,0))
 end
 
 abstract NeuronPool
@@ -257,7 +257,7 @@ function gen_neuron(prop::Prop,k::Int64)
             i_vm::Array{Float64,1}
             divm::Array{Float64,1}
             diag_old::Array{Float64,1}
-            internal_nodes::Int64
+            internal_nodes::Array{Array{Int64,1},1}
             par::Array{Int64,1}
         end
     end   

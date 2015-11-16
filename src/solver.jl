@@ -67,6 +67,15 @@ function fillA!(neuron::Neuron)
         neuron.par[i]=neuron.nodes[i].parent
         
     end
+
+    for i=1:4
+        for j=1:length(getfield(neuron,i))
+            if getfield(neuron,i)[j].internal==true
+                push!(neuron.internal_nodes[i],j)
+            end
+        end
+    end
+    
     
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)
@@ -113,11 +122,10 @@ function main(neuron::Neuron)
     i2=0.0
     dv=0.0
     i=0
-    sec=Int64[length(getfield(neuron,ind)) for ind=1:4]
     
     for ind=1:4
 
-        for j=1:sec[ind]
+        for j in neuron.internal_nodes[ind]
 
             i1=0.0
             i2=0.0
@@ -125,43 +133,35 @@ function main(neuron::Neuron)
 	    if ind==1
 
                 i=neuron.soma[j].ind
-                
-                if neuron.soma[j].internal==true                           
-		    mynode=getfield(neuron.soma[j].prop,2)
-		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-                end
+                                        
+		mynode=getfield(neuron.soma[j].prop,2)
+		i1+=cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
                 
 	    elseif ind==2
 
                 i=neuron.axon[j].ind
                 
-                if neuron.axon[j].internal==true
-		    mynode=getfield(neuron.axon[j].prop,2)
-		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-                end
+		mynode=getfield(neuron.axon[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
             	
 	    elseif ind==3
 
                 i=neuron.dendrite[j].ind
 
-                if neuron.dendrite[j].internal==true
-		    mynode=getfield(neuron.dendrite[j].prop,2)
-		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-                end
+		mynode=getfield(neuron.dendrite[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
                 
 	    elseif ind==4
 
                 i=neuron.apical[j].ind
                 
-                if neuron.apical[j].internal==true
-		    mynode=getfield(neuron.apical[j].prop,2)
-		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-                end
-                
+		mynode=getfield(neuron.apical[j].prop,2)
+		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+
 	    end
             
             neuron.i_vm[i] = i1
@@ -193,7 +193,7 @@ function main(neuron::Neuron)
     #find non voltage states (like gate variables for conductances)
 
     for k=1:4
-	for j=1:sec[k]
+	for j in neuron.internal_nodes[k]
 	    if k==1
 		i=neuron.soma[j].ind
 		mynode=getfield(neuron.soma[j].prop,2)

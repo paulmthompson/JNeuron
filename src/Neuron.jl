@@ -69,7 +69,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
 
                     first=length(neuron.nodes)+1
                     last=length(neuron.nodes)+2
-                    neuron.internal_nodes+=1
                     internodes+=1
 
                 #create regular node
@@ -90,7 +89,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 elseif j==nseglist[i]
 
                     last=length(neuron.nodes)+2
-                    neuron.internal_nodes+=1
                     internodes+=1
                 
                 #create regular node
@@ -100,8 +98,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop0()))
 
                 else
-
-                    neuron.internal_nodes+=1
                 
                     push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0()))
 
@@ -126,7 +122,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     push!(neuron.nodes,Node(length(neuron.nodes)+1,myvars,[100.0],[0.0,0.0],0.0,0.0,parent,children,false,[neuron.secstack[end].pt3d[end]],Prop0()))
                     
                 elseif j == 2
-                    neuron.internal_nodes+=1
+
                     parent=0
                     children=Int64[nodesec[neuron.secstack[i].child[k].refcount]+neuron.secstack[i].child[k].refcount-1 for k=1:length(neuron.secstack[i].child)]
                     
