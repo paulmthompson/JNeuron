@@ -1,5 +1,5 @@
 
-export HH
+export Passive,HH
 
 
 #=
@@ -12,18 +12,16 @@ function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
     x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
 end
 
-#=
-type Passive <: Prop
+
+type Passive <: Channel
     nodevar::Array{ASCIIString,1}
-    v::Float64
-    i::Float64
     g::Float64
     e::Float64
 end
 
 function Passive()
     myvars=Array(ASCIIString,0)
-    Passive(myvars,0.0,.001,.07)
+    Passive(myvars,.001,.07)
 end
 
 function con_calc(prop::Passive,node::Node,v::Float64,dt::Float64)
@@ -31,9 +29,9 @@ function con_calc(prop::Passive,node::Node,v::Float64,dt::Float64)
 end
 
 function cur_calc(prop::Passive,node::Node,v::Float64)
-    prop.i=prop.g*(v-prop.e)
+    prop.g*(v-prop.e)
 end
-=#
+
 #=
 HH
  This is the original Hodgkin-Huxley treatment for the set of sodium, 
