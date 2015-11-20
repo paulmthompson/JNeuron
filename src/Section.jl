@@ -120,70 +120,37 @@ function interp_area(x1::Float64, x2::Float64, x3::Float64)
     [frac1,frac2]
 end
 
-function add!(node::Node,prop::Channel)
-
-    if sum([typeof(node.prop[i])==typeof(prop) for i=1:length(node.prop)])==0
-
-        push!(node.prop,typeof(prop)())
-        
-        for i=1:length(prop.nodevar)
-            if !haskey(node.vars,prop.nodevar[i])
-                node.vars[prop.nodevar[i]]=0.0
-            end
-        end
-    else
-        println("Property also exists in node. Not inserting")
-    end
-           
-    nothing        
-end
-
-function add!(neuron::Neuron,prop::Channel)
-
-    for j=1:length(neuron.nodes)
-
-        if neuron.nodes[j].internal==true
-
-            if sum([typeof(prop)==getfield(neuron.nodes[j].prop,i) for i=2:5])==0
-
-                neuron.nodes[j].prop=Prop(neuron.nodes[j].prop.num+1,typeof(prop)(),NoCh(),NoCh(),NoCh(),NoCh())
-        
-                for i=1:length(prop.nodevar)
-                    if !haskey(neuron.nodes[j].vars,prop.nodevar[i])
-                    neuron.nodes[j].vars[prop.nodevar[i]]=0.0
-                    end
-                end
-            else
-                println("Property also exists in node. Not inserting")
-            end
-
-        end
-        
-    end
-             
-    nothing
-end
-
-function add(neuron::Neuron,prop::Channel,k::Int64)
+function add(neuron::Neuron,prop::Channel)
 
     myprop=Array(Channel,1)
 
     myprop[1]=prop
     
-    gen_prop(myprop,1)
+    myneuron=add(neuron,myprop)
+    
+end
 
-    ex = symbol("Prop_$k")
+function add{T<:Channel}(neuron::Neuron,prop_array::Array{T,1})
 
-    myprop=eval(Expr(:call,ex,0,myprop...))
+    global num_neur::Int64
+    global num_prop::Int64
 
-    gen_neuron(myprop,k)
+    num_prop+=1
+    gen_prop(prop_array,num_prop)
 
-    ex = symbol("Neuron_$k")
+    ex = symbol("Prop_$num_prop")
+
+    myprop=eval(Expr(:call,ex,0,prop_array...))
+
+    num_neur+=1
+    gen_neuron(myprop,num_neur)
+
+    ex = symbol("Neuron_$num_neur")
 
     newnodes=Array(Node{typeof(myprop)},length(neuron.nodes))
 
     for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron.nodes[i],typeof(myprop)(i,prop))
+        newnodes[i]=Node(neuron.nodes[i],typeof(myprop)(i,prop_array...))
 
         for j=2:length(fieldnames(myprop))
             for k=1:length(getfield(myprop,j).nodevar)
@@ -195,6 +162,64 @@ function add(neuron::Neuron,prop::Channel,k::Int64)
     end
     
     myneuron=eval(Expr(:call,ex,Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par))
+
+    reset_pnode!(myneuron)
+
+    myneuron
+    
+end
+
+function add{T<:Channel}(neuron::Neuron,prop_array::Array{Array{T,1},1})
+
+    global num_neur::Int64
+    global num_prop::Int64
+    
+    new_prop_array=Array(Prop,4)
+    
+    for i=1:4
+
+        num_prop+=1
+        gen_prop(prop_array[i],num_prop)
+
+        ex = symbol("Prop_$num_prop")
+
+        new_prop_array[i]=eval(Expr(:call,ex,0,prop_array[i]...))
+
+    end
+
+    num_neur+=1
+    gen_neuron(new_prop_array,num_neur)
+
+    ex = symbol("Neuron_$num_neur")
+
+    newnodes=Array(Node,length(neuron.nodes))
+
+    for i=1:length(neuron.secstack)
+        for j=1:length(neuron.secstack[i].pnode)
+            ind=neuron.secstack[i].pnode[j].ind
+            mtype=neuron.secstack[i].mtype
+
+            newnodes[ind]=Node(neuron.secstack[i].pnode[j],typeof(new_prop_array[mtype])(ind,prop_array[mtype]...))
+
+            for k=2:length(fieldnames(new_prop_array[mtype]))
+                for h=1:length(getfield(new_prop_array[mtype],k).nodevar)
+                    if !haskey(newnodes[ind].vars,getfield(new_prop_array[mtype],k).nodevar[h])
+                        newnodes[ind].vars[getfield(new_prop_array[mtype],k).nodevar[h]]=0.0
+                    end
+                end
+            end
+        end
+    end
+   
+    myneuron=eval(Expr(:call,ex,Array(typeof(new_prop_array[1]),0),Array(typeof(new_prop_array[2]),0),Array(typeof(new_prop_array[3]),0),Array(typeof(new_prop_array[4]),0),neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par))
+
+    reset_pnode!(myneuron)
+
+    myneuron
+    
+end
+
+function reset_pnode!(myneuron::Neuron)
 
     for i=1:length(myneuron.secstack)
 
@@ -212,29 +237,13 @@ function add(neuron::Neuron,prop::Channel,k::Int64)
         
     end
 
-    myneuron
-    
-end
-
-function change_nseg!(sec::Section,nseg::Int64)
-
-    newnodes=Array(Node,0)
-   
-    for i=1:nseg
-        push!(newnodes,Node(sec,i,nseg))
-    end
-
-    sec.pnode=newnodes
-
     nothing
     
 end
+
 
 function Node{T<:Prop}(node::Node{Prop0},myprop::T)
     Node(node.ind,node.vars,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,deepcopy(myprop))
 end
 
-function define_shape!(neuron::Neuron)
-
-end
 

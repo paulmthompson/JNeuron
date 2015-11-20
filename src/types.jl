@@ -51,8 +51,8 @@ These data containers don't help us to easily see the big picture of how the neu
 
 =#
 
-
-#abstract Prop #Property of section (HH, passive etc). contains all of the stuff you need to calc things
+global num_neur = 0
+global num_prop = 0
 
 abstract Channel
 
@@ -222,7 +222,7 @@ myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)
 
 
 #Combination of channels found
-function gen_prop(a::Array{Channel,1},k::Int64)
+function gen_prop{T<:Channel}(a::Array{T,1},k::Int64)
 
     myfields=[:($(symbol("I_$i"))::($(typeof(a[i])))) for i=1:length(a)]
 
@@ -244,6 +244,34 @@ function gen_neuron(prop::Prop,k::Int64)
             axon::Array{Node{($(typeof(prop)))},1}
             dendrite::Array{Node{($(typeof(prop)))},1}
             apical::Array{Node{($(typeof(prop)))},1}
+            secstack::Array{Section,1}
+            v::Array{Float64,1} #intracellular voltage
+            a::Array{Float64,1}
+            b::Array{Float64,1}
+            d::Array{Float64,1}
+            rhs::Array{Float64,1}
+            Ra::Float64
+            Cm::Float64
+            dt::Float64
+            nodes::Array{Node,1}
+            i_vm::Array{Float64,1}
+            divm::Array{Float64,1}
+            diag_old::Array{Float64,1}
+            internal_nodes::Array{Array{Int64,1},1}
+            par::Array{Int64,1}
+        end
+    end   
+
+end
+
+function gen_neuron{T<:Prop}(prop::Array{T,1},k::Int64)
+
+    @eval begin
+        type $(symbol("Neuron_$k")) <: Neuron
+            soma::Array{Node{($(typeof(prop[1])))},1}
+            axon::Array{Node{($(typeof(prop[2])))},1}
+            dendrite::Array{Node{($(typeof(prop[3])))},1}
+            apical::Array{Node{($(typeof(prop[4])))},1}
             secstack::Array{Section,1}
             v::Array{Float64,1} #intracellular voltage
             a::Array{Float64,1}
