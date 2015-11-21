@@ -12,6 +12,8 @@ function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
     x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
 end
 
+function prop_init(prop::Channel,v::Float64)
+end
 
 type Passive <: Channel
     nodevar::Array{ASCIIString,1}
@@ -24,11 +26,11 @@ function Passive()
     Passive(myvars,.001,.07)
 end
 
-function con_calc(prop::Passive,node::Node,v::Float64,dt::Float64)
+function con_calc(prop::Passive,v::Float64,dt::Float64)
 
 end
 
-function cur_calc(prop::Passive,node::Node,v::Float64)
+function cur_calc(prop::Passive,vars::Dict{ASCIIString,Float64},v::Float64)
     prop.g*(v-prop.e)
 end
 

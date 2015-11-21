@@ -140,10 +140,11 @@ function main(neuron::Neuron)
 	    elseif ind==2
 
                 i=neuron.axon[j].ind
-                
-		mynode=getfield(neuron.axon[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+      
+		    mynode=getfield(neuron.axon[j].prop,2)
+		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
+		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
+
             	
 	    elseif ind==3
 
