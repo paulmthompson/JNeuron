@@ -124,7 +124,7 @@ function main(neuron::Neuron)
     
     for ind=1:4
 
-        for j in neuron.internal_nodes[ind]
+        @fastmath @inbounds for j in neuron.internal_nodes[ind]
 
             i1=0.0
             i2=0.0
@@ -193,7 +193,7 @@ function main(neuron::Neuron)
     #find non voltage states (like gate variables for conductances)
 
     for k=1:4
-	for j in neuron.internal_nodes[k]
+	@fastmath @inbounds for j in neuron.internal_nodes[k]
 	    if k==1
 		i=neuron.soma[j].ind
 		mynode=getfield(neuron.soma[j].prop,2)

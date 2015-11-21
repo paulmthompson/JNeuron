@@ -83,8 +83,8 @@ function con_calc(prop::HH,v::Float64,dt::Float64)
     prop.n=implicit_euler(prop.n,dt,prop.ntau,prop.ninf)
     prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
   
-    prop.gna = prop.gnabar * prop.m^3 * prop.h
-    prop.gk = prop.gkbar * prop.n^4
+    prop.gna = prop.gnabar * prop.m * prop.m * prop.m * prop.h
+    prop.gk = prop.gkbar * prop.n * prop.n * prop.n * prop.n
 
     nothing
     
