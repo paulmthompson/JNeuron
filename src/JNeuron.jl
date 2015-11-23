@@ -1,7 +1,7 @@
 
 module JNeuron
 
-using ArrayViews, DistributedArrays
+using ArrayViews, DistributedArrays, Yeppp, PowerSeries
 
 #types
 export Neuron, Network, Intracellular, Extracellular, Stim
