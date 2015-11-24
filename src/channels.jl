@@ -18,7 +18,9 @@ function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
     x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
 end
 
-function prop_init(prop::Channel,v::Float64)
+function speed_init(prop::Channel,l::Int64)
+    :(begin
+      end)
 end
 
 type Passive <: Channel
@@ -32,12 +34,27 @@ function Passive()
     Passive(myvars,.001,.07)
 end
 
-function con_calc(prop::Passive,v::Float64,dt::Float64)
-
+function speed_init(prop::Passive,l::Int64)
+    :(begin
+      p.p[$(1+l),i]=.001
+      p.p[$(2+l),i]=.07
+      end)
 end
 
-function cur_calc(prop::Passive,vars::Dict{ASCIIString,Float64},v::Float64)
-    prop.g*(v-prop.e)
+function speed_con(myprop::Passive,l::Int64)
+
+    :(begin
+      end)
+    
+end
+
+function speed_cur(myprop::Passive,l::Int64)
+
+    :(begin
+    
+      im[k]+= p.p[$(2+l),i]*(v[k]- p.p[$(1+l),i])
+
+      end)
 end
 
 #=
@@ -79,69 +96,95 @@ function HH()
     HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,11)...)
 end
 
-function con_calc(prop::HH,v::Float64,dt::Float64)
-    rates(prop,v)
+function speed_cur(myprop::HH,l::Int64)
 
-    prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
-    prop.n=implicit_euler(prop.n,dt,prop.ntau,prop.ninf)
-    prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
-  
-    prop.gna = prop.gnabar * prop.m * prop.m * prop.m * prop.h
-    prop.gk = prop.gkbar * prop.n * prop.n * prop.n * prop.n
+    :(begin
+      
+      @inbounds ina = p.p[$(5+l),i] * (v[k] - ena)
+      @inbounds ik  = p.p[$(6+l),i] * (v[k] - ek)
+      @inbounds il  = p.p[$(3+l),i] * (v[k] - p.p[$(4+l),i])
 
-    nothing
+      @inbounds im[k]+=ina+ik+il
+
+      end)
     
 end
 
-function cur_calc(prop::HH,vars::Dict{ASCIIString,Float64},v::Float64)
-    
-    ina = prop.gna * (v - vars["ena"])
-    ik = prop.gk * (v - vars["ek"])
-    il = prop.gl * (v - prop.el)
+function speed_con(myprop::HH,l::Int64)
 
-    ina + ik + il
+    :(begin
+
+        #"m" sodium activation system
+        @inbounds alpha = .1 * vtrap(-(v[k]+40.0),10.0)
+        @inbounds beta =  4.0 * exp(-(v[k]+65.0)/18.0)
+        mysum = alpha + beta
+        @inbounds p.p[$(13+l),i] = 1.0/(q10*mysum)
+        @inbounds p.p[$(10+l),i] = alpha/mysum
+ 
+        #"h" sodium inactivation system
+        @inbounds alpha = .07 * exp(-(v[k]+65.0)/20.0)
+        @inbounds beta = 1.0 / (exp(-(v[k]+35.0)/10.0)+1)
+        mysum = alpha + beta
+        @inbounds p.p[$(14+l),i] = 1.0/(q10*mysum)
+        @inbounds p.p[$(11+l),i] = alpha/mysum
+    
+        #"n" potassium activation system
+        @inbounds alpha = .01*vtrap(-(v[k]+55.0),10.0) 
+        @inbounds beta = .125*exp(-(v[k]+65.0)/80.0)
+        mysum = alpha + beta
+        @inbounds p.p[$(15+l),i] = 1/(q10*mysum)
+        @inbounds p.p[$(12+l),i] = alpha/mysum
+
+        @inbounds p.p[$(7+l),i]=implicit_euler(p.p[$(7+l),i],dt,p.p[$(13+l),i],p.p[$(10+l),i])
+        @inbounds p.p[$(8+l),i]=implicit_euler(p.p[$(8+l),i],dt,p.p[$(14+l),i],p.p[$(11+l),i])
+        @inbounds p.p[$(9+l),i]=implicit_euler(p.p[$(9+l),i],dt,p.p[$(15+l),i],p.p[$(12+l),i])
+
+        @inbounds p.p[$(5+l),i] = p.p[$(1+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(8+l),i]
+        @inbounds p.p[$(6+l),i] = p.p[$(2+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i]
+
+
+    end)
+           
 end
 
-
-function prop_init(prop::HH,v::Float64)
-    rates(prop,v)
-    prop.m=prop.minf
-    prop.h=prop.hinf
-    prop.n=prop.ninf
-
-    prop.gna = prop.gnabar * prop.m^3 * prop.h
-    prop.gk = prop.gkbar * prop.n^4
+function speed_init(myprop::HH,l::Int64)
     
-    nothing
-end
+    :(begin
 
-function rates(prop::HH,v::Float64)
+      @inbounds p.p[$(1+l),i]=.12
+      @inbounds p.p[$(2+l),i]=.036
+      @inbounds p.p[$(3+l),i]=.0003
+      @inbounds p.p[$(4+l),i]=-54.3
 
-    #q10 = 3^((node.temp - 6.3)/10)
+        #"m" sodium activation system
+        @inbounds alpha = .1 * vtrap(-(v[k]+40.0),10.0)
+        @inbounds beta =  4.0 * exp(-(v[k]+65.0)/18.0)
+        mysum = alpha + beta
+        @inbounds p.p[$(13+l),i] = 1.0/(q10*mysum)
+        @inbounds p.p[$(10+l),i] = alpha/mysum
+ 
+        #"h" sodium inactivation system
+        @inbounds alpha = .07 * exp(-(v[k]+65.0)/20.0)
+        @inbounds beta = 1.0 / (exp(-(v[k]+35.0)/10.0)+1)
+        mysum = alpha + beta
+        @inbounds p.p[$(14+l),i] = 1.0/(q10*mysum)
+        @inbounds p.p[$(11+l),i] = alpha/mysum
     
-    
-    #"m" sodium activation system
-    alpha = .1 * vtrap(-(v+40),10.0)
-    beta =  4 * exp(-(v+65)/18)
-    mysum = alpha + beta
-    prop.mtau = 1/(q10*mysum)
-    prop.minf = alpha/mysum
-    
-    #"h" sodium inactivation system
-    alpha = .07 * exp(-(v+65)/20)
-    beta = 1 / (exp(-(v+35)/10) + 1)
-    mysum = alpha + beta
-    prop.htau = 1/(q10*mysum)
-    prop.hinf = alpha/mysum
-    
-    #"n" potassium activation system
-    alpha = .01*vtrap(-(v+55),10.0) 
-    beta = .125*exp(-(v+65)/80)
-    mysum = alpha + beta
-    prop.ntau = 1/(q10*mysum)
-    prop.ninf = alpha/mysum
+        #"n" potassium activation system
+        @inbounds alpha = .01*vtrap(-(v[k]+55.0),10.0) 
+        @inbounds beta = .125*exp(-(v[k]+65.0)/80.0)
+        mysum = alpha + beta
+        @inbounds p.p[$(15+l),i] = 1/(q10*mysum)
+        @inbounds p.p[$(12+l),i] = alpha/mysum
 
-    nothing
+        @inbounds p.p[$(7+l),i]=p.p[$(10+l),i]
+        @inbounds p.p[$(8+l),i]=p.p[$(11+l),i]
+        @inbounds p.p[$(9+l),i]=p.p[$(12+l),i]
+
+        @inbounds p.p[$(5+l),i] = p.p[$(1+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(8+l),i]
+        @inbounds p.p[$(6+l),i] = p.p[$(2+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i]
+    end)
+
 end
 
 function vtrap(x::Float64,y::Float64)
