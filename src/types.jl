@@ -224,13 +224,17 @@ myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)
 #Combination of channels found
 function gen_prop{T<:Channel}(a::Array{T,1},k::Int64)
 
-    myfields=[:($(symbol("I_$i"))::($(typeof(a[i])))) for i=1:length(a)]
+    num_fields=sum([length(fieldnames(a[i]))-1 for i=1:length(a)])
 
     @eval begin
         type $(symbol("Prop_$k")) <: Prop
-            num::Int64
-            $(myfields...)
+            p::Array{Float64,2}
         end
+
+        function $(symbol("Prop_$k"))(n::Int64)
+            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+        end
+        
     end
 
 end
@@ -240,10 +244,10 @@ function gen_neuron(prop::Prop,k::Int64)
 
     @eval begin
         type $(symbol("Neuron_$k")) <: Neuron
-            soma::Array{Node{($(typeof(prop)))},1}
-            axon::Array{Node{($(typeof(prop)))},1}
-            dendrite::Array{Node{($(typeof(prop)))},1}
-            apical::Array{Node{($(typeof(prop)))},1}
+            soma::($(typeof(prop)))
+            axon::($(typeof(prop)))
+            dendrite::($(typeof(prop)))
+            apical::($(typeof(prop)))
             secstack::Array{Section,1}
             v::Array{Float64,1} #intracellular voltage
             a::Array{Float64,1}
@@ -259,6 +263,8 @@ function gen_neuron(prop::Prop,k::Int64)
             diag_old::Array{Float64,1}
             internal_nodes::Array{Array{Int64,1},1}
             par::Array{Int64,1}
+            v1::Array{Float64,1}
+            i2::Array{Float64,1}
         end
     end   
 
@@ -268,10 +274,10 @@ function gen_neuron{T<:Prop}(prop::Array{T,1},k::Int64)
 
     @eval begin
         type $(symbol("Neuron_$k")) <: Neuron
-            soma::Array{Node{($(typeof(prop[1])))},1}
-            axon::Array{Node{($(typeof(prop[2])))},1}
-            dendrite::Array{Node{($(typeof(prop[3])))},1}
-            apical::Array{Node{($(typeof(prop[4])))},1}
+            soma::($(typeof(prop[1])))
+            axon::($(typeof(prop[2])))
+            dendrite::($(typeof(prop[3])))
+            apical::($(typeof(prop[4])))
             secstack::Array{Section,1}
             v::Array{Float64,1} #intracellular voltage
             a::Array{Float64,1}
@@ -287,6 +293,8 @@ function gen_neuron{T<:Prop}(prop::Array{T,1},k::Int64)
             diag_old::Array{Float64,1}
             internal_nodes::Array{Array{Int64,1},1}
             par::Array{Int64,1}
+            v1::Array{Float64,1}
+            i2::Array{Float64,1}
         end
     end   
 

@@ -28,7 +28,9 @@ function fillA!(neuron::Neuron)
     neuron.i_vm=zeros(Float64,nodelen)
     neuron.divm=zeros(Float64,nodelen)
     neuron.diag_old=zeros(Float64,nodelen)
-
+    neuron.v1=zeros(Float64,nodelen)
+    neuron.i2=zeros(Float64,nodelen)
+    
     for i=1:length(neuron.nodes)
 
         if neuron.nodes[i].parent != 0
@@ -68,15 +70,20 @@ function fillA!(neuron::Neuron)
         
     end
 
-    for i=1:4
-        for j=1:length(getfield(neuron,i))
-            if getfield(neuron,i)[j].internal==true
-                push!(neuron.internal_nodes[i],j)
+
+    for i=1:length(neuron.secstack)
+        for j=1:length(neuron.secstack[i].pnode)
+            if neuron.secstack[i].pnode[j].internal==true
+                push!(neuron.internal_nodes[neuron.secstack[i].mtype],neuron.secstack[i].pnode[j].ind)
             end
         end
     end
-    
-    
+
+    neuron.soma=typeof(neuron.soma)(length(neuron.internal_nodes[1]))
+    neuron.axon=typeof(neuron.axon)(length(neuron.internal_nodes[2]))
+    neuron.dendrite=typeof(neuron.dendrite)(length(neuron.internal_nodes[3]))
+    neuron.apical=typeof(neuron.apical)(length(neuron.internal_nodes[4]))
+ 
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)
         neuron.diag_ext_old=diag(neuron.A_ext)
@@ -95,13 +102,13 @@ function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
 
     #initial V
     neuron.v[:]=vi
+
+    for i=1:4
+        init!(getfield(neuron,i),neuron.v,neuron.internal_nodes[i])
+    end
     
     #initial states of channels at nodes
     for i=1:length(neuron.nodes)
-        for j=2:length(fieldnames(neuron.nodes[i].prop))
-            prop_init(getfield(neuron.nodes[i].prop,j),neuron.v[i])
-        end
-
         mykeys=keys(neuron.nodes[i].vars)
         for mykey in mykeys
             neuron.nodes[i].vars[mykey]=myconstants[mykey]
@@ -117,70 +124,22 @@ function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
-
-    i1=0.0
-    i2=0.0
-    i=0
     
     for ind=1:4
 
-        @fastmath @inbounds for j in neuron.internal_nodes[ind]
+        cur!(getfield(neuron,ind),neuron.v,neuron.i_vm,neuron.internal_nodes[ind])
+        cur!(getfield(neuron,ind),neuron.v1,neuron.i2,neuron.internal_nodes[ind])
+        
+    end
 
-            i1=0.0
-            i2=0.0
-
-	    if ind==1
-
-                i=neuron.soma[j].ind
-                                        
-		mynode=getfield(neuron.soma[j].prop,2)
-		i1+=cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-                
-	    elseif ind==2
-
-                i=neuron.axon[j].ind
-      
-		    mynode=getfield(neuron.axon[j].prop,2)
-		    i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		    i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-
-            	
-	    elseif ind==3
-
-                i=neuron.dendrite[j].ind
-
-		mynode=getfield(neuron.dendrite[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-                
-	    elseif ind==4
-
-                i=neuron.apical[j].ind
-                
-		mynode=getfield(neuron.apical[j].prop,2)
-		i1+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i])
-		i2+=JNeuron.cur_calc(mynode,neuron.nodes[i].vars,neuron.v[i]+.001)
-
-	    end
-            
-            neuron.i_vm[i] = i1
-            neuron.divm[i] = (i2-i1)/.001
-
-       	end         
+    @inbounds @simd for i=1:length(neuron.v)
+        neuron.divm[i] = (neuron.i2[i]-neuron.i_vm[i])/.001
     end
 
     rhs_diag!(neuron)
     
     #solve A \ rhs to get delta_v
     hines_solve!(neuron)
-
-    if ext==true
-        main_ext(neuron)
-        neuron.delta_vext = neuron.A_ext \ neuron.rhs_ext
-    end
- 
-    #if second order correct, currents are updated?
 
     #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
     if ext==true
@@ -192,28 +151,10 @@ function main(neuron::Neuron)
 
     #find non voltage states (like gate variables for conductances)
 
-    for k=1:4
-	@fastmath @inbounds for j in neuron.internal_nodes[k]
-	    if k==1
-		i=neuron.soma[j].ind
-		mynode=getfield(neuron.soma[j].prop,2)
-		con_calc(mynode,neuron.v[i],neuron.dt)
-	    elseif k==2
-		i=neuron.axon[j].ind
-		mynode=getfield(neuron.axon[j].prop,2)
-		con_calc(mynode,neuron.v[i],neuron.dt)
-	    elseif k==3
-		i=neuron.dendrite[j].ind
-		mynode=getfield(neuron.dendrite[j].prop,2)
-		con_calc(mynode,neuron.v[i],neuron.dt)
-	    elseif k==4
-		i=neuron.apical[j].ind
-		mynode=getfield(neuron.apical[j].prop,2)
-		con_calc(mynode,neuron.v[i],neuron.dt)
-	    end
-       	end
+    for ind=1:4
+        con!(getfield(neuron,ind),neuron.v,neuron.internal_nodes[ind])     
     end
-    
+ 
     neuron
     
 end
@@ -253,6 +194,9 @@ function add_delta!(neuron::Neuron)
     @fastmath @inbounds @simd for i=1:length(neuron.v)
         neuron.v[i] += neuron.rhs[i]
         neuron.rhs[i] = 0.0
+        neuron.v1[i]=neuron.v[i]+.001
+        neuron.i2[i]=0.0
+        neuron.i_vm[i]=0.0
     end
     nothing
 end
@@ -325,3 +269,4 @@ function hines_solve!(neuron::Neuron)
 nothing
 
 end
+

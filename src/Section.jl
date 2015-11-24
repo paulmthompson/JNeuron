@@ -140,7 +140,9 @@ function add{T<:Channel}(neuron::Neuron,prop_array::Array{T,1})
 
     ex = symbol("Prop_$num_prop")
 
-    myprop=eval(Expr(:call,ex,0,prop_array...))
+    myprop=eval(Expr(:call,ex,0))
+
+    gen_current(prop_array,myprop)
 
     num_neur+=1
     gen_neuron(myprop,num_neur)
@@ -150,7 +152,7 @@ function add{T<:Channel}(neuron::Neuron,prop_array::Array{T,1})
     newnodes=Array(Node{typeof(myprop)},length(neuron.nodes))
 
     for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron.nodes[i],typeof(myprop)(i,prop_array...))
+        newnodes[i]=Node(neuron.nodes[i],typeof(myprop)(0))
 
         for j=2:length(fieldnames(myprop))
             for k=1:length(getfield(myprop,j).nodevar)
@@ -161,7 +163,7 @@ function add{T<:Channel}(neuron::Neuron,prop_array::Array{T,1})
         end
     end
     
-    myneuron=eval(Expr(:call,ex,Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),Array(typeof(myprop),0),neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par))
+    myneuron=eval(Expr(:call,ex,myprop,myprop,myprop,myprop,neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par,zeros(Float64,length(neuron.v)),zeros(Float64,length(neuron.v))))
 
     reset_pnode!(myneuron)
 
@@ -183,7 +185,9 @@ function add{T<:Channel}(neuron::Neuron,prop_array::Array{Array{T,1},1})
 
         ex = symbol("Prop_$num_prop")
 
-        new_prop_array[i]=eval(Expr(:call,ex,0,prop_array[i]...))
+        new_prop_array[i]=eval(Expr(:call,ex,0))
+
+        gen_current(props_array[i],$(ex))
 
     end
 
@@ -211,7 +215,7 @@ function add{T<:Channel}(neuron::Neuron,prop_array::Array{Array{T,1},1})
         end
     end
    
-    myneuron=eval(Expr(:call,ex,Array(typeof(new_prop_array[1]),0),Array(typeof(new_prop_array[2]),0),Array(typeof(new_prop_array[3]),0),Array(typeof(new_prop_array[4]),0),neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par))
+    myneuron=eval(Expr(:call,ex,new_prop_array[1],new_prop_array[2],new_prop_array[3],new_prop_array[4],neuron.secstack,neuron.v,neuron.a,neuron.b,neuron.d,neuron.rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,neuron.i_vm,neuron.divm,neuron.diag_old,neuron.internal_nodes,neuron.par,zeros(Float64,length(neuron.v)),zeros(Float64,length(neuron.v))))
 
     reset_pnode!(myneuron)
 
@@ -224,12 +228,6 @@ function reset_pnode!(myneuron::Neuron)
     for i=1:length(myneuron.secstack)
 
         first=myneuron.secstack[i].pnode[1].ind
-
-        for j=1:length(myneuron.secstack[i].pnode)
-            
-            push!(getfield(myneuron,myneuron.secstack[i].mtype),myneuron.nodes[myneuron.secstack[i].pnode[j].ind])
-            
-        end
 
         last=myneuron.secstack[i].pnode[end].ind
 

@@ -3,6 +3,7 @@ export Passive,HH
 
 const power_exp=Base.exp(series(0.0,1.0,zeros(Float64,6)...))
 
+
 function exp(x::Float64)
     polyval(power_exp,x)::Float64
 end
@@ -62,23 +63,20 @@ type HH <: Channel
     el::Float64
     gna::Float64
     gk::Float64
-    il::Float64
     m::Float64
     h::Float64
-    n::Float64
+    n::Float64 #9
     minf::Float64
     hinf::Float64
     ninf::Float64
-    ina::Float64
-    ik::Float64
     mtau::Float64
-    ntau::Float64
     htau::Float64
+    ntau::Float64 #15
 end
 
 function HH()
     myvars=["ena", "ek"]
-    HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,14)...)
+    HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,11)...)
 end
 
 function con_calc(prop::HH,v::Float64,dt::Float64)
@@ -97,11 +95,11 @@ end
 
 function cur_calc(prop::HH,vars::Dict{ASCIIString,Float64},v::Float64)
     
-    prop.ina = prop.gna * (v - vars["ena"])
-    prop.ik = prop.gk * (v - vars["ek"])
-    prop.il = prop.gl * (v - prop.el)
+    ina = prop.gna * (v - vars["ena"])
+    ik = prop.gk * (v - vars["ek"])
+    il = prop.gl * (v - prop.el)
 
-    prop.ina + prop.ik + prop.il
+    ina + ik + il
 end
 
 
