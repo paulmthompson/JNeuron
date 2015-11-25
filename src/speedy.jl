@@ -18,7 +18,7 @@ function gen_current{T<:Channel}(props::Array{T,1},myprop::Prop)
 
         function con!(p::$(typeof(myprop)),v::Array{Float64,1},internal::Array{Int64,1},dt=.025)
 
-            @fastmath @simd for i=1:length(internal)
+            @fastmath for i=1:length(internal)
                 k=internal[i]
                 $([confields[j] for j=1:length(confields)]...)
             end
@@ -28,7 +28,7 @@ function gen_current{T<:Channel}(props::Array{T,1},myprop::Prop)
 
         function cur!(p::$(typeof(myprop)),v::Array{Float64,1},im::Array{Float64,1},internal::Array{Int64,1})
 
-            @fastmath @simd for i=1:length(internal)
+            @fastmath for i=1:length(internal)
                 k=internal[i]
                 $([curfields[j] for j=1:length(curfields)]...)
             end

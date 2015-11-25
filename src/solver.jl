@@ -234,7 +234,7 @@ function hines_solve!(neuron::Neuron)
 
     p=0.0
 
-    @fastmath @inbounds @simd for i=(length(neuron.d)-3):-1:1
+    @fastmath @inbounds for i=(length(neuron.d)-3):-1:1
 
 	p = -neuron.a[i] / neuron.d[i]
 	neuron.d[neuron.par[i]] -= p * -neuron.b[i]
@@ -261,7 +261,7 @@ function hines_solve!(neuron::Neuron)
     neuron.rhs[i] -= -neuron.b[i] * neuron.rhs[neuron.par[i]]
     neuron.rhs[i] /= neuron.d[i]
 
-    @fastmath @inbounds @simd for i=1:(length(neuron.d)-2)
+    @fastmath @inbounds for i=1:(length(neuron.d)-2)
 	neuron.rhs[i] -= -neuron.b[i] * neuron.rhs[neuron.par[i]]
 	neuron.rhs[i] /= neuron.d[i]
     end
