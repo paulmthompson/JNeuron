@@ -31,13 +31,13 @@ end
 
 function Passive()
     myvars=Array(ASCIIString,0)
-    Passive(myvars,.001,.07)
+    Passive(myvars,.001,-70.0)
 end
 
 function speed_init(prop::Passive,l::Int64)
     :(begin
       p.p[$(1+l),i]=.001
-      p.p[$(2+l),i]=.07
+      p.p[$(2+l),i]=-70.0
       end)
 end
 
@@ -52,7 +52,7 @@ function speed_cur(myprop::Passive,l::Int64)
 
     :(begin
     
-      im[k]+= p.p[$(2+l),i]*(v[k]- p.p[$(1+l),i])
+      im[k]+= p.p[$(1+l),i]*(v[k]- p.p[$(2+l),i])
 
       end)
 end

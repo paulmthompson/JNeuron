@@ -10,10 +10,13 @@ sigma: extracellular conductivity
 function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
 
     coeffs=zeros(Float64,0)
+    inds=zeros(Int64,0)
 
     for i=1:length(neuron.nodes)
 
         if neuron.nodes[i].internal == true
+
+            push!(inds,i)
 
             push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
             
@@ -22,7 +25,7 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
 
     end
     
-    coeffs  
+    (coeffs,inds)  
     
 end
 
@@ -31,10 +34,13 @@ end
 function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
 
     coeffs=zeros(Float64,0)
+    inds=zeros(Int64,0)
     
     for i=1:length(neuron.nodes)
 
         if neuron.nodes[i].internal == true
+
+            push!(inds,i)
             
             push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
             
@@ -43,7 +49,7 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
 
     end
     
-    coeffs  
+    (coeffs,inds)  
 
 end
 
@@ -52,11 +58,14 @@ end
 function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
 
     coeffs=zeros(Float64,0)
+    inds=zeros(Int64,0)
     
     for i=1:length(neuron.nodes)
 
         if neuron.nodes[i].internal == true
 
+            push!(inds,i)
+            
             if neuron.nodes[i].parent==0
                 
                 push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
@@ -69,7 +78,7 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
 
     end
     
-    coeffs  
+    (coeffs,inds)  
 
 end
 

@@ -21,7 +21,8 @@ function add!(network::Network,extra::Extracellular)
     
     for j=1:length(fieldnames(network.neur))
         for k=1:length(getfield(network.neur,j))
-            push!(coeffs,Extra_coeffs(extracellular(extra,getfield(network.neur,j)[k],0.3)))
+            (mycoeffs,inds)=extracellular(extra,getfield(network.neur,j)[k],0.3)
+            push!(coeffs,Extra_coeffs(mycoeffs,inds))
         end
     end
     
@@ -63,32 +64,64 @@ function add!(network::Network,intra::Intracellular)
     
 end
 
-function Base.run(network::Network)
+function run!(network::Network)
 
-    #get initial conditions
+    #get initial conditions if uninitialized
+    if length(network.neur.N_1[1].i_vm)==0
+        for j=1:length(fieldnames(network.neur))
+            for k=1:length(getfield(network.neur,j))
+                initialcon!(getfield(network.neur,j)[k])
+            end
+        end
+    end
 
-    map!(initialcon!,network.neur)
+    #set up flags
+    if length(network.extra)==0
+        extra=false
+    else
+        extra=true
+        cur_inds=get_current(network)
+    end
 
-    cur_inds=get_current(network.neur)
-    stim_inds=get_stim(network)
-    v_inds=get_voltage(network)
-                             
+    if length(network.intra)==0
+        intra=false
+    else
+        intra=true
+        v_inds=get_voltage(network)
+    end
+
+    if length(network.stim)==0
+        stim=false
+    else
+        stim=true
+        stim_inds=get_stim(network)
+    end
+                         
     for i=1:length(network.t)
 
         #stimulate if appropriate
-        for j=1:length(network.stim)
-            add_stim(stim_inds[j],network.stim[j].Is[i])
+        if stim==true
+            for j=1:length(network.stim)
+                add_stim(stim_inds[j],network.stim[j].Is[i])
+            end
         end
 
-        map!(main,network.neur)
-        
-        for j=1:length(network.neur)
-            #get extracellular potential if needed
-            for k=1:length(network.extra)
-                network.extra[k].v[i]+=sum(network.extra[k].coeffs[j].c.*fetch_current(cur_inds[j]))
-            end            
+        for j=1:length(fieldnames(network.neur))
+            for k=1:length(getfield(network.neur,j))
+                main(getfield(network.neur,j)[k])
+            end
         end
-                                                                                       
+ 
+        if extra==true
+
+            for j=1:length(cur_inds)
+                for l=1:length(network.extra)
+                    network.extra[l].v[i]+=sum(network.extra[l].coeffs[j].c.*fetch_current(cur_inds[j]))
+                end
+            end
+
+        end
+        
         #get intracellular potentials
         for j=1:length(network.intra)
             network.intra[j].v[i]=fetch_voltage(v_inds[j])
@@ -122,13 +155,29 @@ function fetch_current(myind::RemoteRef)
     fetch(myind)
 end
 
-function get_current(neur::Array{Neuron,1})
+function get_current(network::Network)
+
+    count=0
+    for j=1:length(fieldnames(network.neur))
+        for k=1:length(getfield(network.neur,j))
+            count+=1
+        end
+    end
     
-    [view(neur[i].i_vm,1:neur[i].internal_nodes) for i=1:length(neur)]
+    cur=Array(SubArray{Float64,1},count)
+    count=1
+    
+    for j=1:length(fieldnames(network.neur))
+        for k=1:length(getfield(network.neur,j))
+            cur[count]=sub(getfield(network.neur,j)[k].i_vm,network.extra[1].coeffs[count].inds)
+        end
+    end
+
+    cur
        
 end
 
-function fetch_current(myind::ContiguousView)
+function fetch_current(myind::SubArray{Float64,1})
     myind
 end
 

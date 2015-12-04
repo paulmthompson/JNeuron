@@ -136,6 +136,7 @@ abstract NeuronPool
 
 type Extra_coeffs
     c::Array{Float64,1}
+    inds::Array{Int64,1}
 end
 
 abstract Source

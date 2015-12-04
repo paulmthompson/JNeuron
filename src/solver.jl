@@ -115,8 +115,6 @@ function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
         end
         
     end
-
-    neuron
     
 end
 
@@ -124,6 +122,11 @@ function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
     ext=false
+
+    #reset membrane current
+    @inbounds @simd for i=1:length(neuron.v)
+        neuron.i_vm[i] = 0.0
+    end
     
     for ind=1:4
 
@@ -154,8 +157,6 @@ function main(neuron::Neuron)
     for ind=1:4
         con!(getfield(neuron,ind),neuron.v,neuron.internal_nodes[ind])     
     end
- 
-    neuron
     
 end
 
@@ -196,7 +197,6 @@ function add_delta!(neuron::Neuron)
         neuron.rhs[i] = 0.0
         neuron.v1[i]=neuron.v[i]+.001
         neuron.i2[i]=0.0
-        neuron.i_vm[i]=0.0
     end
     nothing
 end
