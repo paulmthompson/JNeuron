@@ -19,8 +19,10 @@ function add!(network::Network,extra::Extracellular)
 
     coeffs=Array(Extra_coeffs,0)
     
-    for j=1:length(network.neur)
-        push!(coeffs,Extra_coeffs(extracellular(extra,network.neur[j],0.3)))
+    for j=1:length(fieldnames(network.neur))
+        for k=1:length(getfield(network.neur,j))
+            push!(coeffs,Extra_coeffs(extracellular(extra,getfield(network.neur,j)[k],0.3)))
+        end
     end
     
     extra=typeof(extra)(extra.xyz,coeffs,zeros(Float64,length(network.t)))

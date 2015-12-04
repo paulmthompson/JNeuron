@@ -323,7 +323,7 @@ function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
             $(myfields...)
         end
 
-        function NeuronPool0{T<:Neuron}(neur::Array{T,1},par=false)
+        function NeuronPool0{T<:Neuron}(neur::AbstractArray{T,1},par=false)
 
             inds=Array(Array{Int64,1},0)
             mtypes=[typeof(neur[i]) for i=1:length(neur)]
