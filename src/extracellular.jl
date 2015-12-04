@@ -19,8 +19,7 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
             push!(inds,i)
 
             push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
-            
-        else
+
         end
 
     end
@@ -43,8 +42,7 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
             push!(inds,i)
             
             push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
-            
-        else
+
         end
 
     end
@@ -72,8 +70,7 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
             else
                 push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
             end
- 
-        else
+
         end
 
     end
