@@ -205,9 +205,19 @@ function add_stim(myind::RemoteRef,Is::Float64)
     nothing
 end
 
-function get_stim{T <: Array{Neuron,1}}(network::Network{T})
+function get_stim(network::Network)
 
-    myind=[sub(network.neur[network.stim[i].neur].rhs, network.stim[i].node:network.stim[i].node) for i=1:length(network.stim)]
+    count=0
+    for j=1:length(fieldnames(network.neur))
+        for k=1:length(getfield(network.neur,j))
+            count+=1
+        end
+    end
+
+    stim=Array(SubArray{Float64,1},count)
+    count=1
+
+    myind=[sub(getfield(network.neur,network.stim[i].mtype)[network.stim[i].neur].rhs, network.stim[i].node:network.stim[i].node) for i=1:length(network.stim)]
     
 end
 
@@ -238,8 +248,8 @@ function fetch_voltage(myind::RemoteRef)
     fetch(myind[1])
 end
 
-function get_voltage{T <: Array{Neuron,1}}(network::Network{T})
-    myind=[sub(network.neur[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.stim)]
+function get_voltage(network::Network)
+    myind=[sub(getfield(network.neur,network.intra[i].mtype)[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.intra)]
 end
 
 function fetch_voltage(myind::SubArray)

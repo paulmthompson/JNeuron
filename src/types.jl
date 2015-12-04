@@ -167,24 +167,26 @@ end
 
 type Stim
     Is::Array{Float64,1}
+    mtype::Int64
     neur::Int64
     node::Int64
     tstart::Float64
     tstop::Float64
 end
 
-function Stim(Is::Float64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
-    Stim([Is],neur,node,tstart,tstop)
+function Stim(Is::Float64,mtype::Int64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
+    Stim([Is],mtype,neur,node,tstart,tstop)
 end
 
 type Intracellular
+    mtype::Int64
     neur::Int64
     node::Int64
     v::Array{Float64,1}
 end
 
-function Intracellular(neur::Int64,node::Int64)
-    Intracellular(neur,node,Array(Float64,0))
+function Intracellular(mtype::Int64,neur::Int64,node::Int64)
+    Intracellular(mtype,neur,node,Array(Float64,0))
 end
 
 type Network{T <: NeuronPool}
