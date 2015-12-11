@@ -170,6 +170,7 @@ function get_current(network::Network)
     for j=1:length(fieldnames(network.neur))
         for k=1:length(getfield(network.neur,j))
             cur[count]=sub(getfield(network.neur,j)[k].i_vm,network.extra[1].coeffs[count].inds)
+            count+=1
         end
     end
 

@@ -336,9 +336,9 @@ function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
             end
 
             if par==false
-                NeuronPool0([neur[inds[i]] for i=1:length(inds)]...)
+                NeuronPool0([typeof(neur[inds[i]][1])[neur[inds[i]]...] for i=1:length(inds)]...)
             else
-                NeuronPool0([distribute([neur[inds[i]]]) for i=1:length(inds)]...)
+                NeuronPool0([distribute(typeof(neur[inds[i]][1])[neur[inds[i]]...]) for i=1:length(inds)]...)
             end
             
 
