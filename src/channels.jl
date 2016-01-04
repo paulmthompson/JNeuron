@@ -3,7 +3,6 @@ export Passive,HH
 
 const power_exp=Base.exp(series(0.0,1.0,zeros(Float64,6)...))
 
-
 function exp(x::Float64)
     polyval(power_exp,x)::Float64
 end
