@@ -79,10 +79,10 @@ function fillA!(neuron::Neuron)
         end
     end
 
-    neuron.soma=typeof(neuron.soma)(length(neuron.internal_nodes[1]))
-    neuron.axon=typeof(neuron.axon)(length(neuron.internal_nodes[2]))
-    neuron.dendrite=typeof(neuron.dendrite)(length(neuron.internal_nodes[3]))
-    neuron.apical=typeof(neuron.apical)(length(neuron.internal_nodes[4]))
+    neuron.soma=make_prop(neuron.soma,length(neuron.internal_nodes[1]))
+    neuron.axon=make_prop(neuron.axon,length(neuron.internal_nodes[2]))
+    neuron.dendrite=make_prop(neuron.dendrite,length(neuron.internal_nodes[3]))
+    neuron.apical=make_prop(neuron.apical,length(neuron.internal_nodes[4]))
  
     if ext==true
         neuron.diag_ext=diagview(neuron.A_ext)

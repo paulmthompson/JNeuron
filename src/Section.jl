@@ -223,7 +223,7 @@ function add(neuron::Neuron,prop_array)
 
     n=deepcopy(neuron)
     
-    make_neuron(new_prop_array,n,newnodes)
+    n1=make_neuron(new_prop_array,n,newnodes)
 
     reset_pnode!(n1)
 

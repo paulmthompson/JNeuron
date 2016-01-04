@@ -188,7 +188,11 @@ function gen_prop{T<:Channel}(a::Array{T,1},k::Int64)
         function make_prop{T<:Channel}(a::Array{T,1},n::Int64)
             $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
         end
-        
+
+        function make_prop(a::Prop,n::Int64)
+            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+        end
+          
     end
 
 end
