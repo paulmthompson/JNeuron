@@ -1,6 +1,10 @@
 # JNeuron
 Simple single neuron simulations in Julia
 
+## Installation
+
+Pkg.clone("https://github.com/paulmthompson/JNeuron.git")
+
 ## Documentation:
 http://jneuron.readthedocs.org/en/latest/
 
