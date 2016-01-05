@@ -175,8 +175,37 @@ myconstants=Dict{ASCIIString, Float64}("ena"=>50.0, "ek"=>-77.0)
 function make_prop()
 end
 
+function gen_prop(a::Channel,k::Int64)
+    
+    num_fields=sum(length(fieldnames(a)))
+
+    @eval begin
+        type $(symbol("Prop_$k")) <: Prop
+            p::Array{Float64,2}
+        end
+
+        function make_prop(b::$(typeof(a)),n::Int64)
+            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+        end
+      
+    end
+
+    c=make_prop(a,0)
+
+    @eval begin
+       
+        function make_prop(a::$(typeof(c)),n::Int64)
+            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+        end
+
+    end
+
+    nothing
+    
+end
+
 #Combination of channels found
-function gen_prop{T<:Channel}(a::Array{T,1},k::Int64)
+function gen_prop{T<:Tuple}(a::T,k::Int64)
 
     num_fields=sum([length(fieldnames(a[i]))-1 for i=1:length(a)])
 
@@ -185,15 +214,22 @@ function gen_prop{T<:Channel}(a::Array{T,1},k::Int64)
             p::Array{Float64,2}
         end
 
-        function make_prop{T<:Channel}(a::Array{T,1},n::Int64)
-            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
-        end
-
-        function make_prop(a::Prop,n::Int64)
+        function make_prop(b::$(typeof(a)),n::Int64)
             $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
         end
           
     end
+
+    c=make_prop(a,0)
+
+    @eval begin
+        
+        function make_prop(a::$(typeof(c)),n::Int64)
+            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+        end
+    end
+
+    nothing
 
 end
 
@@ -228,7 +264,7 @@ function gen_neuron(prop::Prop,k::Int64)
             i2::Array{Float64,1}
         end
 
-        function make_neuron(prop::Prop,n::Neuron,newnodes::Array{Node,1})
+        function make_neuron(prop::$(typeof(prop)),n::Neuron,newnodes::Array{Node,1})
              $(symbol("Neuron_$k"))(prop,prop,prop,prop,n.secstack,n.v,n.a,n.b,n.d,n.rhs,n.Ra,n.Cm,n.dt,newnodes,n.i_vm,n.divm,n.diag_old,n.internal_nodes,n.par,zeros(Float64,length(n.v)),zeros(Float64,length(n.v)))
         end
         
@@ -236,7 +272,7 @@ function gen_neuron(prop::Prop,k::Int64)
 
 end
 
-function gen_neuron{T<:Prop}(prop::Array{T,1},k::Int64)
+function gen_neuron(prop::Tuple,k::Int64)
 
     @eval begin
         type $(symbol("Neuron_$k")) <: Neuron
@@ -263,7 +299,7 @@ function gen_neuron{T<:Prop}(prop::Array{T,1},k::Int64)
             i2::Array{Float64,1}
         end
 
-        function make_neuron{T<:Prop}(prop::Array{T,1},n::Neuron,newnodes::Array{Node,1})
+        function make_neuron(prop::$(typeof(prop)),n::Neuron,newnodes::Array{Node,1})
              $(symbol("Neuron_$k"))(prop[1],prop[2],prop[3],prop[4],n.secstack,n.v,n.a,n.b,n.d,n.rhs,n.Ra,n.Cm,n.dt,newnodes,n.i_vm,n.divm,n.diag_old,n.internal_nodes,n.par,zeros(Float64,length(n.v)),zeros(Float64,length(n.v)))
         end
         

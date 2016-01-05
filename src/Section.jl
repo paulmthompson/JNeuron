@@ -120,17 +120,7 @@ function interp_area(x1::Float64, x2::Float64, x3::Float64)
     [frac1,frac2]
 end
 
-function add(neuron::Neuron,prop::Channel)
-
-    myprop=Array(Channel,1)
-
-    myprop[1]=prop
-    
-    add(neuron,myprop)
-    
-end
-
-function add{T<:Channel}(neuron::Neuron,prop_array::Array{T,1})
+function add(neuron::Neuron,prop_array::Channel)
 
     global num_neur::Int64
     global num_prop::Int64
@@ -175,26 +165,72 @@ function add{T<:Channel}(neuron::Neuron,prop_array::Array{T,1})
     
 end
 
-function add(neuron::Neuron,prop_array)
+function add{T<:Tuple}(neuron::Neuron,prop_array::T)
 
     global num_neur::Int64
     global num_prop::Int64
-    
-    new_prop_array=Array(Prop,4)
-    
-    for i=1:4
 
+    if method_exists(make_prop,(typeof(prop_array),Int))
+    else
+        num_prop+=1
+        gen_prop(prop_array,num_prop)
+    end
+    
+    myprop=make_prop(prop_array,0)
+
+    gen_current(prop_array,myprop)
+
+    newnodes=Array(Node,length(neuron.nodes))
+    
+    if method_exists(make_neuron,(typeof(myprop),typeof(neuron),typeof(newnodes)))
+    else     
+        num_neur+=1
+        gen_neuron(myprop,num_neur)
+    end
+
+    for i=1:length(neuron.nodes)
+        newnodes[i]=Node(neuron.nodes[i],make_prop(prop_array,0))
+
+        for j=2:length(fieldnames(myprop))
+            for k=1:length(getfield(myprop,j).nodevar)
+                if !haskey(newnodes[i].vars,getfield(myprop,j).nodevar[k])
+                    newnodes[i].vars[getfield(myprop,j).nodevar[k]]=0.0
+                end
+            end
+        end
+    end
+
+    n=deepcopy(neuron)
+    
+    n1=make_neuron(myprop,n,newnodes)
+
+    reset_pnode!(n1)
+
+    n1
+    
+end
+
+function add(neuron::Neuron,prop1,prop2,prop3,prop4)
+
+    global num_neur::Int64
+    global num_prop::Int64
+
+    prop_array=(prop1,prop2,prop3,prop4)
+
+    for i=1:4
         if method_exists(make_prop,(typeof(prop_array[i]),Int))
         else
             num_prop+=1
             gen_prop(prop_array[i],num_prop)
         end
-        
-        new_prop_array[i]=make_prop(prop_array[i],0)
-
-        gen_current(prop_array[i],new_prop_array[i])
-
     end
+     
+    new_prop_array=(make_prop(prop1,0),make_prop(prop2,0),make_prop(prop3,0),make_prop(prop4,0))
+
+    gen_current(prop1,new_prop_array[1])
+    gen_current(prop2,new_prop_array[2])
+    gen_current(prop3,new_prop_array[3])
+    gen_current(prop4,new_prop_array[4])
 
     newnodes=Array(Node,length(neuron.nodes))
     
