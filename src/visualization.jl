@@ -67,3 +67,79 @@ function rotate3d!(neuron::Neuron,theta::Float64,myaxis::Int64)
     
 end
 
+function randomize_shape!(neuron::Neuron)
+
+    parents=zeros(Int64,length(neuron.secstack))
+
+    #find total number of segments
+    for i=1:length(neuron.secstack)      
+        for j=1:length(neuron.secstack[i].child)
+            parents[neuron.secstack[i].child[j].refcount]=i
+        end            
+    end
+
+    for i=1:length(neuron.secstack)
+
+        if (parents[i]!=length(neuron.secstack))&&(parents[i]!=0)
+
+            rot_seg(neuron,parents[i],i)
+            
+        end
+
+    end
+    
+    nothing
+    
+end
+
+function rot_3d(a,b,c,u,v,w,x,y,z,theta)
+    
+    xnew=(a*(v*v+w*w)-u*(b*v + c*w - u*x - v*y - w*z))*(1-cosd(theta))+x*cosd(theta)+(-c*v + b*w - w*y + v*z)*sind(theta)
+    ynew=(b*(u*u+w*w)-v*(a*u + c*w - u*x - v*y - w*z))*(1-cosd(theta))+y*cosd(theta)+(c*u - a*w + w*x - u*z)*sind(theta)
+    znew=(c*(u*u+v*v)-w*(a*u + b*v - u*x - v*y - w*z))*(1-cosd(theta))+z*cosd(theta)+(-b*u + a*v - v*x + u*y)*sind(theta)
+    
+    (xnew,ynew,znew)
+end
+
+function rot_seg(neuron::Neuron,pind::Int64,cind::Int64)
+
+    #last point of previous segment
+    a=neuron.secstack[pind].pt3d[end].x
+    b=neuron.secstack[pind].pt3d[end].y
+    c=neuron.secstack[pind].pt3d[end].z
+
+    (uvw,mag)=pt3d_vec(neuron.secstack[pind].pt3d[end],neuron.secstack[pind].pt3d[end-1])
+
+    theta=randn()*10
+
+    rot_child(neuron,cind,a,b,c,uvw,theta)
+
+    nothing
+end
+
+function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,uvw::Array{Float64,1},theta::Float64)
+    
+    for sec in neuron.secstack[cind].child
+
+        i=sec.refcount
+        rot_child(neuron,i,a,b,c,uvw,theta)
+        
+    end
+
+    @inbounds for j=1:length(neuron.secstack[cind].pt3d)
+
+        x=neuron.secstack[cind].pt3d[j].x
+        y=neuron.secstack[cind].pt3d[j].y
+        z=neuron.secstack[cind].pt3d[j].z
+            
+        xyz=rot_3d(a,b,c,uvw[1],uvw[2],uvw[3],x,y,z,theta)
+
+        neuron.secstack[cind].pt3d[j].x=xyz[1]
+        neuron.secstack[cind].pt3d[j].y=xyz[2]
+        neuron.secstack[cind].pt3d[j].z=xyz[3]
+    end
+
+    nothing
+    
+end
+
