@@ -111,44 +111,7 @@ frustrum_resistance(d1::Float64,d2::Float64,h::Float64,ri::Float64)=ri*h/(pi*(d1
 
 interp_area(x1::Float64, x2::Float64, x3::Float64)=[(x2-x1)/(x3-x1),(x3-x2)/(x3-x1)]
 
-function add(neuron::Neuron,prop_array::Channel)
-
-    global num_neur::Int64
-    global num_prop::Int64
-
-    if method_exists(make_prop,(typeof(prop_array),Int))
-    else
-        num_prop+=1
-        gen_prop(prop_array,num_prop)
-    end
-    
-    myprop=make_prop(prop_array,0)
-
-    gen_current(prop_array,myprop)
-
-    newnodes=Array(Node,length(neuron.nodes))
-    
-    if method_exists(make_neuron,(typeof(myprop),typeof(neuron),typeof(newnodes)))
-    else     
-        num_neur+=1
-        gen_neuron(myprop,num_neur)
-    end
-
-    for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron,neuron.nodes[i].ind,make_prop(prop_array,0))
-    end
-
-    n=deepcopy(neuron)
-    
-    n1=make_neuron(myprop,n,newnodes)
-
-    reset_pnode!(n1)
-
-    n1
-    
-end
-
-function add{T<:Tuple}(neuron::Neuron,prop_array::T)
+function add(neuron::Neuron,prop_array)
 
     global num_neur::Int64
     global num_prop::Int64
