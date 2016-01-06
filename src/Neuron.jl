@@ -10,7 +10,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
     nodesec=zeros(Int64,length(neuron.secstack)+1)
     nseglist=zeros(Int64,length(neuron.secstack))
     nodesec[1]=1
-    parents=zeros(Int64,length(neuron.secstack))
     first=0
     last=0
 
@@ -23,10 +22,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
         nodesec[i+1]=nodesec[i]+nseg
         
         nseglist[i]=nseg
-
-        for j=1:length(neuron.secstack[i].child)
-            parents[neuron.secstack[i].child[j].refcount]=i
-        end
                         
     end
     
@@ -42,7 +37,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 (area, ri,mypt3d) = r_a_calc(neuron.secstack[i],j,nseglist[i])
                 
                 if j==1
-                    parent=nodesec[parents[i]+1]+parents[i]-1
+                    parent=nodesec[neuron.secstack[i].parent+1]+neuron.secstack[i].parent-1
                     if nseglist[i]==1
                         if length(neuron.secstack[i].child)==0
                             children=Array(Int64,0)
@@ -169,4 +164,14 @@ end
 
 function edge_node(neuron,parent,children,mypt3d)
     push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],parent,children,false,mypt3d:mypt3d,Prop0))
+end
+
+function find_parents!(neuron::Neuron)
+    for i=1:length(neuron.secstack)
+        for j=1:length(neuron.secstack[i].child)
+            neuron.secstack[neuron.secstack[i].child[j].refcount].parent=i
+        end                
+    end
+
+    nothing
 end

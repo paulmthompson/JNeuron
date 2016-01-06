@@ -155,7 +155,7 @@ function add(neuron::Neuron,prop_array...)
     
     newnodes=Array(Node,length(neuron.nodes))
     
-    if method_exists(make_neuron,(typeof(myprop),typeof(neuron),typeof(newnodes)))
+    if method_exists(make_neuron,(typeof(myprop),typeof(neuron),Node))
     else     
         num_neur+=1
         gen_neuron(myprop,num_neur)

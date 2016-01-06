@@ -69,20 +69,11 @@ end
 
 function randomize_shape!(neuron::Neuron)
 
-    parents=zeros(Int64,length(neuron.secstack))
-
-    #find total number of segments
-    for i=1:length(neuron.secstack)      
-        for j=1:length(neuron.secstack[i].child)
-            parents[neuron.secstack[i].child[j].refcount]=i
-        end            
-    end
-
     for i=1:length(neuron.secstack)
 
-        if (parents[i]!=length(neuron.secstack))&&(parents[i]!=0)
+        if (neuron.secstack[i].parent!=length(neuron.secstack))&&(neuron.secstack[i].parent!=0)
 
-            rot_seg(neuron,parents[i],i)
+            rot_seg(neuron,neuron.secstack[i].parent,i)
             
         end
 

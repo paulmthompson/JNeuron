@@ -99,6 +99,8 @@ function instantiate(import3d::Import3D)
 
     neuron.Cm=1.0
     neuron.Ra=35.4
+
+    find_parents!(neuron)
     
     neuron
     #connect them, making adjustments to 3d points as necessary
@@ -232,7 +234,7 @@ function sphere_approx(import3d::Import3D, ind::Int64,somas::Array{Section,1})
     Pt3d(centroid...,2*radi,.5); Pt3d(centroid[1]+radi,centroid[2]+radi,centroid[3],2*radi,1.0)]
 
 
-    sec=Section(1,1,[0],Array(Section,0),mypoints,0.0,2*radi)
+    sec=Section(1,1,[0],Array(Section,0),0,mypoints,0.0,2*radi)
     push!(somas,sec)
     
     centroid
@@ -394,7 +396,7 @@ end
 
 
 function Section(section3d::Section3D) #like new_section
-    sec=Section(1,section3d.mytype,[0],Array(Section,0),Array(Pt3d,size(section3d.raw,1)),0.0,0.0)
+    sec=Section(1,section3d.mytype,[0],Array(Section,0),0,Array(Pt3d,size(section3d.raw,1)),0.0,0.0)
 
     #add 3d points from 3d
     for i=1:length(section3d.d)
