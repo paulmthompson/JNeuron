@@ -32,8 +32,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
         if neuron.secstack[i].mtype>1
 
             for j=1:nseglist[i]
-
-                        
+           
                 (area, ri,mypt3d) = r_a_calc(neuron.secstack[i],j,nseglist[i])
                 
                 if j==1
@@ -42,7 +41,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                         if length(neuron.secstack[i].child)==0
                             children=Array(Int64,0)
                         else
-                            children=Int64[nodesec[neuron.secstack[i].child[k].refcount]+neuron.secstack[i].child[k].refcount-1 for k=1:length(neuron.secstack[i].child)]
+                            children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
                         end
                         
                     else
@@ -50,7 +49,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     end
                 elseif j==nseglist[i]
                     parent=length(neuron.nodes)
-                    children=Int64[nodesec[neuron.secstack[i].child[k].refcount]+neuron.secstack[i].child[k].refcount-1 for k=1:length(neuron.secstack[i].child)]
+                    children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
                 else
                     parent=length(neuron.nodes)
                     children=Int64[length(neuron.nodes)+2]
@@ -109,7 +108,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 elseif j == 2
 
                     parent=0
-                    children=Int64[nodesec[neuron.secstack[i].child[k].refcount]+neuron.secstack[i].child[k].refcount-1 for k=1:length(neuron.secstack[i].child)]
+                    children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
                     
                     (area, ri, mypt3d) = r_a_calc(neuron.secstack[i],1,1)
                     push!(children,length(neuron.nodes))
@@ -169,7 +168,7 @@ end
 function find_parents!(neuron::Neuron)
     for i=1:length(neuron.secstack)
         for j=1:length(neuron.secstack[i].child)
-            neuron.secstack[neuron.secstack[i].child[j].refcount].parent=i
+            neuron.secstack[neuron.secstack[i].child[j]].parent=i
         end                
     end
 
