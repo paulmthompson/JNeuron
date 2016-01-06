@@ -75,7 +75,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 elseif j==1
 
                     first=length(neuron.nodes)+1
-                    neuron.internal_nodes+=1
 
                     #create regular node
                     internal_node(neuron,area,ri,parent,children,mypt3d)
