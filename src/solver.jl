@@ -107,15 +107,6 @@ function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
         init!(getfield(neuron,i),neuron.v,neuron.internal_nodes[i])
     end
     
-    #initial states of channels at nodes
-    for i=1:length(neuron.nodes)
-        mykeys=keys(neuron.nodes[i].vars)
-        for mykey in mykeys
-            neuron.nodes[i].vars[mykey]=myconstants[mykey]
-        end
-        
-    end
-    
 end
 
 function main(neuron::Neuron)

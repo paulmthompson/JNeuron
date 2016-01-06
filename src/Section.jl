@@ -181,14 +181,6 @@ function add{T<:Tuple}(neuron::Neuron,prop_array::T)
 
     for i=1:length(neuron.nodes)
         newnodes[i]=Node(neuron.nodes[i],make_prop(prop_array,0))
-
-        for j=2:length(fieldnames(myprop))
-            for k=1:length(getfield(myprop,j).nodevar)
-                if !haskey(newnodes[i].vars,getfield(myprop,j).nodevar[k])
-                    newnodes[i].vars[getfield(myprop,j).nodevar[k]]=0.0
-                end
-            end
-        end
     end
 
     n=deepcopy(neuron)
@@ -238,13 +230,6 @@ function add(neuron::Neuron,prop1,prop2,prop3,prop4)
 
             newnodes[ind]=Node(neuron.secstack[i].pnode[j],make_prop(prop_array[mtype],0))
 
-            for k=2:length(fieldnames(new_prop_array[mtype]))
-                for h=1:length(getfield(new_prop_array[mtype],k).nodevar)
-                    if !haskey(newnodes[ind].vars,getfield(new_prop_array[mtype],k).nodevar[h])
-                        newnodes[ind].vars[getfield(new_prop_array[mtype],k).nodevar[h]]=0.0
-                    end
-                end
-            end
         end
     end
 
@@ -276,7 +261,7 @@ end
 
 
 function Node(node::Node,myprop::Prop)
-    Node(node.ind,node.vars,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
+    Node(node.ind,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
 end
 
 

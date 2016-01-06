@@ -21,7 +21,6 @@ end
 
 type Node
     ind::Int64
-    vars::Dict{ASCIIString,Float64}
     area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
     ri::Array{Float64,1}  #internal resistance of left[1] and right[2] part of segment
     b::Float64 #resistance between node and parent node divided by area of node
