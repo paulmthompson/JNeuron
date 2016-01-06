@@ -12,18 +12,18 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
 
-    for i=1:length(neuron.nodes)
+    for i=1:length(neuron.secstack)
+        for j in neuron.secstack[i].pnode
+            if neuron.nodes[j].internal == true
 
-        if neuron.nodes[i].internal == true
-
-            push!(inds,i)
-
-            push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
-
+                push!(inds,j)
+                mypt3d=neuron.secstack[i].pt3d[neuron.nodes[j].pt3d]
+                push!(coeffs,(1/(4*pi*sigma))*point_coeffs(mypt3d,extra.xyz))
+                
+            end
         end
-
     end
-    
+      
     (coeffs,inds)  
     
 end
@@ -34,17 +34,17 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
 
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
-    
-    for i=1:length(neuron.nodes)
 
-        if neuron.nodes[i].internal == true
+    for i=1:length(neuron.secstack)
+        for j in neuron.secstack[i].pnode
+            if neuron.nodes[j].internal == true
 
-            push!(inds,i)
-            
-            push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
-
+                push!(inds,j)
+                mypt3d=neuron.secstack[i].pt3d[neuron.nodes[j].pt3d]
+                push!(coeffs,(1/(4*pi*sigma))*line_coeffs(mypt3d,extra.xyz))
+                
+            end
         end
-
     end
     
     (coeffs,inds)  
@@ -57,22 +57,23 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
 
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
-    
-    for i=1:length(neuron.nodes)
 
-        if neuron.nodes[i].internal == true
+    for i=1:length(neuron.secstack)
+        for j in neuron.secstack[i].pnode
+            if neuron.nodes[j].internal == true
 
-            push!(inds,i)
-            
-            if neuron.nodes[i].parent==0
+                push!(inds,j)
+                mypt3d=neuron.secstack[i].pt3d[neuron.nodes[j].pt3d]
+
+                if neuron.nodes[j].parent==0
+                    push!(coeffs,(1/(4*pi*sigma))*point_coeffs(mypt3d,extra.xyz))
+                else
+                    push!(coeffs,(1/(4*pi*sigma))*line_coeffs(mypt3d,extra.xyz))
+
+                end
                 
-                push!(coeffs,(1/(4*pi*sigma))*point_coeffs(neuron.nodes[i].pt3d,extra.xyz))
-            else
-                push!(coeffs,(1/(4*pi*sigma))*line_coeffs(neuron.nodes[i].pt3d,extra.xyz))
             end
-
         end
-
     end
     
     (coeffs,inds)  
