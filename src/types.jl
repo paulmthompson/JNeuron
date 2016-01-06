@@ -26,7 +26,7 @@ type Node
     parent::Int64 #index in node array of parent
     children::Array{Int64,1} #Node(s) from other sections attached to this one
     internal::Bool
-    pt3d::Array{Pt3d,1}
+    pt3d::UnitRange{Int64}
     prop::DataType
 end
 

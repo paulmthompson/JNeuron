@@ -32,7 +32,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
     
     for i=1:length(neuron.secstack)
 
-        mypt3d=neuron.secstack[i].pt3d
+        mypt3d=1:length(neuron.secstack[i].pt3d)
 
         if neuron.secstack[i].mtype>1
 
@@ -70,7 +70,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     internal_node(neuron,area,ri,parent,[length(neuron.nodes)+2],mypt3d)
 
                     #create internode at end of section
-                    edge_node(neuron,length(neuron.nodes),children,[mypt3d[end]])
+                    edge_node(neuron,length(neuron.nodes),children,mypt3d[end])
                 
                 elseif j==1
 
@@ -87,7 +87,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     internal_node(neuron,area,ri,parent,[length(neuron.nodes)+2],mypt3d)
                     
                     #create internode at end of section
-                    edge_node(neuron,length(neuron.nodes),children,[mypt3d[end]])
+                    edge_node(neuron,length(neuron.nodes),children,mypt3d[end])
 
                 else
                 
@@ -109,7 +109,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     parent=length(neuron.nodes)+2
                     children=Array(Int64,0)
 
-                    edge_node(neuron,parent,children,[neuron.secstack[end].pt3d[end]])
+                    edge_node(neuron,parent,children,length(neuron.secstack[end].pt3d))
                     
                 elseif j == 2
 
@@ -126,7 +126,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     parent=length(neuron.nodes)
                     children=Array(Int64,0)
 
-                    edge_node(neuron,parent,children,[neuron.secstack[end].pt3d[1]])
+                    edge_node(neuron,parent,children,1)
                     
                 end
                 
@@ -168,5 +168,5 @@ function internal_node(neuron::Neuron,area,ri,parent,children,mypt3d)
 end
 
 function edge_node(neuron,parent,children,mypt3d)
-    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],parent,children,false,mypt3d,Prop0))
+    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],parent,children,false,mypt3d:mypt3d,Prop0))
 end

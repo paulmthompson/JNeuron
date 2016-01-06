@@ -100,8 +100,8 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
     end
 
     ri*=.01
-    
-    (area, ri,sec.pt3d[first:last])
+
+    (area, ri, first:last)
      
 end
 
