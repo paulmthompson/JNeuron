@@ -275,8 +275,8 @@ function reset_pnode!(neuron::Neuron)
 end
 
 
-function Node{T<:Prop}(node::Node{Prop0},myprop::T)
-    Node(node.ind,node.vars,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,deepcopy(myprop))
+function Node(node::Node,myprop::Prop)
+    Node(node.ind,node.vars,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
 end
 
 

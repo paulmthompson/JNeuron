@@ -19,7 +19,7 @@ type Pt3d
     arc::Float64 #normalized distance from 0 to end
 end
 
-type Node{T<:Prop}
+type Node
     ind::Int64
     vars::Dict{ASCIIString,Float64}
     area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
@@ -30,7 +30,7 @@ type Node{T<:Prop}
     children::Array{Int64,1} #Node(s) from other sections attached to this one
     internal::Bool
     pt3d::Array{Pt3d,1}
-    prop::T
+    prop::DataType
 end
 
 type Section
