@@ -105,20 +105,11 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
      
 end
 
-function frustrum_area(d1::Float64,d2::Float64,h::Float64)
-    F=pi*(d1/2+d2/2)*sqrt((d1/2-d2/2)^2+h^2)
-end
+frustrum_area(d1::Float64,d2::Float64,h::Float64)=pi*(d1/2+d2/2)*sqrt((d1/2-d2/2)^2+h^2)
 
-function frustrum_resistance(d1::Float64,d2::Float64,h::Float64,ri::Float64)
-    R=ri*h/(pi*(d1/2)*(d2/2))
-end
+frustrum_resistance(d1::Float64,d2::Float64,h::Float64,ri::Float64)=ri*h/(pi*(d1/2)*(d2/2))
 
-function interp_area(x1::Float64, x2::Float64, x3::Float64)
-    frac1=(x2-x1)/(x3-x1)
-    frac2=(x3-x2)/(x3-x1)
-
-    [frac1,frac2]
-end
+interp_area(x1::Float64, x2::Float64, x3::Float64)=[(x2-x1)/(x3-x1),(x3-x2)/(x3-x1)]
 
 function add(neuron::Neuron,prop_array::Channel)
 

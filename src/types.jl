@@ -33,13 +33,6 @@ type Node{T<:Prop}
     prop::T
 end
 
-type Node_ext
-    ind::Int64
-    ri::Array{Float64,1}
-    parent_r::Float64
-    children_r::Array{Float64,1}
-end
-
 type Section
     refcount::Int64 #ID for section, also the place in secstack array
     mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
