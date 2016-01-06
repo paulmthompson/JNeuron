@@ -111,21 +111,48 @@ frustrum_resistance(d1::Float64,d2::Float64,h::Float64,ri::Float64)=ri*h/(pi*(d1
 
 interp_area(x1::Float64, x2::Float64, x3::Float64)=[(x2-x1)/(x3-x1),(x3-x2)/(x3-x1)]
 
-function add(neuron::Neuron,prop_array)
+function add(neuron::Neuron,prop_array...)
 
     global num_neur::Int64
     global num_prop::Int64
 
-    if method_exists(make_prop,(typeof(prop_array),Int))
+    num_arg=length(prop_array)
+
+    if num_arg==1
+
+        prop_array=prop_array[1]
+        
+        if method_exists(make_prop,(typeof(prop_array),Int))
+        else
+            num_prop+=1
+            gen_prop(prop_array,num_prop)
+        end
+        
+        myprop=make_prop(prop_array,0)
+
+        gen_current(prop_array,myprop)
+        
+    elseif num_arg==4
+        
+        for i=1:4
+            if method_exists(make_prop,(typeof(prop_array[i]),Int))
+            else
+                num_prop+=1
+                gen_prop(prop_array[i],num_prop)
+            end
+        end
+
+        myprop=(make_prop(prop_array[1],0),make_prop(prop_array[2],0),make_prop(prop_array[3],0),make_prop(prop_array[4],0))
+
+        gen_current(prop_array[1],myprop[1])
+        gen_current(prop_array[2],myprop[2])
+        gen_current(prop_array[3],myprop[3])
+        gen_current(prop_array[4],myprop[4])
+     
     else
-        num_prop+=1
-        gen_prop(prop_array,num_prop)
+        #error checking
     end
     
-    myprop=make_prop(prop_array,0)
-
-    gen_current(prop_array,myprop)
-
     newnodes=Array(Node,length(neuron.nodes))
     
     if method_exists(make_neuron,(typeof(myprop),typeof(neuron),typeof(newnodes)))
@@ -134,63 +161,24 @@ function add(neuron::Neuron,prop_array)
         gen_neuron(myprop,num_neur)
     end
 
-    for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron,neuron.nodes[i].ind,make_prop(prop_array,0))
+    for i=1:length(neuron.secstack)
+        for j=1:length(neuron.secstack[i].pnode)
+
+            ind=neuron.nodes[neuron.secstack[i].pnode[j]].ind
+
+            if num_arg==1
+                newnodes[ind]=Node(neuron,neuron.secstack[i].pnode[j],make_prop(prop_array,0))
+            else
+                mtype=neuron.secstack[i].mtype
+                newnodes[ind]=Node(neuron,neuron.secstack[i].pnode[j],make_prop(prop_array[mtype],0))
+            end
+
+        end
     end
 
     n=deepcopy(neuron)
     
     n1=make_neuron(myprop,n,newnodes)
-
-    reset_pnode!(n1)
-
-    n1
-    
-end
-
-function add(neuron::Neuron,prop1,prop2,prop3,prop4)
-
-    global num_neur::Int64
-    global num_prop::Int64
-
-    prop_array=(prop1,prop2,prop3,prop4)
-
-    for i=1:4
-        if method_exists(make_prop,(typeof(prop_array[i]),Int))
-        else
-            num_prop+=1
-            gen_prop(prop_array[i],num_prop)
-        end
-    end
-     
-    new_prop_array=(make_prop(prop1,0),make_prop(prop2,0),make_prop(prop3,0),make_prop(prop4,0))
-
-    gen_current(prop1,new_prop_array[1])
-    gen_current(prop2,new_prop_array[2])
-    gen_current(prop3,new_prop_array[3])
-    gen_current(prop4,new_prop_array[4])
-
-    newnodes=Array(Node,length(neuron.nodes))
-    
-    if method_exists(make_neuron,(typeof(new_prop_array),typeof(neuron),typeof(newnodes)))
-    else     
-        num_neur+=1
-        gen_neuron(new_prop_array,num_neur)
-    end
-
-    for i=1:length(neuron.secstack)
-        for j=1:length(neuron.secstack[i].pnode)
-            ind=neuron.nodes[neuron.secstack[i].pnode[j]].ind
-            mtype=neuron.secstack[i].mtype
-
-            newnodes[ind]=Node(neuron,neuron.secstack[i].pnode[j],make_prop(prop_array[mtype],0))
-
-        end
-    end
-
-    n=deepcopy(neuron)
-    
-    n1=make_neuron(new_prop_array,n,newnodes)
 
     reset_pnode!(n1)
 
