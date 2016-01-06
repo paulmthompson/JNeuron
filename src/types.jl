@@ -37,7 +37,6 @@ type Section
     child::Array{Section,1}
     pt3d::Array{Pt3d,1}
     Ra::Float64 #cytoplasmic resistivity
-    parentx::Float64
     length::Float64
 end
 
