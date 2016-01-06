@@ -18,9 +18,9 @@ Imagine you have a similar with three kinds of neurons with different ion channe
 	filepath="/path/to/file/cell.asc"
 	blank_neuron=instantiate(filepath)
 	set_nsegs!(blank_neuron)
-	myneuron1=add(blank_neuron,[HH()])
-	myneuron2=add(blank_neuron,[HH(),Passive()])
-	myneuron3=add(blank_neuron,Array[[HH(),Passive()],[HH(),Passive()],[Passive()],[Passive()]]);
+	myneuron1=add(blank_neuron,HH())
+	myneuron2=add(blank_neuron,(HH(),Passive()))
+	myneuron3=add(blank_neuron,(HH(),Passive()),(HH(),Passive()),Passive(),Passive());
 
 You could easily construct an array of the neurons above to be accessed during simulations:
 
