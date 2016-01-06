@@ -179,29 +179,8 @@ function add(neuron::Neuron,prop_array...)
     n=deepcopy(neuron)
     
     n1=make_neuron(myprop,n,newnodes)
-
-    reset_pnode!(n1)
-
-    n1
     
 end
-
-function reset_pnode!(neuron::Neuron)
-
-    for i=1:length(neuron.secstack)
-
-        first=neuron.nodes[neuron.secstack[i].pnode[1]].ind
-
-        last=neuron.nodes[neuron.secstack[i].pnode[end]].ind
-
-        neuron.secstack[i].pnode=collect(first:last)
-        
-    end
-
-    nothing
-    
-end
-
 
 function Node(neuron::Neuron,node_ind::Int64,myprop::Prop)
     node=neuron.nodes[node_ind]
