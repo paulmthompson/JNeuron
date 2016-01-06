@@ -11,7 +11,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
     nseglist=zeros(Int64,length(neuron.secstack))
     nodesec[1]=1
     parents=zeros(Int64,length(neuron.secstack))
-    internodes=0
     first=0
     last=0
 
@@ -66,7 +65,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
 
                     first=length(neuron.nodes)+1
                     last=length(neuron.nodes)+2
-                    internodes+=1
 
                     #create regular node
                     internal_node(neuron,area,ri,parent,[length(neuron.nodes)+2],mypt3d)
@@ -85,7 +83,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                 elseif j==nseglist[i]
 
                     last=length(neuron.nodes)+2
-                    internodes+=1
                 
                     #create regular node
                     internal_node(neuron,area,ri,parent,[length(neuron.nodes)+2],mypt3d)
