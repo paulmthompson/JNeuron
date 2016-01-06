@@ -70,7 +70,7 @@ Once you have specified the components of the network, it has everything it need
 
 .. code-block:: julia
 	
-	run(mynetwork)
+	run!(mynetwork)
 
 Any components that you specified to calculate (like extracellular voltage above) will be stored in the data container at the end of the run for you to access:
 
@@ -124,20 +124,20 @@ In JNeuron, the cable equation is discretized so that voltages are solved at cer
 Adding Channels
 ----------------
 
-Neurons can have a variety of ion channels. Many from the literature are already defined in JNeuron (see Channels). Neurons are considered to have 4 types of sections: 1) cell body, 2) axon, 3) basal dendrites and 4) apical dendrites. Different types of ion channels can be present in each of these 4 sections. If the same channels are present everywhere in the neuron, they can easily be added my calling the add method with an array of the channel type:
+Neurons can have a variety of ion channels. Many from the literature are already defined in JNeuron (see Channels). Neurons are considered to have 4 types of sections: 1) cell body, 2) axon, 3) basal dendrites and 4) apical dendrites. Different types of ion channels can be present in each of these 4 sections. If the same channels are present everywhere in the neuron, they can easily be added my calling the add method with an instance of the channel type. Multiple channels are added as a tuple of channel types:
 
 .. code-block:: julia
 
-	myneuron1=add(blank_neuron,[HH()]) #add hodgkin huxley channels
+	myneuron1=add(blank_neuron,HH()) #add hodgkin huxley channels
 
-	myneuron2=add(blank_neuron,[HH(),Passive()]) #add hodgkin huxley and Passive channels
+	myneuron2=add(blank_neuron,(HH(),Passive())) #add hodgkin huxley and Passive channels
 
-If we instead want Hodgkin Huxley and Passive channels in the soma and axon, but only passive channels in the basal and apical dendrites, we can call the add function with a 4x1 array of channel arrays like this:
+If we instead want Hodgkin Huxley and Passive channels in the soma and axon, but only passive channels in the basal and apical dendrites, we can call the add function with a channel/tuple argument for each location:
 
 .. code-block:: julia
 	
 	# 1) cell body, 2) axon 3) basal 4) apical
-	myneuron3=add(blank_neuron,Array[[HH(),Passive()],[HH(),Passive()],[Passive()],[Passive()]]);
+	myneuron3=add(blank_neuron,(HH(),Passive()),(HH(),Passive()),Passive(),Passive());
 
 Notice that in this step the input to the add method is the "blank_neuron" which has no channel types. When we call the add function, JNeuron is actually performing several metaprogramming steps under the hood, by putting together all of the methods that get called for each ion channel, and generating a new type unique for that neuron.
 
