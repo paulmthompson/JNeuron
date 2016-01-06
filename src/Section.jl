@@ -261,7 +261,7 @@ end
 
 
 function Node(node::Node,myprop::Prop)
-    Node(node.ind,node.area,node.ri,node.b,node.a,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
+    Node(node.ind,node.area,node.ri,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
 end
 
 

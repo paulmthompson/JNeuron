@@ -69,10 +69,10 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     internodes+=1
 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,0.0,0.0,parent,[length(neuron.nodes)+2],true,mypt3d,Prop0))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,parent,[length(neuron.nodes)+2],true,mypt3d,Prop0))
 
                 #create internode at end of section
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop0))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],length(neuron.nodes),children,false,[mypt3d[end]],Prop0))
                 
                 elseif j==1
 
@@ -80,7 +80,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     neuron.internal_nodes+=1
 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,parent,children,true,mypt3d,Prop0))
 
                             
                 elseif j==nseglist[i]
@@ -89,14 +89,14 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     internodes+=1
                 
                 #create regular node
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,0.0,0.0,parent,[length(neuron.nodes)+2],true,mypt3d,Prop0))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,parent,[length(neuron.nodes)+2],true,mypt3d,Prop0))
 
                 #create internode at end of section
-                push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],0.0,0.0,length(neuron.nodes),children,false,[mypt3d[end]],Prop0))
+                push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],length(neuron.nodes),children,false,[mypt3d[end]],Prop0))
 
                 else
                 
-                    push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0))
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,parent,children,true,mypt3d,Prop0))
 
                 end
 
@@ -110,13 +110,11 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
             
             for j=1:3
 
-                myvars=Dict{ASCIIString,Float64}()
-
                 if j ==1 
                     parent=length(neuron.nodes)+2
                     children=Array(Int64,0)
 
-                    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],0.0,0.0,parent,children,false,[neuron.secstack[end].pt3d[end]],Prop0))
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],parent,children,false,[neuron.secstack[end].pt3d[end]],Prop0))
                     
                 elseif j == 2
 
@@ -127,13 +125,13 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     push!(children,length(neuron.nodes))
                     push!(children,length(neuron.nodes)+2)
 
-                    push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,0.0,0.0,parent,children,true,mypt3d,Prop0))
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,area,ri,parent,children,true,mypt3d,Prop0))
                     
                 else
                     parent=length(neuron.nodes)
                     children=Array(Int64,0)
 
-                    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],0.0,0.0,parent,children,false,[neuron.secstack[end].pt3d[1]],Prop0))
+                    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],parent,children,false,[neuron.secstack[end].pt3d[1]],Prop0))
                     
                 end
                 

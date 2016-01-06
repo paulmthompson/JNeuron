@@ -15,8 +15,6 @@ Only the diagonals of A change from iteration to iteration, by a factor proporti
 
 function fillA!(neuron::Neuron)
 
-    ext=false
-
     nodelen=length(neuron.nodes)
     
     neuron.v=zeros(Float64,nodelen)
@@ -39,8 +37,8 @@ function fillA!(neuron::Neuron)
             area_p=sum(neuron.nodes[neuron.nodes[i].parent].area)
             area_n=sum(neuron.nodes[i].area)
 
-            neuron.nodes[i].b=100/(r_p*area_n)
-            neuron.nodes[i].a=100/(r_p*area_p)
+            neuron.b[i]=100/(r_p*area_n)
+            neuron.a[i]=100/(r_p*area_p)
 
             neuron.diag_old[i]=100/(r_p*area_n)+.001*neuron.Cm/neuron.dt
         
@@ -64,8 +62,6 @@ function fillA!(neuron::Neuron)
 
         end
 
-        neuron.a[i]=neuron.nodes[i].a
-        neuron.b[i]=neuron.nodes[i].b
         neuron.par[i]=neuron.nodes[i].parent
         
     end
@@ -83,11 +79,6 @@ function fillA!(neuron::Neuron)
     neuron.axon=make_prop(neuron.axon,length(neuron.internal_nodes[2]))
     neuron.dendrite=make_prop(neuron.dendrite,length(neuron.internal_nodes[3]))
     neuron.apical=make_prop(neuron.apical,length(neuron.internal_nodes[4]))
- 
-    if ext==true
-        neuron.diag_ext=diagview(neuron.A_ext)
-        neuron.diag_ext_old=diag(neuron.A_ext)
-    end
 
     nothing
        
@@ -149,37 +140,6 @@ function main(neuron::Neuron)
         con!(getfield(neuron,ind),neuron.v,neuron.internal_nodes[ind])     
     end
     
-end
-
-function main_ext(neuron::Neuron)
-    
-     for i=1:length(neuron.nodes)
-       
-         #calculate current
-         iext=1/neuron.xg*(neuron.vext[i]-neuron.ex)
-                
-         #add iext to rhs
-         neuron.rhs_ext[i]+=iext
-
-         #add cm/dt*delta_v + di/vm*delta_v + i(v_m) to rhs (membrane current entering ext space)
-         neuron.rhs_ext+=neuron.Cm/neuron.dt*neuron.delta_v[i] + neuron.divm[i]*neuron.delta_v[i] + neuron.i_vm[i]
-                
-         #calculate current entering node from parent and exiting to children
-         #add to rhs for that node
-        
-         #parent current
-         i_p=(neuron.vext[neuron.nodes[i].parent]-neuron.vext[i])/neuron.enodes[i].parent_r
-
-         #children current
-         i_c=0.0
-         for j=1:length(neuron.nodes[i].children)
-             i_c+=(neuron.vext[i]-neuron.vext[neuron.nodes[i].children[j]])/neuron.enodes[i].children_r[j]
-         end
-
-         neuron.rhs_ext[i]+=i_p
-         neuron.rhs_ext[i]+=i_c
-            
-     end
 end
 
 function add_delta!(neuron::Neuron)
