@@ -66,11 +66,10 @@ function fillA!(neuron::Neuron)
         
     end
 
-
     for i=1:length(neuron.secstack)
         for j=1:length(neuron.secstack[i].pnode)
-            if neuron.secstack[i].pnode[j].internal==true
-                push!(neuron.internal_nodes[neuron.secstack[i].mtype],neuron.secstack[i].pnode[j].ind)
+            if neuron.nodes[neuron.secstack[i].pnode[j]].internal==true
+                push!(neuron.internal_nodes[neuron.secstack[i].mtype],neuron.secstack[i].pnode[j])
             end
         end
     end

@@ -135,15 +135,7 @@ function add(neuron::Neuron,prop_array::Channel)
     end
 
     for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron.nodes[i],make_prop(prop_array,0))
-
-        for j=2:length(fieldnames(myprop))
-            for k=1:length(getfield(myprop,j).nodevar)
-                if !haskey(newnodes[i].vars,getfield(myprop,j).nodevar[k])
-                    newnodes[i].vars[getfield(myprop,j).nodevar[k]]=0.0
-                end
-            end
-        end
+        newnodes[i]=Node(neuron,neuron.nodes[i].ind,make_prop(prop_array,0))
     end
 
     n=deepcopy(neuron)
@@ -180,7 +172,7 @@ function add{T<:Tuple}(neuron::Neuron,prop_array::T)
     end
 
     for i=1:length(neuron.nodes)
-        newnodes[i]=Node(neuron.nodes[i],make_prop(prop_array,0))
+        newnodes[i]=Node(neuron,neuron.nodes[i].ind,make_prop(prop_array,0))
     end
 
     n=deepcopy(neuron)
@@ -225,10 +217,10 @@ function add(neuron::Neuron,prop1,prop2,prop3,prop4)
 
     for i=1:length(neuron.secstack)
         for j=1:length(neuron.secstack[i].pnode)
-            ind=neuron.secstack[i].pnode[j].ind
+            ind=neuron.nodes[neuron.secstack[i].pnode[j]].ind
             mtype=neuron.secstack[i].mtype
 
-            newnodes[ind]=Node(neuron.secstack[i].pnode[j],make_prop(prop_array[mtype],0))
+            newnodes[ind]=Node(neuron,neuron.secstack[i].pnode[j],make_prop(prop_array[mtype],0))
 
         end
     end
@@ -247,11 +239,11 @@ function reset_pnode!(neuron::Neuron)
 
     for i=1:length(neuron.secstack)
 
-        first=neuron.secstack[i].pnode[1].ind
+        first=neuron.nodes[neuron.secstack[i].pnode[1]].ind
 
-        last=neuron.secstack[i].pnode[end].ind
+        last=neuron.nodes[neuron.secstack[i].pnode[end]].ind
 
-        neuron.secstack[i].pnode=sub(neuron.nodes,first:last)
+        neuron.secstack[i].pnode=collect(first:last)
         
     end
 
@@ -260,7 +252,8 @@ function reset_pnode!(neuron::Neuron)
 end
 
 
-function Node(node::Node,myprop::Prop)
+function Node(neuron::Neuron,node_ind::Int64,myprop::Prop)
+    node=neuron.nodes[node_ind]
     Node(node.ind,node.area,node.ri,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
 end
 

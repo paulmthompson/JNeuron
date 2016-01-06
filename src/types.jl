@@ -33,7 +33,7 @@ end
 type Section
     refcount::Int64 #ID for section, also the place in secstack array
     mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
-    pnode::Array{Node,1} #one node at center of each segment
+    pnode::Array{Int64,1} #one node at center of each segment
     child::Array{Section,1}
     pt3d::Array{Pt3d,1}
     Ra::Float64 #cytoplasmic resistivity
