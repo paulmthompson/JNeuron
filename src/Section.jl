@@ -109,7 +109,7 @@ frustrum_area(d1::Float64,d2::Float64,h::Float64)=pi*(d1/2+d2/2)*sqrt((d1/2-d2/2
 
 frustrum_resistance(d1::Float64,d2::Float64,h::Float64,ri::Float64)=ri*h/(pi*(d1/2)*(d2/2))
 
-interp_area(x1::Float64, x2::Float64, x3::Float64)=[(x2-x1)/(x3-x1),(x3-x2)/(x3-x1)]
+interp_area(x1::Float64, x2::Float64, x3::Float64)=((x2-x1)/(x3-x1),(x3-x2)/(x3-x1))
 
 function add(neuron::Neuron,prop_array...)
 
