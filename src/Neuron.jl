@@ -129,7 +129,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
         end
         
         #map pnode of this section to newly created nodes            
-        neuron.secstack[i].pnode=collect(first:last)
+        neuron.secstack[i].pnode=first:last
                
     end
 
