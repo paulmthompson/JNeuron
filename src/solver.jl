@@ -33,9 +33,9 @@ function fillA!(neuron::Neuron)
 
         if neuron.nodes[i].parent != 0
             
-            r_p=neuron.nodes[neuron.nodes[i].parent].ri[2]+neuron.nodes[i].ri[1]
-            area_p=sum(neuron.nodes[neuron.nodes[i].parent].area)
-            area_n=sum(neuron.nodes[i].area)
+            r_p=neuron.nodes[neuron.nodes[i].parent].ri.r+neuron.nodes[i].ri.l
+            area_p=neuron.nodes[neuron.nodes[i].parent].area.t
+            area_n=neuron.nodes[i].area.t
 
             neuron.b[i]=100/(r_p*area_n)
             neuron.a[i]=100/(r_p*area_p)
@@ -43,7 +43,7 @@ function fillA!(neuron::Neuron)
             neuron.diag_old[i]=100/(r_p*area_n)+.001*neuron.Cm/neuron.dt
         
             for j in neuron.nodes[i].children
-                r_c=neuron.nodes[i].ri[2]+neuron.nodes[j].ri[1]
+                r_c=neuron.nodes[i].ri.r+neuron.nodes[j].ri.l
                 neuron.diag_old[i] += 100/(r_c*area_n)
                 
             end
@@ -52,10 +52,10 @@ function fillA!(neuron::Neuron)
 
             neuron.diag_old[i]=.001*neuron.Cm/neuron.dt
 
-            area_n=sum(neuron.nodes[i].area)
+            area_n=neuron.nodes[i].area.t
             
             for j in neuron.nodes[i].children
-                r_c=neuron.nodes[i].ri[2]+neuron.nodes[j].ri[1]
+                r_c=neuron.nodes[i].ri.r+neuron.nodes[j].ri.l
                 neuron.diag_old[i] += 100/(r_c*area_n)
                 
             end

@@ -162,7 +162,7 @@ function internal_node(neuron::Neuron,area,ri,parent,children,mypt3d)
 end
 
 function edge_node(neuron,parent,children,mypt3d)
-    push!(neuron.nodes,Node(length(neuron.nodes)+1,[100.0],[0.0,0.0],parent,children,false,mypt3d:mypt3d,Prop0))
+    push!(neuron.nodes,Node(length(neuron.nodes)+1,SegArea(50.0,50.0,100.0),SegRi(0.0,0.0),parent,children,false,mypt3d:mypt3d,Prop0))
 end
 
 function find_parents!(neuron::Neuron)

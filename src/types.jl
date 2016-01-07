@@ -19,10 +19,21 @@ type Pt3d
     arc::Float64 #normalized distance from 0 to end
 end
 
+immutable SegArea
+    l::Float64
+    r::Float64
+    t::Float64
+end
+
+immutable SegRi
+    l::Float64
+    r::Float64
+end
+
 type Node
     ind::Int64
-    area::Array{Float64,1} #surface area of left [1] and right[2] part of segment
-    ri::Array{Float64,1}  #internal resistance of left[1] and right[2] part of segment
+    area::SegArea #surface area of left [1] and right[2] part of segment
+    ri::SegRi  #internal resistance of left[1] and right[2] part of segment
     parent::Int64 #index in node array of parent
     children::Array{Int64,1} #Node(s) from other sections attached to this one
     internal::Bool
