@@ -1,12 +1,4 @@
-#=
-Methods to construct and act on Section type, which mirrors the functions of Neuron's Section type
 
-Inputs:
-sec - section containing node
-x - ID of node to be created (range of 1 to nseg)
-nseg - number of total segments in section
-
-=#
 
 function r_a_calc(sec::Section,x::Int64,nseg::Int64,Ra::Float64)
     

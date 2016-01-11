@@ -83,12 +83,12 @@ function randomize_shape!(neuron::Neuron)
     
 end
 
-function rot_3d(a,b,c,u,v,w,x,y,z,theta)
-    
-    xnew=(a*(v*v+w*w)-u*(b*v + c*w - u*x - v*y - w*z))*(1-cosd(theta))+x*cosd(theta)+(-c*v + b*w - w*y + v*z)*sind(theta)
-    ynew=(b*(u*u+w*w)-v*(a*u + c*w - u*x - v*y - w*z))*(1-cosd(theta))+y*cosd(theta)+(c*u - a*w + w*x - u*z)*sind(theta)
-    znew=(c*(u*u+v*v)-w*(a*u + b*v - u*x - v*y - w*z))*(1-cosd(theta))+z*cosd(theta)+(-b*u + a*v - v*x + u*y)*sind(theta)
-    
+function rot_3d(a,b,c,u,v,w,x,y,z,dcos,dsin)
+  
+    xnew=(a*(v*v+w*w)-u*(b*v + c*w - u*x - v*y - w*z))*(1-dcos)+x*dcos+(-c*v + b*w - w*y + v*z)*dsin
+    ynew=(b*(u*u+w*w)-v*(a*u + c*w - u*x - v*y - w*z))*(1-dcos)+y*dcos+(c*u - a*w + w*x - u*z)*dsin
+    znew=(c*(u*u+v*v)-w*(a*u + b*v - u*x - v*y - w*z))*(1-dcos)+z*dcos+(-b*u + a*v - v*x + u*y)*dsin
+
     (xnew,ynew,znew)
 end
 
@@ -103,16 +103,19 @@ function rot_seg(neuron::Neuron,pind::Int64,cind::Int64)
 
     theta=randn()*10
 
-    rot_child(neuron,cind,a,b,c,uvw,theta)
+    dcos=cosd(theta)
+    dsin=sind(theta)
+
+    rot_child(neuron,cind,a,b,c,uvw,dcos,dsin)
 
     nothing
 end
 
-function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,uvw::Array{Float64,1},theta::Float64)
+function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,uvw::Array{Float64,1},dcos::Float64,dsin::Float64)
     
     for i in neuron.secstack[cind].child
 
-        rot_child(neuron,i,a,b,c,uvw,theta)
+        rot_child(neuron,i,a,b,c,uvw,dcos,dsin)
         
     end
 
@@ -122,7 +125,7 @@ function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,u
         y=neuron.secstack[cind].pt3d[j].y
         z=neuron.secstack[cind].pt3d[j].z
             
-        xyz=rot_3d(a,b,c,uvw[1],uvw[2],uvw[3],x,y,z,theta)
+        xyz=rot_3d(a,b,c,uvw[1],uvw[2],uvw[3],x,y,z,dcos,dsin)
 
         neuron.secstack[cind].pt3d[j]=Pt3d(xyz[1],xyz[2],xyz[3],neuron.secstack[cind].pt3d[j].d,neuron.secstack[cind].pt3d[j].arc)
 
