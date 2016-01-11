@@ -91,14 +91,13 @@ function instantiate(import3d::Import3D)
         end
     end
 
-    #set default Ra, Cm
     neuron.Cm=1.0
     neuron.Ra=35.4
 
     find_parents!(neuron)
     
     neuron
-    #connect them, making adjustments to 3d points as necessary
+
 end
 
 function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},rootind::Array{Int64,1},mapping::Dict{Int64,Int64})

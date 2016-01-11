@@ -31,7 +31,6 @@ immutable SegRi
 end
 
 immutable Node
-    ind::Int64
     area::SegArea #surface area of left [1] and right[2] part of segment
     ri::SegRi  #internal resistance of left[1] and right[2] part of segment
     parent::Int64 #index in node array of parent

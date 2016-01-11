@@ -161,7 +161,7 @@ function add(neuron::Neuron,prop_array...)
     for i=1:length(neuron.secstack)
         for j=1:length(neuron.secstack[i].pnode)
 
-            ind=neuron.nodes[neuron.secstack[i].pnode[j]].ind
+            ind=neuron.secstack[i].pnode[j]
 
             if num_arg==1
                 newnodes[ind]=Node(neuron,neuron.secstack[i].pnode[j],make_prop(prop_array,0))
@@ -179,7 +179,7 @@ end
 
 function Node(neuron::Neuron,node_ind::Int64,myprop::Prop)
     node=neuron.nodes[node_ind]
-    Node(node.ind,node.area,node.ri,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
+    Node(node.area,node.ri,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
 end
 
 
