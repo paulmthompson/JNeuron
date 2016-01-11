@@ -30,7 +30,7 @@ immutable SegRi
     r::Float64
 end
 
-type Node
+immutable Node
     ind::Int64
     area::SegArea #surface area of left [1] and right[2] part of segment
     ri::SegRi  #internal resistance of left[1] and right[2] part of segment
@@ -42,7 +42,6 @@ type Node
 end
 
 type Section
-    refcount::Int64 #ID for section, also the place in secstack array
     mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     pnode::UnitRange{Int64} #one node at center of each segment
     child::Array{Int64,1}

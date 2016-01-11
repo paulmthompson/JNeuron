@@ -93,7 +93,6 @@ function instantiate(import3d::Import3D)
 
     #set default Ra, Cm
     for i=1:length(neuron.secstack)  
-        neuron.secstack[i].refcount=i
         neuron.secstack[i].Ra=35.4
     end
 
@@ -145,15 +144,14 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
         #xyzd measurements along estimated centroid - "stack of frusta"
     end
 
-    #calculate root distance to each centroid
-    #connect to closest centroid (first point in root)
-    #add root as child to soma
     ds=zeros(Float64,length(somas))
+    
     for i in [mapping[k] for k in rootind]
+        
         for j=1:length(somas)
             ds[j]=sqrt((centroids[1,j]-neuron.secstack[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secstack[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secstack[i].pt3d[1].z)^2)
         end
-        #push!(neuron.secstack[i].child,somas[indmin(ds)]) #add root as child of soma
+        
         push!(somas[indmin(ds)].child,i)
     end
 
@@ -234,7 +232,7 @@ function sphere_approx(import3d::Import3D, ind::Int64,somas::Array{Section,1})
     Pt3d(centroid...,2*radi,.5); Pt3d(centroid[1]+radi,centroid[2]+radi,centroid[3],2*radi,1.0)]
 
 
-    sec=Section(1,1,1:1,Array(Int64,0),0,mypoints,0.0,2*radi)
+    sec=Section(1,1:1,Array(Int64,0),0,mypoints,0.0,2*radi)
     push!(somas,sec)
     
     centroid
@@ -396,7 +394,7 @@ end
 
 
 function Section(section3d::Section3D) #like new_section
-    sec=Section(1,section3d.mytype,1:1,Array(Int64,0),0,Array(Pt3d,size(section3d.raw,1)),0.0,0.0)
+    sec=Section(section3d.mytype,1:1,Array(Int64,0),0,Array(Pt3d,size(section3d.raw,1)),0.0,0.0)
 
     #add 3d points from 3d
     for i=1:length(section3d.d)
