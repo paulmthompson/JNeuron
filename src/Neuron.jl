@@ -33,7 +33,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
 
             for j=1:nseglist[i]
            
-                (area, ri,mypt3d) = r_a_calc(neuron.secstack[i],j,nseglist[i])
+                (area, ri,mypt3d) = r_a_calc(neuron.secstack[i],j,nseglist[i],neuron.Ra)
                 
                 if j==1
                     parent=nodesec[neuron.secstack[i].parent+1]+neuron.secstack[i].parent-1
@@ -110,7 +110,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
                     parent=0
                     children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
                     
-                    (area, ri, mypt3d) = r_a_calc(neuron.secstack[i],1,1)
+                    (area, ri, mypt3d) = r_a_calc(neuron.secstack[i],1,1,neuron.Ra)
                     push!(children,length(neuron.nodes))
                     push!(children,length(neuron.nodes)+2)
 
@@ -151,7 +151,7 @@ function lambda_f(frequency::Float64,sec::Section,neuron::Neuron)
         d1=d2
     end
 
-    lam *= sqrt(2) * 1e-5 * sqrt(4*pi*frequency*sec.Ra*neuron.Cm)
+    lam *= sqrt(2) * 1e-5 * sqrt(4*pi*frequency*neuron.Ra*neuron.Cm)
 
     sec.length/lam
     

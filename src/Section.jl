@@ -8,7 +8,7 @@ nseg - number of total segments in section
 
 =#
 
-function r_a_calc(sec::Section,x::Int64,nseg::Int64)
+function r_a_calc(sec::Section,x::Int64,nseg::Int64,Ra::Float64)
     
     #find location of other nodes on section in normalized units
     
@@ -30,7 +30,7 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
 
         area=SegArea(myarea/2,myarea/2,myarea)
 
-        r=frustrum_resistance(sec.pt3d[1].d,sec.pt3d[1].d,sec.length*(interval[2]-interval[1])/2,sec.Ra)
+        r=frustrum_resistance(sec.pt3d[1].d,sec.pt3d[1].d,sec.length*(interval[2]-interval[1])/2,Ra)
         ri=SegRi(.01*r,.01*r)
 
         first=1
@@ -55,7 +55,7 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
     
         for i=(first+1):mid
             al+=frustrum_area(diam, sec.pt3d[i].d,height)
-            rl+=frustrum_resistance(diam,sec.pt3d[i].d,height,sec.Ra)
+            rl+=frustrum_resistance(diam,sec.pt3d[i].d,height,Ra)
             diam=sec.pt3d[i].d
             height=(arc3d[i+1]-arc3d[i])*sec.length
         end
@@ -67,20 +67,20 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
         height=(cent-arc3d[mid])*sec.length
 
         al+=frustrum_area(sec.pt3d[mid].d,diam,height)
-        rl+=frustrum_resistance(sec.pt3d[mid].d,diam,height,sec.Ra)
+        rl+=frustrum_resistance(sec.pt3d[mid].d,diam,height,Ra)
 
         #first point after center    
         height=(arc3d[mid+1]-cent)*sec.length
 
         ar+=frustrum_area(diam,sec.pt3d[mid+1].d,height)
-        rr+=frustrum_resistance(diam,sec.pt3d[mid+1].d,height,sec.Ra)
+        rr+=frustrum_resistance(diam,sec.pt3d[mid+1].d,height,Ra)
 
         diam=sec.pt3d[mid+1].d
         height=(arc3d[mid+2]-arc3d[mid+1])*sec.length
 
         for i=(mid+2):last
             ar+=frustrum_area(diam,sec.pt3d[i].d,height)
-            rr+=frustrum_resistance(diam,sec.pt3d[i].d,height,sec.Ra)
+            rr+=frustrum_resistance(diam,sec.pt3d[i].d,height,Ra)
             diam=sec.pt3d[i].d
             height=(arc3d[i+1]-arc3d[i])*sec.length
         end
@@ -92,7 +92,7 @@ function r_a_calc(sec::Section,x::Int64,nseg::Int64)
         height=(interval[2]-arc3d[last])*sec.length
 
         ar+=frustrum_area(sec.pt3d[last].d,diam,height)
-        rr+=frustrum_resistance(sec.pt3d[last].d,diam,height,sec.Ra)
+        rr+=frustrum_resistance(sec.pt3d[last].d,diam,height,Ra)
 
         area=SegArea(al,ar,al+ar)
         ri=SegRi(.01*rl,.01*rr)
