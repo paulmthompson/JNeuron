@@ -4,13 +4,12 @@ global num_neur = 0
 global num_prop = 0
 
 abstract Channel
-
 abstract Prop
+abstract Neuron
 
 type Prop0<:Prop
 end
 
-#associated 3d point
 immutable Pt3d
     x::Float64
     y::Float64
@@ -25,10 +24,14 @@ immutable SegArea
     t::Float64
 end
 
+SegArea()=SegArea(50.0,50.0,100.0)
+
 immutable SegRi
     l::Float64
     r::Float64
 end
+
+SegRi()=SegRi(0.0,0.0)
 
 immutable Node
     area::SegArea #surface area of left [1] and right[2] part of segment
@@ -40,6 +43,17 @@ immutable Node
     prop::DataType
 end
 
+Node(a::SegArea,r::SegRi,p::Int64,c::Array{Int64},m::UnitRange{Int64})=Node(a,r,p,c,true,m,Prop0)
+
+Node(p::Int64,c::Array{Int64,1},m::Int64)=Node(SegArea(),SegRi(),p,c,false,m:m,Prop0)
+
+Node(n::Node,p::Prop)=Node(n.area,n.ri,n.parent,n.children,n.internal,n.pt3d,typeof(p))
+
+function Node(neuron::Neuron,node_ind::Int64,myprop::Prop)
+    node=neuron.nodes[node_ind]
+    Node(node.area,node.ri,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
+end
+
 immutable Section
     mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     pnode::UnitRange{Int64} #one node at center of each segment
@@ -48,8 +62,6 @@ immutable Section
     pt3d::Array{Pt3d,1}
     length::Float64
 end
-
-abstract Neuron
 
 type Neuron0 <: Neuron
     

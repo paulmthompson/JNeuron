@@ -64,7 +64,7 @@ function add!(network::Network,intra::Intracellular)
     
 end
 
-function run!(network::Network,init=true)
+function run!{T<:NeuronPool}(network::Network{T},init=true)
 
     #get initial conditions if uninitialized
     if init==true

@@ -159,14 +159,12 @@ function lambda_f(frequency::Float64,sec::Section,neuron::Neuron)
 end
 
 function internal_node(neuron::Neuron,area,ri,parent,children,mypt3d,i)
-    push!(neuron.nodes,Node(area,ri,parent,children,true,mypt3d,Prop0))
-
+    push!(neuron.nodes,Node(area,ri,parent,children,mypt3d))
+    
     push!(neuron.internal_nodes[neuron.secstack[i].mtype],length(neuron.nodes))
 end
 
-function edge_node(neuron::Neuron,parent,children,mypt3d)
-    push!(neuron.nodes,Node(SegArea(50.0,50.0,100.0),SegRi(0.0,0.0),parent,children,false,mypt3d:mypt3d,Prop0))
-end
+edge_node(neuron::Neuron,parent,children,mypt3d)=push!(neuron.nodes,Node(parent,children,mypt3d))
 
 function find_parents!(neuron::Neuron)
     for i=1:length(neuron.secstack)
