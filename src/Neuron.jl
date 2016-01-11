@@ -29,8 +29,6 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
     
     for i=1:length(neuron.secstack)
 
-        mypt3d=1:length(neuron.secstack[i].pt3d)
-
         if neuron.secstack[i].mtype>1
 
             for j=1:nseglist[i]
