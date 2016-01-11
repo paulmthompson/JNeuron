@@ -139,3 +139,4 @@ function pt3d_vec(pt3d1::Pt3d,pt3d2::Pt3d)
 
     (mynorm, mag)
 end
+

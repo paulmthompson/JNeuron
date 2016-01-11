@@ -242,10 +242,10 @@ function gen_neuron(prop::Prop,k::Int64)
 
     @eval begin
         type $(symbol("Neuron_$k")) <: Neuron
-            soma::($(typeof(prop)))
-            axon::($(typeof(prop)))
-            dendrite::($(typeof(prop)))
-            apical::($(typeof(prop)))
+            soma::$(typeof(prop))
+            axon::$(typeof(prop))
+            dendrite::$(typeof(prop))
+            apical::$(typeof(prop))
             secstack::Array{Section,1}
             v::Array{Float64,1} #intracellular voltage
             a::Array{Float64,1}
@@ -266,7 +266,35 @@ function gen_neuron(prop::Prop,k::Int64)
         end
 
         function make_neuron(prop::$(typeof(prop)),n::Neuron,newnodes::Array{Node,1})
-             $(symbol("Neuron_$k"))(prop,prop,prop,prop,n.secstack,n.v,n.a,n.b,n.d,n.rhs,n.Ra,n.Cm,n.dt,newnodes,n.i_vm,n.divm,n.diag_old,n.internal_nodes,n.par,zeros(Float64,length(n.v)),zeros(Float64,length(n.v)))
+
+            nodelen=length(n.nodes)
+
+            i_vm=zeros(Float64,nodelen)
+            divm=zeros(Float64,nodelen)
+            v1=zeros(Float64,nodelen)
+            i2=zeros(Float64,nodelen)
+            par=zeros(Float64,nodelen)
+            inter_n=deepcopy(n.internal_nodes)
+            diag_old=zeros(Float64,nodelen)
+            rhs=zeros(Float64,nodelen)
+            a=zeros(Float64,nodelen)
+            b=zeros(Float64,nodelen)
+            d=zeros(Float64,nodelen)
+            v=zeros(Float64,nodelen)
+
+            secs=deepcopy(n.secstack)
+            
+            soma=make_prop(prop,length(inter_n[1]))
+            axon=make_prop(prop,length(inter_n[2]))
+            dendrite=make_prop(prop,length(inter_n[3]))
+            apical=make_prop(prop,length(inter_n[4]))
+        
+            n2 = $(symbol("Neuron_$k"))(soma,axon,dendrite,apical,secs,v,a,b,d,rhs,n.Ra,n.Cm,n.dt,newnodes,i_vm,divm,diag_old,inter_n,par,v1,i2)
+
+            fillA!(n2)
+
+            n2
+            
         end
         
     end   
@@ -277,10 +305,10 @@ function gen_neuron(prop::Tuple,k::Int64)
 
     @eval begin
         type $(symbol("Neuron_$k")) <: Neuron
-            soma::($(typeof(prop[1])))
-            axon::($(typeof(prop[2])))
-            dendrite::($(typeof(prop[3])))
-            apical::($(typeof(prop[4])))
+            soma::$(typeof(prop[1]))
+            axon::$(typeof(prop[2]))
+            dendrite::$(typeof(prop[3]))
+            apical::$(typeof(prop[4]))
             secstack::Array{Section,1}
             v::Array{Float64,1} #intracellular voltage
             a::Array{Float64,1}
@@ -301,7 +329,34 @@ function gen_neuron(prop::Tuple,k::Int64)
         end
 
         function make_neuron(prop::$(typeof(prop)),n::Neuron,newnodes::Array{Node,1})
-             $(symbol("Neuron_$k"))(prop[1],prop[2],prop[3],prop[4],n.secstack,n.v,n.a,n.b,n.d,n.rhs,n.Ra,n.Cm,n.dt,newnodes,n.i_vm,n.divm,n.diag_old,n.internal_nodes,n.par,zeros(Float64,length(n.v)),zeros(Float64,length(n.v)))
+
+            nodelen=length(n.nodes)
+
+            i_vm=zeros(Float64,nodelen)
+            divm=zeros(Float64,nodelen)
+            v1=zeros(Float64,nodelen)
+            i2=zeros(Float64,nodelen)
+            par=zeros(Float64,nodelen)
+            inter_n=deepcopy(n.internal_nodes)
+            diag_old=zeros(Float64,nodelen)
+            rhs=zeros(Float64,nodelen)
+            a=zeros(Float64,nodelen)
+            b=zeros(Float64,nodelen)
+            d=zeros(Float64,nodelen)
+            v=zeros(Float64,nodelen)
+
+            secs=deepcopy(n.secstack)
+
+            soma=make_prop(prop[1],length(inter_n[1]))
+            axon=make_prop(prop[2],length(inter_n[2]))
+            dendrite=make_prop(prop[3],length(inter_n[3]))
+            apical=make_prop(prop[4],length(inter_n[4]))
+            
+            n2 = $(symbol("Neuron_$k"))(soma,axon,dendrite,apical,secs,v,a,b,d,rhs,n.Ra,n.Cm,n.dt,newnodes,i_vm,divm,diag_old,inter_n,par,v1,i2)
+
+            fillA!(n2)
+
+            n2
         end
         
     end   

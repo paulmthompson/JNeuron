@@ -64,10 +64,10 @@ function add!(network::Network,intra::Intracellular)
     
 end
 
-function run!(network::Network)
+function run!(network::Network,init=true)
 
     #get initial conditions if uninitialized
-    if length(network.neur.N_1[1].i_vm)==0
+    if init==true
         for j=1:length(fieldnames(network.neur))
             for k=1:length(getfield(network.neur,j))
                 initialcon!(getfield(network.neur,j)[k])

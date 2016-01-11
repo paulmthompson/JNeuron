@@ -172,10 +172,8 @@ function add(neuron::Neuron,prop_array...)
 
         end
     end
-
-    n=deepcopy(neuron)
     
-    n1=make_neuron(myprop,n,newnodes)
+    n1=make_neuron(myprop,neuron,newnodes)
     
 end
 

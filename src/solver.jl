@@ -15,20 +15,6 @@ Only the diagonals of A change from iteration to iteration, by a factor proporti
 
 function fillA!(neuron::Neuron)
 
-    nodelen=length(neuron.nodes)
-    
-    neuron.v=zeros(Float64,nodelen)
-    neuron.a=zeros(Float64,nodelen)
-    neuron.b=zeros(Float64,nodelen)
-    neuron.d=zeros(Float64,nodelen)
-    neuron.par=zeros(Int64,nodelen)
-    neuron.rhs=zeros(Float64,nodelen)
-    neuron.i_vm=zeros(Float64,nodelen)
-    neuron.divm=zeros(Float64,nodelen)
-    neuron.diag_old=zeros(Float64,nodelen)
-    neuron.v1=zeros(Float64,nodelen)
-    neuron.i2=zeros(Float64,nodelen)
-    
     for i=1:length(neuron.nodes)
 
         if neuron.nodes[i].parent != 0
@@ -66,19 +52,6 @@ function fillA!(neuron::Neuron)
         
     end
 
-    for i=1:length(neuron.secstack)
-        for j=1:length(neuron.secstack[i].pnode)
-            if neuron.nodes[neuron.secstack[i].pnode[j]].internal==true
-                push!(neuron.internal_nodes[neuron.secstack[i].mtype],neuron.secstack[i].pnode[j])
-            end
-        end
-    end
-
-    neuron.soma=make_prop(neuron.soma,length(neuron.internal_nodes[1]))
-    neuron.axon=make_prop(neuron.axon,length(neuron.internal_nodes[2]))
-    neuron.dendrite=make_prop(neuron.dendrite,length(neuron.internal_nodes[3]))
-    neuron.apical=make_prop(neuron.apical,length(neuron.internal_nodes[4]))
-
     nothing
        
 end
@@ -86,9 +59,6 @@ end
 function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
 
     neuron.dt=dt #default
-    
-    #fill matrix
-    fillA!(neuron)
 
     #initial V
     neuron.v[:]=vi
