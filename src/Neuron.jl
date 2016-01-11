@@ -129,7 +129,7 @@ function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
         end
         
         #map pnode of this section to newly created nodes            
-        neuron.secstack[i].pnode=first:last
+        Section!(neuron,i,first:last)
                
     end
 
@@ -170,9 +170,21 @@ end
 function find_parents!(neuron::Neuron)
     for i=1:length(neuron.secstack)
         for j=1:length(neuron.secstack[i].child)
-            neuron.secstack[neuron.secstack[i].child[j]].parent=i
+            Section!(neuron,neuron.secstack[i].child[j],i)
         end                
     end
 
+    nothing
+end
+
+function Section!(neuron::Neuron,ind::Int64,i::Int64)
+    sec=neuron.secstack[ind]
+    neuron.secstack[ind]=Section(sec.mtype,sec.pnode,sec.child,i,sec.pt3d,sec.length)
+    nothing
+end
+
+function Section!(neuron::Neuron,ind::Int64,i::UnitRange{Int64})
+    sec=neuron.secstack[ind]
+    neuron.secstack[ind]=Section(sec.mtype,i,sec.child,sec.parent,sec.pt3d,sec.length)
     nothing
 end

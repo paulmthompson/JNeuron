@@ -389,23 +389,24 @@ end
 
 
 function Section(section3d::Section3D) #like new_section
-    sec=Section(section3d.mytype,1:1,Array(Int64,0),0,Array(Pt3d,size(section3d.raw,1)),0.0)
 
+    mypt3d=Array(Pt3d,size(section3d.raw,1))
+    mylength=0.0
     #add 3d points from 3d
     for i=1:length(section3d.d)
         if i>1
-            mylength=sqrt((section3d.raw[i,1]-section3d.raw[i-1,1])^2+(section3d.raw[i,2]-section3d.raw[i-1,2])^2+(section3d.raw[i,3]-section3d.raw[i-1,3])^2)
-            sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],mylength+sec.pt3d[i-1].arc)
-            sec.length+=mylength
+            l=sqrt((section3d.raw[i,1]-section3d.raw[i-1,1])^2+(section3d.raw[i,2]-section3d.raw[i-1,2])^2+(section3d.raw[i,3]-section3d.raw[i-1,3])^2)
+            mypt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],l+mypt3d[i-1].arc)
+            mylength+=l
         else
-            sec.pt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],0.0)
+            mypt3d[i]=Pt3d(section3d.raw[i,:]...,section3d.d[i],0.0)
         end
     end
 
     #normalize arc length
-    for i=2:size(sec.pt3d,1)
-        sec.pt3d[i]=Pt3d(sec.pt3d[i].x,sec.pt3d[i].y,sec.pt3d[i].z,sec.pt3d[i].d,sec.pt3d[i].arc/sec.length)
+    for i=2:size(mypt3d,1)
+        mypt3d[i]=Pt3d(mypt3d[i].x,mypt3d[i].y,mypt3d[i].z,mypt3d[i].d,mypt3d[i].arc/mylength)
     end
     
-    sec
+    sec=Section(section3d.mytype,1:1,Array(Int64,0),0,mypt3d,mylength)
 end

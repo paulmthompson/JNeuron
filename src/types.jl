@@ -40,7 +40,7 @@ immutable Node
     prop::DataType
 end
 
-type Section
+immutable Section
     mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
     pnode::UnitRange{Int64} #one node at center of each segment
     child::Array{Int64,1}
