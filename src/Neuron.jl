@@ -8,6 +8,7 @@ add_sec(neuron::Neuron, sec::Section)=push!(neuron.secstack,sec)
 function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
 
     neuron.internal_nodes=[Array(Int64,0) for i=1:4]
+    neuron.nodes=Array(Node,0)
     
     nodesec=zeros(Int64,length(neuron.secstack)+1)
     nseglist=zeros(Int64,length(neuron.secstack))
