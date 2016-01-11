@@ -53,10 +53,10 @@ abstract Neuron
 
 type Neuron0 <: Neuron
     
-    soma::Array{Prop0,1}
-    axon::Array{Prop0,1}
-    dendrite::Array{Prop0,1}
-    apical::Array{Prop0,1}
+    soma::Prop0
+    axon::Prop0
+    dendrite::Prop0
+    apical::Prop0
     secstack::Array{Section,1}
     v::Array{Float64,1} #intracellular voltage
     a::Array{Float64,1}
@@ -76,7 +76,7 @@ type Neuron0 <: Neuron
 end
 
 function Neuron0()
-    Neuron0(Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Prop,0),Array(Section,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),[Array(Int64,0) for i=1:4],Array(Int64,0))
+    Neuron0(Prop0(),Prop0(),Prop0(),Prop0(),Array(Section,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),[Array(Int64,0) for i=1:4],Array(Int64,0))
 end
 
 abstract NeuronPool
