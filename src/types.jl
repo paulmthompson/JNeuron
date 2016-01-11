@@ -11,7 +11,7 @@ type Prop0<:Prop
 end
 
 #associated 3d point
-type Pt3d
+immutable Pt3d
     x::Float64
     y::Float64
     z::Float64
@@ -232,6 +232,39 @@ function gen_prop{T<:Tuple}(a::T,k::Int64)
 
     nothing
 
+end
+
+function Base.copy(secs::Array{Section,1})
+
+end
+
+function Base.copy(neuron::Neuron)
+
+    nodelen=length(neuron.nodes)
+
+    i_vm=zeros(Float64,nodelen)
+    divm=zeros(Float64,nodelen)
+    v1=zeros(Float64,nodelen)
+    i2=zeros(Float64,nodelen)
+    par=deepcopy(neuron.par)
+    inter_n=deepcopy(neuron.internal_nodes)
+    diag_old=zeros(Float64,nodelen)
+    rhs=zeros(Float64,nodelen)
+    a=deepcopy(neuron.a)
+    b=deepcopy(neuron.b)
+    d=deepcopy(neuron.d)
+    v=zeros(Float64,nodelen)
+    
+    secs=deepcopy(neuron.secstack)
+    newnodes=deepcopy(neuron.nodes)
+
+    soma=make_prop(neuron.soma,length(inter_n[1]))
+    axon=make_prop(neuron.axon,length(inter_n[2]))
+    dendrite=make_prop(neuron.dendrite,length(inter_n[3]))
+    apical=make_prop(neuron.apical,length(inter_n[4]))
+            
+    n2 = typeof(neuron)(soma,axon,dendrite,apical,secs,v,a,b,d,rhs,neuron.Ra,neuron.Cm,neuron.dt,newnodes,i_vm,divm,diag_old,inter_n,par,v1,i2)
+    
 end
 
 function make_neuron()

@@ -110,9 +110,8 @@ end
 
 function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,uvw::Array{Float64,1},theta::Float64)
     
-    for sec in neuron.secstack[cind].child
+    for i in neuron.secstack[cind].child
 
-        i=sec.refcount
         rot_child(neuron,i,a,b,c,uvw,theta)
         
     end
@@ -125,9 +124,8 @@ function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,u
             
         xyz=rot_3d(a,b,c,uvw[1],uvw[2],uvw[3],x,y,z,theta)
 
-        neuron.secstack[cind].pt3d[j].x=xyz[1]
-        neuron.secstack[cind].pt3d[j].y=xyz[2]
-        neuron.secstack[cind].pt3d[j].z=xyz[3]
+        neuron.secstack[cind].pt3d[j]=Pt3d(xyz[1],xyz[2],xyz[3],neuron.secstack[cind].pt3d[j].d,neuron.secstack[cind].pt3d[j].arc)
+
     end
 
     nothing

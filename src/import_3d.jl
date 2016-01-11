@@ -411,7 +411,7 @@ function Section(section3d::Section3D) #like new_section
 
     #normalize arc length
     for i=2:size(sec.pt3d,1)
-        sec.pt3d[i].arc=sec.pt3d[i].arc/sec.length
+        sec.pt3d[i]=Pt3d(sec.pt3d[i].x,sec.pt3d[i].y,sec.pt3d[i].z,sec.pt3d[i].d,sec.pt3d[i].arc/sec.length)
     end
     
     sec
