@@ -1,112 +1,74 @@
 
-function set_nsegs!(neuron::Neuron,frequency=100.0,d_lambda=.1)
+function set_nsegs!(n::Neuron,frequency=100.0,d_lambda=.1)
 
-    neuron.internal_nodes=[Array(Int64,0) for i=1:4]
-    neuron.nodes=Array(Node,0)
+    n.internal_nodes=[Array(Int64,0) for i=1:4]
+    n.nodes=Array(Node,0)
     
-    nodesec=zeros(Int64,length(neuron.secstack)+1)
-    nseglist=zeros(Int64,length(neuron.secstack))
+    nodesec=zeros(Int64,length(n.secstack)+1)
+    nseglist=zeros(Int64,length(n.secstack))
     nodesec[1]=1
-    first=0
-    last=0
-
+    
     #find total number of segments
-    for i=1:length(neuron.secstack)
+    for i=1:length(n.secstack)
         
-        lambda=lambda_f(frequency, neuron.secstack[i], neuron)
-        nseg=floor(Int64, (neuron.secstack[i].length / (d_lambda * lambda) + .9) /2 )*2+1
+        lambda=lambda_f(frequency, n.secstack[i], n)
+        nseg=floor(Int64, (n.secstack[i].length / (d_lambda * lambda) + .9) /2 )*2+1
 
         nodesec[i+1]=nodesec[i]+nseg
         
         nseglist[i]=nseg                        
     end
-    
-    for i=1:length(neuron.secstack)
 
-        if neuron.secstack[i].mtype>1
+    first=0
+    last=0
+    for i=1:length(n.secstack)
+
+        if n.secstack[i].mtype>1
 
             for j=1:nseglist[i]
            
-                (area, ri,mypt3d) = r_a_calc(neuron.secstack[i],j,nseglist[i],neuron.Ra)
-                
-                if j==1
-                    parent=nodesec[neuron.secstack[i].parent+1]+neuron.secstack[i].parent-1
-                    if nseglist[i]==1
-                        if length(neuron.secstack[i].child)==0
-                            children=Array(Int64,0)
-                        else
-                            children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
-                        end
-                        
-                    else
-                        children=Int64[length(neuron.nodes)+2]
-                    end
-                elseif j==nseglist[i]
-                    parent=length(neuron.nodes)
-                    children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
-                else
-                    parent=length(neuron.nodes)
-                    children=Int64[length(neuron.nodes)+2]
-                end
+                (area, ri,mypt3d) = r_a_calc(n.secstack[i],j,nseglist[i],n.Ra)
 
                 if (j==1)&&(j==nseglist[i])
 
-                    first=length(neuron.nodes)+1
-                    last=length(neuron.nodes)+2
+                    first=length(n.nodes)+1
+                    last=length(n.nodes)+2
+                    single_node(n,nodesec,area,ri,mypt3d,i)
 
-                    internal_node(neuron,area,ri,parent,[length(neuron.nodes)+2],mypt3d,i)
-
-                    edge_node(neuron,length(neuron.nodes),children,mypt3d[end])                
                 elseif j==1
                     
-                    first=length(neuron.nodes)+1
-
-                    internal_node(neuron,area,ri,parent,children,mypt3d,i)                           
+                    first=length(n.nodes)+1
+                    first_node(n,nodesec,area,ri,mypt3d,i)
+                    
                 elseif j==nseglist[i]
 
-                    last=length(neuron.nodes)+2
-                
-                    internal_node(neuron,area,ri,parent,[length(neuron.nodes)+2],mypt3d,i)
-                    
-                    edge_node(neuron,length(neuron.nodes),children,mypt3d[end])
+                    last=length(n.nodes)+2
+                    last_node(n,area,ri,mypt3d,nodesec,i)
                 else
-                
-                    internal_node(neuron,area,ri,parent,children,mypt3d,i)
+                    middle_node(n,area,ri,mypt3d,i)
                 end
             end
         else
+            #approximate soma as 1 segment with everything connected at middle
+            first=length(n.nodes)+1
+            last=length(n.nodes)+3
 
-            #approximate soma as 1 segments with everything connected at middle
-            first=length(neuron.nodes)+1
-            last=length(neuron.nodes)+3
-            for j=1:3
-
-                if j ==1 
-                    parent=length(neuron.nodes)+2
-                    children=Array(Int64,0)
-
-                    edge_node(neuron,parent,children,length(neuron.secstack[end].pt3d))
+            parent=length(n.nodes)+2
+            children=Array(Int64,0)
+            edge_node(n,parent,children,length(n.secstack[end].pt3d))
                     
-                elseif j == 2
+            parent=0
+            children=edge_children(n,nodesec,i)            
+            (area, ri, mypt3d) = r_a_calc(n.secstack[i],1,1,n.Ra)
+            push!(children,length(n.nodes))
+            push!(children,length(n.nodes)+2)
+            internal_node(n,area,ri,parent,children,mypt3d,i)             
 
-                    parent=0
-                    children=Int64[nodesec[neuron.secstack[i].child[k]]+neuron.secstack[i].child[k]-1 for k=1:length(neuron.secstack[i].child)]
-                    
-                    (area, ri, mypt3d) = r_a_calc(neuron.secstack[i],1,1,neuron.Ra)
-                    push!(children,length(neuron.nodes))
-                    push!(children,length(neuron.nodes)+2)
-
-                    internal_node(neuron,area,ri,parent,children,mypt3d,i)
-                    
-                else
-                    parent=length(neuron.nodes)
-                    children=Array(Int64,0)
-
-                    edge_node(neuron,parent,children,1)                    
-                end              
-            end
+            parent=length(n.nodes)
+            children=Array(Int64,0)
+            edge_node(n,parent,children,1)                    
         end                   
-        Section!(neuron.secstack,i,first:last)             
+        Section!(n.secstack,i,first:last)             
     end
     nothing   
 end
@@ -134,6 +96,34 @@ end
 internal_node(n,a,ri,p,c,pt,i)=(nd=Node(a,ri,p,c,pt); add_node(n,nd); add_inode(n,i))
 
 edge_node(n,p,c,pt)=(nd=Node(p,c,pt); add_node(n,nd))
+
+edge_children(n,ns,i)=Int64[ns[n.secstack[i].child[k]]+n.secstack[i].child[k]-1 for k=1:length(n.secstack[i].child)]
+
+first_par(n,ns,i)=ns[n.secstack[i].parent+1]+n.secstack[i].parent-1
+
+first_childs(n)=Int64[length(n.nodes)+2]
+
+first_node(n,ns,area,ri,pt,i)=(p=first_par(n,ns,i); c=first_childs(n); internal_node(n,area,ri,p,c,pt,i))
+
+middle_node(n,area,ri,pt,i)=(p=length(n.nodes);c=first_childs(n);internal_node(n,area,ri,p,c,pt,i))
+
+function last_node(n,area,ri,pt,ns,i)
+    p=length(n.nodes)
+    c=edge_children(n,ns,i)               
+    internal_node(n,area,ri,p,[length(n.nodes)+2],pt,i)           
+    edge_node(n,length(n.nodes),c,pt[end])
+end
+
+function single_node(n,ns,area,ri,pt,i) 
+    p=first_par(n,ns,i)
+    if length(n.secstack[i].child)==0
+        c=Array(Int64,0)
+    else
+        c=edge_children(n,ns,i)
+    end
+    internal_node(n,area,ri,p,[length(n.nodes)+2],pt,i)    
+    edge_node(n,length(n.nodes),c,pt[end])
+end
 
 function r_a_calc(sec::Section,x::Int64,nseg::Int64,Ra::Float64)
     

@@ -10,8 +10,7 @@ export Neuron, Network, Intracellular, Extracellular, Stim
 export input, instantiate, set_nsegs!, add!, add, run!
 
 include("types.jl")
-include("Section.jl")
-include("Neuron.jl")
+include("Node.jl")
 include("import_3d.jl")
 include("channels.jl")
 include("mod2j.jl")
