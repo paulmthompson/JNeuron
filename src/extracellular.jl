@@ -12,12 +12,12 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
 
-    for i=1:length(neuron.secstack)
-        for j in neuron.secstack[i].pnode
+    for i=1:length(neuron.secs)
+        for j in neuron.secs[i].pnode
             if neuron.nodes[j].internal == true
 
                 push!(inds,j)
-                mypt3d=neuron.secstack[i].pt3d[neuron.nodes[j].pt3d]
+                mypt3d=neuron.secs[i].pt3d[neuron.nodes[j].pt3d]
                 push!(coeffs,(1/(4*pi*sigma))*point_coeffs(mypt3d,extra.xyz))
                 
             end
@@ -34,18 +34,17 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
 
-    for i=1:length(neuron.secstack)
-        for j in neuron.secstack[i].pnode
+    for i=1:length(neuron.secs)
+        for j in neuron.secs[i].pnode
             if neuron.nodes[j].internal == true
 
                 push!(inds,j)
-                mypt3d=neuron.secstack[i].pt3d[neuron.nodes[j].pt3d]
+                mypt3d=neuron.secs[i].pt3d[neuron.nodes[j].pt3d]
                 push!(coeffs,(1/(4*pi*sigma))*line_coeffs(mypt3d,extra.xyz))
                 
             end
         end
-    end
-    
+    end 
     (coeffs,inds)  
 end
 
@@ -56,24 +55,22 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
 
-    for i=1:length(neuron.secstack)
-        for j in neuron.secstack[i].pnode
+    for i=1:length(neuron.secs)
+        for j in neuron.secs[i].pnode
             if neuron.nodes[j].internal == true
 
                 push!(inds,j)
-                mypt3d=neuron.secstack[i].pt3d[neuron.nodes[j].pt3d]
+                mypt3d=neuron.secs[i].pt3d[neuron.nodes[j].pt3d]
 
                 if neuron.nodes[j].parent==0
                     push!(coeffs,(1/(4*pi*sigma))*point_coeffs(mypt3d,extra.xyz))
                 else
                     push!(coeffs,(1/(4*pi*sigma))*line_coeffs(mypt3d,extra.xyz))
 
-                end
-                
+                end            
             end
         end
-    end
-    
+    end  
     (coeffs,inds)  
 end
 

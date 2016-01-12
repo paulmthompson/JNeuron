@@ -3,9 +3,7 @@ export Passive,HH
 
 const power_exp=Base.exp(series(0.0,1.0,zeros(Float64,6)...))
 
-function exp(x::Float64)
-    polyval(power_exp,x)::Float64
-end
+exp(x::Float64)=polyval(power_exp,x)::Float64
 
 #=
 Passive
@@ -17,10 +15,7 @@ function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
     x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
 end
 
-function speed_init(prop::Channel,l::Int64)
-    :(begin
-      end)
-end
+speed_init(prop::Channel,l::Int64)=(:(begin; end))
 
 type Passive <: Channel
     nodevar::Array{ASCIIString,1}
@@ -28,10 +23,7 @@ type Passive <: Channel
     e::Float64
 end
 
-function Passive()
-    myvars=Array(ASCIIString,0)
-    Passive(myvars,.001,-70.0)
-end
+Passive()=(myvars=Array(ASCIIString,0); Passive(myvars,.001,-70.0))
 
 function speed_init(prop::Passive,l::Int64)
     :(begin
@@ -40,12 +32,7 @@ function speed_init(prop::Passive,l::Int64)
       end)
 end
 
-function speed_con(myprop::Passive,l::Int64)
-
-    :(begin
-      end)
-    
-end
+speed_con(myprop::Passive,l::Int64)=(:(begin; end))
 
 function speed_cur(myprop::Passive,l::Int64)
 

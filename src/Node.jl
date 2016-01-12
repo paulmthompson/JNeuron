@@ -4,15 +4,15 @@ function set_nsegs!(n::Neuron,frequency=100.0,d_lambda=.1)
     n.internal_nodes=[Array(Int64,0) for i=1:4]
     n.nodes=Array(Node,0)
     
-    nodesec=zeros(Int64,length(n.secstack)+1)
-    nseglist=zeros(Int64,length(n.secstack))
+    nodesec=zeros(Int64,length(n.secs)+1)
+    nseglist=zeros(Int64,length(n.secs))
     nodesec[1]=1
     
     #find total number of segments
-    for i=1:length(n.secstack)
+    for i=1:length(n.secs)
         
-        lambda=lambda_f(frequency, n.secstack[i], n)
-        nseg=floor(Int64, (n.secstack[i].length / (d_lambda * lambda) + .9) /2 )*2+1
+        lambda=lambda_f(frequency, n.secs[i], n)
+        nseg=floor(Int64, (n.secs[i].length / (d_lambda * lambda) + .9) /2 )*2+1
 
         nodesec[i+1]=nodesec[i]+nseg
         
@@ -21,13 +21,13 @@ function set_nsegs!(n::Neuron,frequency=100.0,d_lambda=.1)
 
     first=0
     last=0
-    for i=1:length(n.secstack)
+    for i=1:length(n.secs)
 
-        if n.secstack[i].mtype>1
+        if n.secs[i].mtype>1
 
             for j=1:nseglist[i]
            
-                (area, ri,mypt3d) = r_a_calc(n.secstack[i],j,nseglist[i],n.Ra)
+                (area, ri,mypt3d) = r_a_calc(n.secs[i],j,nseglist[i],n.Ra)
 
                 if (j==1)&&(j==nseglist[i])
 
@@ -55,11 +55,11 @@ function set_nsegs!(n::Neuron,frequency=100.0,d_lambda=.1)
 
             parent=length(n.nodes)+2
             children=Array(Int64,0)
-            edge_node(n,parent,children,length(n.secstack[end].pt3d))
+            edge_node(n,parent,children,length(n.secs[end].pt3d))
                     
             parent=0
             children=edge_children(n,nodesec,i)            
-            (area, ri, mypt3d) = r_a_calc(n.secstack[i],1,1,n.Ra)
+            (area, ri, mypt3d) = r_a_calc(n.secs[i],1,1,n.Ra)
             push!(children,length(n.nodes))
             push!(children,length(n.nodes)+2)
             internal_node(n,area,ri,parent,children,mypt3d,i)             
@@ -68,7 +68,7 @@ function set_nsegs!(n::Neuron,frequency=100.0,d_lambda=.1)
             children=Array(Int64,0)
             edge_node(n,parent,children,1)                    
         end                   
-        Section!(n.secstack,i,first:last)             
+        Section!(n.secs,i,first:last)             
     end
     nothing   
 end
@@ -97,9 +97,9 @@ internal_node(n,a,ri,p,c,pt,i)=(nd=Node(a,ri,p,c,pt); add_node(n,nd); add_inode(
 
 edge_node(n,p,c,pt)=(nd=Node(p,c,pt); add_node(n,nd))
 
-edge_children(n,ns,i)=Int64[ns[n.secstack[i].child[k]]+n.secstack[i].child[k]-1 for k=1:length(n.secstack[i].child)]
+edge_children(n,ns,i)=Int64[ns[n.secs[i].child[k]]+n.secs[i].child[k]-1 for k=1:length(n.secs[i].child)]
 
-first_par(n,ns,i)=ns[n.secstack[i].parent+1]+n.secstack[i].parent-1
+first_par(n,ns,i)=ns[n.secs[i].parent+1]+n.secs[i].parent-1
 
 first_childs(n)=Int64[length(n.nodes)+2]
 
@@ -116,7 +116,7 @@ end
 
 function single_node(n,ns,area,ri,pt,i) 
     p=first_par(n,ns,i)
-    if length(n.secstack[i].child)==0
+    if length(n.secs[i].child)==0
         c=Array(Int64,0)
     else
         c=edge_children(n,ns,i)

@@ -47,10 +47,7 @@ function gen_current(props,myprop::Prop)
                 k=internal[i]
                 $([initfields[j] for j=1:length(initfields)]...)
             end
-        end
-        
-
-            
+        end        
     end    
 end
 

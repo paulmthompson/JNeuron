@@ -30,43 +30,33 @@ function fillA!(neuron::Neuron)
         
             for j in neuron.nodes[i].children
                 r_c=neuron.nodes[i].ri.r+neuron.nodes[j].ri.l
-                neuron.diag_old[i] += 100/(r_c*area_n)
-                
-            end
-            
+                neuron.diag_old[i] += 100/(r_c*area_n)              
+            end         
         else
-
+            
             neuron.diag_old[i]=.001*neuron.Cm/neuron.dt
-
             area_n=neuron.nodes[i].area.t
             
             for j in neuron.nodes[i].children
                 r_c=neuron.nodes[i].ri.r+neuron.nodes[j].ri.l
-                neuron.diag_old[i] += 100/(r_c*area_n)
-                
+                neuron.diag_old[i] += 100/(r_c*area_n)             
             end
-
         end
 
-        neuron.par[i]=neuron.nodes[i].parent
-        
+        neuron.par[i]=neuron.nodes[i].parent      
     end
-
-    nothing
-       
+    nothing       
 end
 
 function initialcon!(neuron::Neuron, vi=-65.0,dt=.025)
 
-    neuron.dt=dt #default
+    neuron.dt=dt
 
-    #initial V
     neuron.v[:]=vi
 
     for i=1:4
         init!(getfield(neuron,i),neuron.v,neuron.internal_nodes[i])
-    end
-    
+    end   
 end
 
 function main(neuron::Neuron)
@@ -108,7 +98,7 @@ function main(neuron::Neuron)
     for ind=1:4
         con!(getfield(neuron,ind),neuron.v,neuron.internal_nodes[ind])     
     end
-    
+    nothing
 end
 
 function add_delta!(neuron::Neuron)
@@ -146,8 +136,7 @@ function rhs_diag!(neuron::Neuron)
     neuron.d[i] = neuron.diag_old[i] + neuron.divm[i]
     neuron.rhs[i] -= neuron.i_vm[i]
     
-    nothing
-    
+    nothing  
 end
 
 function hines_solve!(neuron::Neuron)
@@ -185,8 +174,6 @@ function hines_solve!(neuron::Neuron)
 	neuron.rhs[i] -= -neuron.b[i] * neuron.rhs[neuron.par[i]]
 	neuron.rhs[i] /= neuron.d[i]
     end
-
-nothing
-
+    nothing
 end
 

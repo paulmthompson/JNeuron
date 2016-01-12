@@ -73,7 +73,7 @@ function instantiate(import3d::Import3D)
             sec=Section(import3d.sections[i])
             add_sec(neuron,sec)
             push!(childinds,import3d.sections[i].childind)
-            mapping[i]=length(neuron.secstack)
+            mapping[i]=length(neuron.secs)
         elseif import3d.sections[i].mytype==1
             push!(somaind,i)
         end
@@ -83,7 +83,7 @@ function instantiate(import3d::Import3D)
 
     for i=1:length(childinds)
         for j in childinds[i]
-            push!(neuron.secstack[i].child,mapping[j])
+            push!(neuron.secs[i].child,mapping[j])
         end
     end
 
@@ -137,13 +137,13 @@ function connect2soma(import3d::Import3D,neuron::Neuron,somaind::Array{Int64,1},
     for i in [mapping[k] for k in rootind]
         
         for j=1:length(somas)
-            ds[j]=sqrt((centroids[1,j]-neuron.secstack[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secstack[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secstack[i].pt3d[1].z)^2)
+            ds[j]=sqrt((centroids[1,j]-neuron.secs[i].pt3d[1].x)^2 + (centroids[2,j]-neuron.secs[i].pt3d[1].y)^2 + (centroids[3,j]-neuron.secs[i].pt3d[1].z)^2)
         end
         
         push!(somas[indmin(ds)].child,i)
     end
 
-    append!(neuron.secstack,somas)
+    append!(neuron.secs,somas)
 
     nothing
     
@@ -219,15 +219,12 @@ function sphere_approx(import3d::Import3D, ind::Int64,somas::Array{Section,1})
     mypoints=[Pt3d(centroid[1]-radi,centroid[2]-radi,centroid[3],2*radi,0.0);
     Pt3d(centroid...,2*radi,.5); Pt3d(centroid[1]+radi,centroid[2]+radi,centroid[3],2*radi,1.0)]
 
-
     sec=Section(1,1:1,Array(Int64,0),0,mypoints,2*radi,Prop0)
     push!(somas,sec)
     
-    centroid
-    
+    centroid    
 end
-
-                   
+                  
 #=
 Neurolucida file types
 =#
