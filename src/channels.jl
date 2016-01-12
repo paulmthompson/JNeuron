@@ -5,17 +5,19 @@ const power_exp=Base.exp(series(0.0,1.0,zeros(Float64,6)...))
 
 exp(x::Float64)=polyval(power_exp,x)::Float64
 
-#=
-Passive
-still needs range variables
-adapted for Julia by PMT
-=#
+#implicit_euler(x,dt,xtau,xinf)=x +(1.0-exp(-dt/xtau))*(-(xinf/xtau)/(-1.0/xtau)-x) slower?
 
 function implicit_euler(x::Float64, dt::Float64,xtau::Float64,xinf::Float64)
     x = x + (1.0 - exp(dt*(( ( ( - 1.0 ) ) ) / xtau)))*(- ( ( ( xinf ) ) / xtau ) / ( ( ( ( - 1.0) ) ) / xtau ) - x)
 end
 
 speed_init(prop::Channel,l::Int64)=(:(begin; end))
+
+#=
+Passive
+still needs range variables
+adapted for Julia by PMT
+=#
 
 type Passive <: Channel
     nodevar::Array{ASCIIString,1}
@@ -35,11 +37,8 @@ end
 speed_con(myprop::Passive,l::Int64)=(:(begin; end))
 
 function speed_cur(myprop::Passive,l::Int64)
-
-    :(begin
-    
+    :(begin   
       im[k]+= p.p[$(1+l),i]*(v[k]- p.p[$(2+l),i])
-
       end)
 end
 
@@ -77,23 +76,17 @@ type HH <: Channel
     ntau::Float64 #15
 end
 
-function HH()
-    myvars=["ena", "ek"]
-    HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,11)...)
-end
+HH()=(myvars=["ena", "ek"];HH(myvars,.12,.036,.0003,-54.3,zeros(Float64,11)...))
 
 function speed_cur(myprop::HH,l::Int64)
 
-    :(begin
-      
+    :(begin     
       @inbounds ina = p.p[$(5+l),i] * (v[k] - ena)
       @inbounds ik  = p.p[$(6+l),i] * (v[k] - ek)
       @inbounds il  = p.p[$(3+l),i] * (v[k] - p.p[$(4+l),i])
 
       @inbounds im[k]+=ina+ik+il
-
       end)
-    
 end
 
 function speed_con(myprop::HH,l::Int64)
@@ -128,9 +121,7 @@ function speed_con(myprop::HH,l::Int64)
         @inbounds p.p[$(5+l),i] = p.p[$(1+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(8+l),i]
         @inbounds p.p[$(6+l),i] = p.p[$(2+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i]
 
-
-    end)
-           
+    end)          
 end
 
 function speed_init(myprop::HH,l::Int64)
@@ -170,7 +161,6 @@ function speed_init(myprop::HH,l::Int64)
         @inbounds p.p[$(5+l),i] = p.p[$(1+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(7+l),i] * p.p[$(8+l),i]
         @inbounds p.p[$(6+l),i] = p.p[$(2+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i] * p.p[$(9+l),i]
     end)
-
 end
 
 function vtrap(x::Float64,y::Float64)
@@ -201,10 +191,7 @@ type Ca_HVA <: Channel
     htau::Float64
 end
 
-function Ca_HVA()
-    myvars=["eca"]
-    Ca_HVA(myvars,.00001,zeros(Float64,7)...)
-end
+Ca_HVA()=(myvars=["eca"];Ca_HVA(myvars,.00001,zeros(Float64,7)...))
 
 function con_calc(prop::Ca_HVA,v::Float64,dt::Float64)
 
@@ -274,10 +261,7 @@ type Ca_LVAst <: Channel
     qt::Float64
 end
 
-function Ca_LVAst()
-    myvars=["eca"]
-    Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10))
-end
+Ca_LVAst()=(myvars=["eca"];Ca_LVAst(myvars,.00001,zeros(Float64,7)...,2.3^((34-21)/10)))
 
 function con_calc(prop::Ca_LVAst,v::Float64,dt::Float64)
 
@@ -325,10 +309,7 @@ type Ih <: Channel
     mtau::Float64
 end
 
-function Ih()
-    myvars=Array(ASCIIString,0)
-    Ih(myvars,.00001, -45, zeros(Float64, 5)...)
-end
+Ih()=(myvars=Array(ASCIIString,0);Ih(myvars,.00001, -45, zeros(Float64, 5)...))
 
 function con_calc(prop::Ih,v::Float64,dt::Float64)
 
@@ -367,4 +348,3 @@ function rates(prop::Ih,v::Float64)
     
     nothing
 end
-
