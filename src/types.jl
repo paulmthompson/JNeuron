@@ -46,6 +46,8 @@ Node(p::Int64,c::Array{Int64,1},m::Int64)=Node(SegArea(),SegRi(),p,c,false,m:m)
 
 Node(n::Node)=Node(n.area,n.ri,n.parent,n.children,n.internal,n.pt3d)
 
+add_node(n::Neuron,nd::Node)=push!(n.nodes,nd)
+
 type Prop0<:Prop
 end
 
@@ -107,7 +109,13 @@ Section(s::Section,p::UnitRange{Int64})=Section(s.mtype,p,s.child,s.parent,s.pt3
 
 Section!(s::Array{Section,1},ind::Int64,p::Int64)=(s[ind]=Section(s[ind],p); nothing)
 
+Section!(n::Neuron,ind::Int64,p::Int64)=Section!(n.secstack,ind,p)
+
 Section!(s::Array{Section,1},ind::Int64,p::UnitRange{Int64})=(s[ind]=Section(s[ind],p); nothing)
+
+Section!(n::Neuron,ind::Int64,p::UnitRange{Int64})=Section!(n.secstack,ind,p)
+
+add_sec(neuron::Neuron, sec::Section)=push!(neuron.secstack,sec)
 
 make_neuron()=nothing
 
@@ -174,6 +182,45 @@ function gen_neuron(prop,k::Int64)
             n2           
         end        
     end   
+end
+
+add_inode(n::Neuron,i::Int64)=push!(n.internal_nodes[n.secstack[i].mtype],length(n.nodes))
+
+find_parents!(n::Neuron)=(for i=1:length(n.secstack), j in n.secstack[i].child; Section!(n,j,i); end)
+
+function add(neuron::Neuron,prop_array...)
+
+    num_arg=length(prop_array)
+
+    if num_arg==1
+
+        prop_array=prop_array[1]
+        
+        gen_prop_check(prop_array)
+        
+        myprop=make_prop(prop_array,0)
+        gen_current(prop_array,myprop)
+        
+    elseif num_arg==4
+        
+        for i=1:4
+            gen_prop_check(prop_array[i])
+        end
+
+        myprop=(make_prop(prop_array[1],0),make_prop(prop_array[2],0),make_prop(prop_array[3],0),make_prop(prop_array[4],0))
+
+        for i=1:4
+            gen_current(prop_array[i],myprop[i])
+        end
+
+    else
+        #error checking
+    end
+
+    gen_neur_check(myprop)
+     
+    n1=make_neuron(myprop,neuron.nodes,neuron.secstack,neuron.internal_nodes)
+    
 end
 
 gen_neuron(Prop0(),0)
@@ -251,28 +298,22 @@ type Network{T <: NeuronPool}
     stim::Array{Stim,1}
 end
 
-function Network(neuron::Neuron,tstop::Float64; par=false)
+Network(p::NeuronPool,ts::Float64)=Network(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
 
-    gen_neuronpool([neuron],par)
+Network(n::Neuron,ts::Float64; par=false)=(gen_npool([n],par); p=NeuronPool0([n],par); Network(p,ts))
 
-    pool=NeuronPool0([neuron],par)
+function Network{T<:Neuron}(n::Array{T,1},ts::Float64; par=false)
 
-    Network(pool,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
+    gen_npool(n,par)
 
-end
+    pool=NeuronPool0(n,par)
 
-function Network{T<:Neuron}(neurons::Array{T,1},tstop::Float64; par=false)
-
-    gen_neuronpool(neurons,par)
-
-    pool=NeuronPool0(neurons,par)
-
-    Network(pool,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))  
+    Network(pool,ts)  
 
 end
 
 #types of neurons found in network
-function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
+function gen_npool{T<:Neuron}(neur::Array{T,1}, par=false)
 
     typeinds=Array(DataType,0)
     mtypes=[typeof(neur[i]) for i=1:length(neur)]

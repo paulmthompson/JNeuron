@@ -81,53 +81,34 @@ function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
     
     (unit_ds, delta_s)=pt3d_vec(pt3d[end],pt3d[1])
 
-    dist1=pt3d_xyz_vec(pt3d[1],xyz)
-    dist2=pt3d_xyz_vec(pt3d[end],xyz)
+    d1=vect(pt3d[1],xyz)
+    d2=vect(pt3d[end],xyz)
 
-    ln=dot(unit_ds,dist1)
-    hn=dot(unit_ds,dist2)
+    ln=dot(unit_ds,d1)
+    hn=dot(unit_ds,d2)
 
-    a=sqrt(sum(dist1.^2))-hn
-    b=sqrt(sum(dist2.^2))-ln
+    a=sqrt(sum(d1.^2))-hn
+    b=sqrt(sum(d2.^2))-ln
 
     1/delta_s*log(abs(a/b))  
 end
 
-function point_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
+function point_coeffs(p::Array{Pt3d,1},xyz::Array{Float64,1})
 
-    middle=round(length(pt3d)/2)
+    middle=round(length(p)/2)
             
-    dist1=pt3d_xyz_vec(pt3d[middle],xyz)
+    dist1=vect(p[middle],xyz)
 
     1/(dist1)
             
 end
 
-#distance between two 3d points
-dist(pt3d1::Pt3d, pt3d2::Pt3d)=sqrt((pt3d1.x-pt3d2.x)^2+(pt3d1.y-pt3d2.y)^2+(pt3d1.z-pt3d2.z)^2)
+dist(p1::Pt3d, p2::Pt3d)=sqrt((p1.x-p2.x)^2+(p1.y-p2.y)^2+(p1.z-p2.z)^2)
 
-dist(pt3d1::Pt3d,xyz::Array{Float64,1})=sqrt((pt3d1.x-xyz[1])^2+(pt3d1.y-xyz[2])^2+(pt3d1.z-xyz[3])^2)
+dist(p1::Pt3d,xyz::Array{Float64,1})=sqrt((p1.x-xyz[1])^2+(p1.y-xyz[2])^2+(p1.z-xyz[3])^2)
 
-function pt3d_xyz_vec(pt3d1::Pt3d,xyz::Array{Float64,1})
-    mynorm=zeros(Float64,3)
-    mynorm[1]=(xyz[1]-pt3d1.x)
-    mynorm[2]=(xyz[2]-pt3d1.y)
-    mynorm[3]=(xyz[3]-pt3d1.z)
+vect(p::Pt3d,xyz::Array{Float64,1})=[xyz[1]-p.x,xyz[2]-p.y,xyz[3]-p.z]
 
-    mynorm
-end
+vect(p1::Pt3d,p2::Pt3d)=[p2.x-p1.x,p2.y-p1.y,p2.z-p1.z]
 
-function pt3d_vec(pt3d1::Pt3d,pt3d2::Pt3d)
-
-    mynorm=zeros(Float64,3)
-    mynorm[1]=(pt3d2.x-pt3d1.x)
-    mynorm[2]=(pt3d2.y-pt3d1.y)
-    mynorm[3]=(pt3d2.z-pt3d1.z)
-
-    mag=dist(pt3d1,pt3d2)
-
-    mynorm /= mag
-
-    (mynorm, mag)
-end
-
+pt3d_vec(p1::Pt3d,p2::Pt3d)=(n=vect(p1,p2); mag=dist(p1,p2); n /= mag; (n, mag))
