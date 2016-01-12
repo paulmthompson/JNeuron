@@ -82,8 +82,7 @@ function gen_prop(a,k::Int64)
 
     c=make_prop(a,0)
 
-    @eval begin
-       
+    @eval begin       
         make_prop(a::$(typeof(c)),n::Int64)=$(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
     end
     
@@ -99,6 +98,16 @@ immutable Section
     length::Float64
     prop::DataType
 end
+
+Section(s::Section,p::Int64)=Section(s.mtype,s.pnode,s.child,p,s.pt3d,s.length,s.prop)
+
+Section(s::Section,p::DataType)=Section(s.mtype,s.pnode,s.child,s.parent,s.pt3d,s.length,p)
+
+Section(s::Section,p::UnitRange{Int64})=Section(s.mtype,p,s.child,s.parent,s.pt3d,s.length,s.prop)
+
+Section!(s::Array{Section,1},ind::Int64,p::Int64)=(s[ind]=Section(s[ind],p); nothing)
+
+Section!(s::Array{Section,1},ind::Int64,p::UnitRange{Int64})=(s[ind]=Section(s[ind],p); nothing)
 
 make_neuron()=nothing
 
@@ -209,7 +218,7 @@ type Extracellular{S<:Source}
     v::Array{Float64,1}
 end
 
-Extracellular(xyz::Array{Float64,1})=Extracellular(Line,xyz)
+Extracellular(xyz::Array{Float64,1})=Extracellular(Line(),xyz)
 
 Extracellular(s::Source,xyz)=Extracellular{typeof(s)}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
 

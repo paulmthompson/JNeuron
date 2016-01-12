@@ -1,16 +1,4 @@
 
-
-#=
-Add neuron to network
-=#
-
-function add!(network::Network,neuron::Neuron)
-    
-    push!(network.neur,neuron)
-
-    nothing
-end
-
 #=
 Add extracellular electrode to network
 =#
@@ -151,9 +139,7 @@ function get_current(neur::DArray{Neuron,1})
 
 end
 
-function fetch_current(myind::RemoteRef)
-    fetch(myind)
-end
+fetch_current(myind::RemoteRef)=fetch(myind)
 
 function get_current(network::Network)
 
@@ -178,9 +164,7 @@ function get_current(network::Network)
        
 end
 
-function fetch_current(myind::SubArray{Float64,1})
-    myind
-end
+fetch_current(myind::SubArray{Float64,1})=myind
 
 function get_stim{T <: DArray{Neuron,1}}(network::Network{T})
 
@@ -222,11 +206,7 @@ function get_stim(network::Network)
     
 end
 
-function add_stim(myind::SubArray,Is::Float64)
-
-    myind[1]+=Is
-    
-end
+add_stim(myind::SubArray,Is::Float64)=myind[1]+=Is
 
 function get_voltage{T <: DArray{Neuron,1}}(network::Network{T})
 
@@ -245,15 +225,11 @@ function get_voltage{T <: DArray{Neuron,1}}(network::Network{T})
     
 end
 
-function fetch_voltage(myind::RemoteRef)
-    fetch(myind[1])
-end
+fetch_voltage(myind::RemoteRef)=fetch(myind[1])
 
 function get_voltage(network::Network)
     myind=[sub(getfield(network.neur,network.intra[i].mtype)[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.intra)]
 end
 
-function fetch_voltage(myind::SubArray)
-    myind[1]
-end
+fetch_voltage(myind::SubArray)=myind[1]
 

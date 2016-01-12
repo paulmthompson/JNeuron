@@ -24,8 +24,7 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
         end
     end
       
-    (coeffs,inds)  
-    
+    (coeffs,inds)      
 end
 
 #Line Source
@@ -48,7 +47,6 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
     end
     
     (coeffs,inds)  
-
 end
 
 #Mixed Source (Soma as a point, everything else as line)
@@ -77,7 +75,6 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
     end
     
     (coeffs,inds)  
-
 end
 
 function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
@@ -93,8 +90,7 @@ function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
     a=sqrt(sum(dist1.^2))-hn
     b=sqrt(sum(dist2.^2))-ln
 
-    1/delta_s*log(abs(a/b))
-    
+    1/delta_s*log(abs(a/b))  
 end
 
 function point_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
@@ -105,17 +101,12 @@ function point_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
 
     1/(dist1)
             
-    
 end
 
 #distance between two 3d points
-function dist(pt3d1::Pt3d, pt3d2::Pt3d)
-    dist=sqrt((pt3d1.x-pt3d2.x)^2+(pt3d1.y-pt3d2.y)^2+(pt3d1.z-pt3d2.z)^2)
-end
+dist(pt3d1::Pt3d, pt3d2::Pt3d)=sqrt((pt3d1.x-pt3d2.x)^2+(pt3d1.y-pt3d2.y)^2+(pt3d1.z-pt3d2.z)^2)
 
-function dist(pt3d1::Pt3d,xyz::Array{Float64,1})
-    dist=sqrt((pt3d1.x-xyz[1])^2+(pt3d1.y-xyz[2])^2+(pt3d1.z-xyz[3])^2)
-end
+dist(pt3d1::Pt3d,xyz::Array{Float64,1})=sqrt((pt3d1.x-xyz[1])^2+(pt3d1.y-xyz[2])^2+(pt3d1.z-xyz[3])^2)
 
 function pt3d_xyz_vec(pt3d1::Pt3d,xyz::Array{Float64,1})
     mynorm=zeros(Float64,3)
