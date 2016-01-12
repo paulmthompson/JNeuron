@@ -5,6 +5,8 @@ These functions and types are designed to import 3D files of various formats. Cu
 This will mostly address the functionality that was available in Neuron's import3d hoc files. The Import3d had lots of GUI stuff intertwined in it, though and I'm not planning on doing anything GUI related anytime soon, but I'd like to keep it separate if I do
 =#
 
+abstract Import3D
+
 type Section3D
     parent::Array{Section3D,1}
     children::Array{Section3D,1}
@@ -14,9 +16,7 @@ type Section3D
     d::Array{Float64,1}
 end
 
-function Section3D(ID::Int64)
-    Section3D(Array(Section3D,0),Array(Section3D,0),Array(Int64,0),ID,Array(Float64,0,3),Array(Float64,0))         
-end
+Section3D(ID::Int64)=Section3D(Array(Section3D,0),Array(Section3D,0),Array(Int64,0),ID,Array(Float64,0,3),Array(Float64,0))         
 
 type curxyz
     x::Array{Float64,1}
@@ -24,11 +24,7 @@ type curxyz
     z::Array{Float64,1}
 end
 
-function curxyz()
-    curxyz(Array(Float64,0),Array(Float64,0),Array(Float64,0))
-end
-
-abstract Import3D
+curxyz()=curxyz(Array(Float64,0),Array(Float64,0),Array(Float64,0))
 
 type nlcda3 <: Import3D
     sections::Array{Section3D,1}
@@ -62,7 +58,7 @@ end
 
 function instantiate(import3d::Import3D)
 
-    neuron=Neuron0()
+    neuron=make_neuron(Prop0(),Array(Node,0),Array(Section,0),[Array(Int64,0) for i=1:4])
 
     somaind=Array(Int64,0)
     rootind=Array(Int64,0)
@@ -90,9 +86,6 @@ function instantiate(import3d::Import3D)
             push!(neuron.secstack[i].child,mapping[j])
         end
     end
-
-    neuron.Cm=1.0
-    neuron.Ra=35.4
 
     find_parents!(neuron)
     
@@ -227,7 +220,7 @@ function sphere_approx(import3d::Import3D, ind::Int64,somas::Array{Section,1})
     Pt3d(centroid...,2*radi,.5); Pt3d(centroid[1]+radi,centroid[2]+radi,centroid[3],2*radi,1.0)]
 
 
-    sec=Section(1,1:1,Array(Int64,0),0,mypoints,2*radi)
+    sec=Section(1,1:1,Array(Int64,0),0,mypoints,2*radi,Prop0)
     push!(somas,sec)
     
     centroid
@@ -408,5 +401,5 @@ function Section(section3d::Section3D) #like new_section
         mypt3d[i]=Pt3d(mypt3d[i].x,mypt3d[i].y,mypt3d[i].z,mypt3d[i].d,mypt3d[i].arc/mylength)
     end
     
-    sec=Section(section3d.mytype,1:1,Array(Int64,0),0,mypt3d,mylength)
+    sec=Section(section3d.mytype,1:1,Array(Int64,0),0,mypt3d,mylength,Prop0)
 end

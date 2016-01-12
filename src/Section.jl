@@ -130,25 +130,8 @@ function add(neuron::Neuron,prop_array...)
     end
 
     gen_neur_check(myprop)
-    
-    newnodes=Array(Node,length(neuron.nodes))
-
-    for i=1:length(neuron.secstack)
-        for j=1:length(neuron.secstack[i].pnode)
-
-            ind=neuron.secstack[i].pnode[j]
-
-            if num_arg==1
-                newnodes[ind]=Node(neuron.nodes[neuron.secstack[i].pnode[j]],make_prop(prop_array,0))
-            else
-                mtype=neuron.secstack[i].mtype
-                newnodes[ind]=Node(neuron.nodes[neuron.secstack[i].pnode[j]],make_prop(prop_array[mtype],0))
-            end
-
-        end
-    end
-    
-    n1=make_neuron(myprop,neuron,newnodes)
+     
+    n1=make_neuron(myprop,neuron.nodes,neuron.secstack,neuron.internal_nodes)
     
 end
 

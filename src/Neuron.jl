@@ -178,12 +178,12 @@ end
 
 function Section!(neuron::Neuron,ind::Int64,i::Int64)
     sec=neuron.secstack[ind]
-    neuron.secstack[ind]=Section(sec.mtype,sec.pnode,sec.child,i,sec.pt3d,sec.length)
+    neuron.secstack[ind]=Section(sec.mtype,sec.pnode,sec.child,i,sec.pt3d,sec.length,Prop0)
     nothing
 end
 
 function Section!(neuron::Neuron,ind::Int64,i::UnitRange{Int64})
     sec=neuron.secstack[ind]
-    neuron.secstack[ind]=Section(sec.mtype,i,sec.child,sec.parent,sec.pt3d,sec.length)
+    neuron.secstack[ind]=Section(sec.mtype,i,sec.child,sec.parent,sec.pt3d,sec.length,Prop0)
     nothing
 end

@@ -1,14 +1,12 @@
 
-
 global num_neur = 0
 global num_prop = 0
 
 abstract Channel
 abstract Prop
 abstract Neuron
-
-type Prop0<:Prop
-end
+abstract NeuronPool
+abstract Source
 
 immutable Pt3d
     x::Float64
@@ -34,71 +32,167 @@ end
 SegRi()=SegRi(0.0,0.0)
 
 immutable Node
-    area::SegArea #surface area of left [1] and right[2] part of segment
-    ri::SegRi  #internal resistance of left[1] and right[2] part of segment
-    parent::Int64 #index in node array of parent
-    children::Array{Int64,1} #Node(s) from other sections attached to this one
+    area::SegArea 
+    ri::SegRi 
+    parent::Int64 
+    children::Array{Int64,1}
     internal::Bool
     pt3d::UnitRange{Int64}
-    prop::DataType
 end
 
-Node(a::SegArea,r::SegRi,p::Int64,c::Array{Int64},m::UnitRange{Int64})=Node(a,r,p,c,true,m,Prop0)
+Node(a::SegArea,r::SegRi,p::Int64,c::Array{Int64},m::UnitRange{Int64})=Node(a,r,p,c,true,m)
 
-Node(p::Int64,c::Array{Int64,1},m::Int64)=Node(SegArea(),SegRi(),p,c,false,m:m,Prop0)
+Node(p::Int64,c::Array{Int64,1},m::Int64)=Node(SegArea(),SegRi(),p,c,false,m:m)
 
-Node(n::Node,p::Prop)=Node(n.area,n.ri,n.parent,n.children,n.internal,n.pt3d,typeof(p))
+Node(n::Node)=Node(n.area,n.ri,n.parent,n.children,n.internal,n.pt3d)
 
-function Node(neuron::Neuron,node_ind::Int64,myprop::Prop)
-    node=neuron.nodes[node_ind]
-    Node(node.area,node.ri,node.parent,node.children,node.internal,node.pt3d,typeof(myprop))
+type Prop0<:Prop
+end
+
+make_prop(a::Prop0,b::Int64)=Prop0()
+
+function gen_prop_check(prop_array)
+
+    global num_prop::Int64
+    
+    if method_exists(make_prop,(typeof(prop_array),Int))
+    else
+        num_prop+=1
+        gen_prop(prop_array,num_prop)
+    end
+
+    nothing   
+end
+
+function gen_prop(a,k::Int64)
+
+    if issubtype(typeof(a),Tuple)
+        num_fields=sum([length(fieldnames(a[i]))-1 for i=1:length(a)])
+    else    
+        num_fields=sum(length(fieldnames(a)))
+    end
+
+    @eval begin
+        type $(symbol("Prop_$k")) <: Prop
+            p::Array{Float64,2}
+        end
+
+        make_prop(b::$(typeof(a)),n::Int64)=$(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))     
+    end
+
+    c=make_prop(a,0)
+
+    @eval begin
+       
+        make_prop(a::$(typeof(c)),n::Int64)=$(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+    end
+    
+    nothing  
 end
 
 immutable Section
-    mtype::Int64 #Cellbody=1,Axon=2,Dendrite=3,Apical=4
-    pnode::UnitRange{Int64} #one node at center of each segment
+    mtype::Int64 
+    pnode::UnitRange{Int64} 
     child::Array{Int64,1}
     parent::Int64
     pt3d::Array{Pt3d,1}
     length::Float64
+    prop::DataType
 end
 
-type Neuron0 <: Neuron
+make_neuron()=nothing
+
+function gen_neur_check(myprop)
+
+    global num_neur::Int64
     
-    soma::Prop0
-    axon::Prop0
-    dendrite::Prop0
-    apical::Prop0
-    secstack::Array{Section,1}
-    v::Array{Float64,1} #intracellular voltage
-    a::Array{Float64,1}
-    b::Array{Float64,1}
-    d::Array{Float64,1}
-    rhs::Array{Float64,1}
-    Ra::Float64
-    Cm::Float64
-    dt::Float64
-    nodes::Array{Node,1}
-    i_vm::Array{Float64,1}
-    divm::Array{Float64,1}
-    diag_old::Array{Float64,1}
-    internal_nodes::Array{Array{Int64,1},1}
-    par::Array{Int64,1}
+    if method_exists(make_neuron,(typeof(myprop),Array{Node,1},Array{Section,1},Array{Array{Int64,1}}))
+    else     
+        num_neur+=1
+        gen_neuron(myprop,num_neur)
+    end
 
+    nothing
 end
 
-function Neuron0()
-    Neuron0(Prop0(),Prop0(),Prop0(),Prop0(),Array(Section,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),0.0,0.0,0.025,Array(Node,0),zeros(Float64,0),zeros(Float64,0),zeros(Float64,0),[Array(Int64,0) for i=1:4],Array(Int64,0))
+function gen_neuron(prop,k::Int64)
+
+    if issubtype(typeof(prop),Prop)
+        myprop=(prop,prop,prop,prop)
+    else
+        myprop=prop
+    end
+    
+    @eval begin
+        type $(symbol("Neuron_$k")) <: Neuron
+            soma::$(typeof(myprop[1]))
+            axon::$(typeof(myprop[2]))
+            dendrite::$(typeof(myprop[3]))
+            apical::$(typeof(myprop[4]))
+            secstack::Array{Section,1}
+            v::Array{Float64,1} 
+            a::Array{Float64,1}
+            b::Array{Float64,1}
+            d::Array{Float64,1}
+            rhs::Array{Float64,1}
+            Ra::Float64
+            Cm::Float64
+            dt::Float64
+            nodes::Array{Node,1}
+            i_vm::Array{Float64,1}
+            divm::Array{Float64,1}
+            diag_old::Array{Float64,1}
+            internal_nodes::Array{Array{Int64,1},1}
+            par::Array{Int64,1}
+            v1::Array{Float64,1}
+            i2::Array{Float64,1}
+        end
+
+        function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
+
+            len=length(n)
+
+            secs=deepcopy(s)
+            nodes=deepcopy(n)
+            inter_n=deepcopy(inter)
+            
+            (soma,axon,dendrite,apical)=make_props(prop,inter_n)
+            
+            n2 = $(symbol("Neuron_$k"))(soma,axon,dendrite,apical,secs,zeros(Float64,len),zeros(Float64,len),zeros(Float64,len),zeros(Float64,len),zeros(Float64,len),35.4,1.0,.025,nodes,zeros(Float64,len),zeros(Float64,len),zeros(Float64,len),inter_n,zeros(Float64,len),zeros(Float64,len),zeros(Float64,len))
+
+            fillA!(n2)
+            
+            n2           
+        end        
+    end   
 end
 
-abstract NeuronPool
+gen_neuron(Prop0(),0)
+
+function make_props(prop::Prop,inter_n::Array{Array{Int64,1}})
+
+    soma=make_prop(prop,length(inter_n[1]))
+    axon=make_prop(prop,length(inter_n[2]))
+    dendrite=make_prop(prop,length(inter_n[3]))
+    apical=make_prop(prop,length(inter_n[4]))
+
+    (soma,axon,dendrite,apical)  
+end
+
+function make_props(prop::Tuple,inter_n::Array{Array{Int64,1}})
+
+    soma=make_prop(prop[1],length(inter_n[1]))
+    axon=make_prop(prop[2],length(inter_n[2]))
+    dendrite=make_prop(prop[3],length(inter_n[3]))
+    apical=make_prop(prop[4],length(inter_n[4]))
+
+    (soma,axon,dendrite,apical)  
+end
 
 type Extra_coeffs
     c::Array{Float64,1}
     inds::Array{Int64,1}
 end
-
-abstract Source
 
 type Point <: Source
 end
@@ -115,14 +209,9 @@ type Extracellular{S<:Source}
     v::Array{Float64,1}
 end
 
-#Default Line Sources for extracellular Electrodes
-function Extracellular(xyz::Array{Float64,1})
-    Extracellular{Line}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
-end
+Extracellular(xyz::Array{Float64,1})=Extracellular(Line,xyz)
 
-function Extracellular(source::Source,xyz::Array{Float64,1})
-    Extracellular{typeof(source)}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
-end
+Extracellular(s::Source,xyz)=Extracellular{typeof(s)}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
 
 type Stim
     Is::Array{Float64,1}
@@ -133,9 +222,7 @@ type Stim
     tstop::Float64
 end
 
-function Stim(Is::Float64,mtype::Int64,neur::Int64,node::Int64,tstart::Float64,tstop::Float64)
-    Stim([Is],mtype,neur,node,tstart,tstop)
-end
+Stim(Is,mtype,neur,node,tstart,tstop)=Stim([Is],mtype,neur,node,tstart,tstop)
 
 type Intracellular
     mtype::Int64
@@ -144,22 +231,19 @@ type Intracellular
     v::Array{Float64,1}
 end
 
-function Intracellular(mtype::Int64,neur::Int64,node::Int64)
-    Intracellular(mtype,neur,node,Array(Float64,0))
-end
+Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,node,Array(Float64,0))
 
 type Network{T <: NeuronPool}
-    neur::T #Array of Neurons for simulation
-    t::FloatRange{Float64} #time range for simulation
-    extra::Array{Extracellular,1} #Extracellular Recording
+    neur::T 
+    t::FloatRange{Float64} 
+    extra::Array{Extracellular,1} 
     #extracellular Stimulation
-    intra::Array{Intracellular,1} #Intracellular Recording
-    stim::Array{Stim,1} #Intracellular Stimulation
+    intra::Array{Intracellular,1} 
+    stim::Array{Stim,1}
 end
 
 function Network(neuron::Neuron,tstop::Float64; par=false)
 
-    #create neuron pool
     gen_neuronpool([neuron],par)
 
     pool=NeuronPool0([neuron],par)
@@ -170,228 +254,11 @@ end
 
 function Network{T<:Neuron}(neurons::Array{T,1},tstop::Float64; par=false)
 
-    #create neuron pool
     gen_neuronpool(neurons,par)
 
     pool=NeuronPool0(neurons,par)
 
     Network(pool,0.0:0.025:tstop,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))  
-
-end
-
-make_prop()=nothing
-
-function gen_prop_check(prop_array)
-
-    global num_prop::Int64
-    
-    if method_exists(make_prop,(typeof(prop_array),Int))
-    else
-        num_prop+=1
-        gen_prop(prop_array,num_prop)
-    end
-
-    nothing
-    
-end
-
-function gen_prop(a::Channel,k::Int64)
-    
-    num_fields=sum(length(fieldnames(a)))
-
-    @eval begin
-        type $(symbol("Prop_$k")) <: Prop
-            p::Array{Float64,2}
-        end
-
-        function make_prop(b::$(typeof(a)),n::Int64)
-            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
-        end
-      
-    end
-
-    c=make_prop(a,0)
-
-    @eval begin
-       
-        function make_prop(a::$(typeof(c)),n::Int64)
-            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
-        end
-
-    end
-
-    nothing
-    
-end
-
-#Combination of channels found
-function gen_prop{T<:Tuple}(a::T,k::Int64)
-
-    num_fields=sum([length(fieldnames(a[i]))-1 for i=1:length(a)])
-
-    @eval begin
-        type $(symbol("Prop_$k")) <: Prop
-            p::Array{Float64,2}
-        end
-
-        function make_prop(b::$(typeof(a)),n::Int64)
-            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
-        end
-          
-    end
-
-    c=make_prop(a,0)
-
-    @eval begin
-        
-        function make_prop(a::$(typeof(c)),n::Int64)
-            $(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
-        end
-    end
-
-    nothing
-
-end
-
-make_neuron()=nothing
-
-#Neuron with particular combination of channels
-function gen_neuron(prop::Prop,k::Int64)
-
-    @eval begin
-        type $(symbol("Neuron_$k")) <: Neuron
-            soma::$(typeof(prop))
-            axon::$(typeof(prop))
-            dendrite::$(typeof(prop))
-            apical::$(typeof(prop))
-            secstack::Array{Section,1}
-            v::Array{Float64,1} #intracellular voltage
-            a::Array{Float64,1}
-            b::Array{Float64,1}
-            d::Array{Float64,1}
-            rhs::Array{Float64,1}
-            Ra::Float64
-            Cm::Float64
-            dt::Float64
-            nodes::Array{Node,1}
-            i_vm::Array{Float64,1}
-            divm::Array{Float64,1}
-            diag_old::Array{Float64,1}
-            internal_nodes::Array{Array{Int64,1},1}
-            par::Array{Int64,1}
-            v1::Array{Float64,1}
-            i2::Array{Float64,1}
-        end
-
-        function make_neuron(prop::$(typeof(prop)),n::Neuron,newnodes::Array{Node,1})
-
-            nodelen=length(n.nodes)
-
-            i_vm=zeros(Float64,nodelen)
-            divm=zeros(Float64,nodelen)
-            v1=zeros(Float64,nodelen)
-            i2=zeros(Float64,nodelen)
-            par=zeros(Float64,nodelen)
-            inter_n=deepcopy(n.internal_nodes)
-            diag_old=zeros(Float64,nodelen)
-            rhs=zeros(Float64,nodelen)
-            a=zeros(Float64,nodelen)
-            b=zeros(Float64,nodelen)
-            d=zeros(Float64,nodelen)
-            v=zeros(Float64,nodelen)
-
-            secs=deepcopy(n.secstack)
-            
-            soma=make_prop(prop,length(inter_n[1]))
-            axon=make_prop(prop,length(inter_n[2]))
-            dendrite=make_prop(prop,length(inter_n[3]))
-            apical=make_prop(prop,length(inter_n[4]))
-        
-            n2 = $(symbol("Neuron_$k"))(soma,axon,dendrite,apical,secs,v,a,b,d,rhs,n.Ra,n.Cm,n.dt,newnodes,i_vm,divm,diag_old,inter_n,par,v1,i2)
-
-            fillA!(n2)
-
-            n2
-            
-        end
-        
-    end   
-
-end
-
-function gen_neur_check(myprop)
-
-    global num_neur::Int64
-    
-    if method_exists(make_neuron,(typeof(myprop),Neuron,Array{Node,1}))
-    else     
-        num_neur+=1
-        gen_neuron(myprop,num_neur)
-    end
-
-    nothing
-    
-end
-
-function gen_neuron(prop::Tuple,k::Int64)
-
-    @eval begin
-        type $(symbol("Neuron_$k")) <: Neuron
-            soma::$(typeof(prop[1]))
-            axon::$(typeof(prop[2]))
-            dendrite::$(typeof(prop[3]))
-            apical::$(typeof(prop[4]))
-            secstack::Array{Section,1}
-            v::Array{Float64,1} #intracellular voltage
-            a::Array{Float64,1}
-            b::Array{Float64,1}
-            d::Array{Float64,1}
-            rhs::Array{Float64,1}
-            Ra::Float64
-            Cm::Float64
-            dt::Float64
-            nodes::Array{Node,1}
-            i_vm::Array{Float64,1}
-            divm::Array{Float64,1}
-            diag_old::Array{Float64,1}
-            internal_nodes::Array{Array{Int64,1},1}
-            par::Array{Int64,1}
-            v1::Array{Float64,1}
-            i2::Array{Float64,1}
-        end
-
-        function make_neuron(prop::$(typeof(prop)),n::Neuron,newnodes::Array{Node,1})
-
-            nodelen=length(n.nodes)
-
-            i_vm=zeros(Float64,nodelen)
-            divm=zeros(Float64,nodelen)
-            v1=zeros(Float64,nodelen)
-            i2=zeros(Float64,nodelen)
-            par=zeros(Float64,nodelen)
-            inter_n=deepcopy(n.internal_nodes)
-            diag_old=zeros(Float64,nodelen)
-            rhs=zeros(Float64,nodelen)
-            a=zeros(Float64,nodelen)
-            b=zeros(Float64,nodelen)
-            d=zeros(Float64,nodelen)
-            v=zeros(Float64,nodelen)
-
-            secs=deepcopy(n.secstack)
-
-            soma=make_prop(prop[1],length(inter_n[1]))
-            axon=make_prop(prop[2],length(inter_n[2]))
-            dendrite=make_prop(prop[3],length(inter_n[3]))
-            apical=make_prop(prop[4],length(inter_n[4]))
-            
-            n2 = $(symbol("Neuron_$k"))(soma,axon,dendrite,apical,secs,v,a,b,d,rhs,n.Ra,n.Cm,n.dt,newnodes,i_vm,divm,diag_old,inter_n,par,v1,i2)
-
-            fillA!(n2)
-
-            n2
-        end
-        
-    end   
 
 end
 
@@ -431,10 +298,7 @@ function gen_neuronpool{T<:Neuron}(neur::Array{T,1}, par=false)
                 NeuronPool0([typeof(neur[inds[i]][1])[neur[inds[i]]...] for i=1:length(inds)]...)
             else
                 NeuronPool0([distribute(typeof(neur[inds[i]][1])[neur[inds[i]]...]) for i=1:length(inds)]...)
-            end
-            
-
-        end
-        
+            end         
+        end 
     end
 end
