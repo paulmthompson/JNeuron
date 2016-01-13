@@ -15,7 +15,7 @@ function plot_arrays(neuron::Neuron)
         push!(y[i],neuron.secs[i].pt3d[j].y)
     end
 
-    (x,y)
+    [hcat(x[i],y[i]) for i=1:length(x)]
 end
 
 function translate3d!(neuron::Neuron,x::Float64,y::Float64,z::Float64)
