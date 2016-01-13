@@ -16,6 +16,10 @@ immutable Pt3d
     arc::Float64 #normalized distance from 0 to end
 end
 
+Pt3d(pt::Pt3d,xyz::Array{Float64,1})=Pt3d(xyz[1],xyz[2],xyz[3],pt.d,pt.arc)
+
+add(pt::Pt3d,x::Float64,y::Float64,z::Float64)=Pt3d(pt.x+x,pt.y+y,pt.z+z,pt.d,pt.arc)
+
 immutable SegArea
     l::Float64
     r::Float64

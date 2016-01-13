@@ -5,16 +5,23 @@ Basic 3D reconstruction
 
 =#
 
+function plot_arrays(neuron::Neuron)
+    
+    x=[zeros(Float64,0) for i=1:length(neuron.secs)]
+    y=[zeros(Float64,0) for i=1:length(neuron.secs)]
+    
+    for i=1:length(neuron.secs), j=1:length(neuron.secs[i].pt3d)
+        push!(x[i],neuron.secs[i].pt3d[j].x)
+        push!(y[i],neuron.secs[i].pt3d[j].y)
+    end
+
+    (x,y)
+end
+
 function translate3d!(neuron::Neuron,x::Float64,y::Float64,z::Float64)
 
-    for i=1:length(neuron.secs)
-
-        for j=1:length(neuron.secs[i].pt3d)
-
-            neuron.secs[i].pt3d[j].x+=x
-            neuron.secs[i].pt3d[j].y+=y
-            neuron.secs[i].pt3d[j].z+=z          
-        end      
+    for i=1:length(neuron.secs), j=1:length(neuron.secs[i].pt3d)
+            neuron.secs[i].pt3d[j]=add(neuron.secs[i].pt3d[j],x,y,z)     
     end   
 end
 
@@ -37,33 +44,28 @@ function rotate3d!(neuron::Neuron,theta::Float64,myaxis::Int64)
         rotmat[2,2]=1.0
         rotmat[3,1]=-sin(theta)
         rotmat[3,3]=cos(theta)
-
     else
 
         rotmat[1,1]=cos(theta)
         rotmat[1,2]=-sin(theta)
         rotmat[2,1]=sin(theta)
         rotmat[2,2]=cos(theta)
-        rotmat[3,3]=1.0
-        
+        rotmat[3,3]=1.0        
     end
 
     for i=1:length(neuron.secs)
-
         for j=1:length(neuron.secs[i].pt3d)
 
             xyz=rotmat*[neuron.secs[i].pt3d[j].x,neuron.secs[i].pt3d[j].y,neuron.secs[i].pt3d[j].z]
-                  
-            neuron.secstack[i].pt3d[j].x=xyz[1]
-            neuron.secstack[i].pt3d[j].y=xyz[2]
-            neuron.secstack[i].pt3d[j].z=xyz[3]         
+
+            neuron.secs[i].pt3d[j]=Pt3d(neuron.secs[i].pt3d[j],xyz)          
         end     
     end    
 end
 
 function randomize_shape!(neuron::Neuron)
 
-    for i=1:length(neuron.secstack)
+    for i=1:length(neuron.secs)
 
         if (neuron.secs[i].parent!=length(neuron.secs))&&(neuron.secs[i].parent!=0)
 
