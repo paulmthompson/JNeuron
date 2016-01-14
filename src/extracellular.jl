@@ -76,7 +76,7 @@ end
 
 function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
     
-    (unit_ds, delta_s)=pt3d_vec(pt3d[end],pt3d[1])
+    (unit_ds, delta_s)=pt3d_vec(pt3d[1],pt3d[end])
 
     d1=vect(pt3d[1],xyz)
     d2=vect(pt3d[end],xyz)
