@@ -1,12 +1,15 @@
 
 global num_neur = 0
 global num_prop = 0
+global num_pool = 0
 
 abstract Channel
 abstract Prop
 abstract Neuron
-abstract NeuronPool
 abstract Source
+abstract NeuronPool
+abstract ParPool <: NeuronPool
+abstract SinglePool <: NeuronPool
 
 immutable Pt3d
     x::Float64
@@ -304,13 +307,41 @@ end
 
 Network(p::NeuronPool,ts::Float64)=Network(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
 
-Network(n::Neuron,ts::Float64; par=false)=(gen_npool([n],par); p=NeuronPool0([n],par); Network(p,ts))
+Network(n::Neuron,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
 
-Network{T}(n::Array{T,1},ts::Float64; par=false)=(gen_npool(n,par); p=NeuronPool0(n,par); Network(p,ts))
+Network(n::Tuple,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
 
-#types of neurons found in network
-function gen_npool{T<:Neuron}(neur::Array{T,1}, par=false)
+function gen_pool_check(neur,par,ts)
 
+    global num_pool::Int64
+    
+    if method_exists(make_ppool,(typeof(neur)))||method_exists(make_spool,(typeof(neur)))
+    else
+        gen_npool(neur,par)
+        num_pool+=1
+    end
+
+    if par==true
+        p=make_ppool(neur)
+    else
+        p=make_spool(neur)
+    end
+
+    Network(p,ts)
+    
+end
+
+make_spool()=nothing
+make_ppool()=nothing
+                                
+function gen_npool(neur, par::Bool)
+
+    global num_pool::Int64
+
+    if issubtype(typeof(neur),Neuron)
+        neur=[neur]
+    end
+    
     typeinds=Array(DataType,0)
     mtypes=[typeof(neur[i]) for i=1:length(neur)]
     #Determine types of neurons
@@ -321,30 +352,46 @@ function gen_npool{T<:Neuron}(neur::Array{T,1}, par=false)
     end
     
     if par==false
+
         myfields=[:($(symbol("N_$i"))::Array{($(typeinds[i])),1}) for i=1:length(typeinds)]
-    else
-        myfields=[:($(symbol("N_$i"))::DArray{($(typeinds[i])),1}) for i=1:length(typeinds)]
-    end
-    
-    @eval begin
-        type $(symbol("NeuronPool0")) <: NeuronPool
-            $(myfields...)
-        end
-
-        function NeuronPool0{T<:Neuron}(neur::AbstractArray{T,1},par=false)
-
-            inds=Array(Array{Int64,1},0)
-            mtypes=[typeof(neur[i]) for i=1:length(neur)]
-
-            for i=1:length(fieldnames(NeuronPool0))
-                push!(inds,find(mtypes.==eltype(fieldtype(NeuronPool0,i))))
+        
+        @eval begin
+            type $(symbol("Pool_$num_pool")) <: SinglePool
+                $(myfields...)
             end
 
-            if par==false
-                NeuronPool0([typeof(neur[inds[i]][1])[neur[inds[i]]...] for i=1:length(inds)]...)
-            else
-                NeuronPool0([distribute(typeof(neur[inds[i]][1])[neur[inds[i]]...]) for i=1:length(inds)]...)
-            end         
-        end 
+            function make_spool(neur::$(typeof(neur)))
+
+                inds=Array(Array{Int64,1},0)
+                mtypes=[typeof(neur[i]) for i=1:length(neur)]
+
+                for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))
+                    push!(inds,find(mtypes.==eltype(fieldtype($(symbol("Pool_$num_pool")),i))))
+                end
+
+                $(symbol("Pool_$num_pool"))([typeof(neur[inds[i]][1])[neur[inds[i]]...] for i=1:length(inds)]...)
+            end
+        end
+    else
+
+        myfields=[:($(symbol("N_$i"))::DArray{($(typeinds[i])),1}) for i=1:length(typeinds)]
+        
+        @eval begin
+            type $(symbol("Pool_$num_pool")) <: ParPool
+                $(myfields...)
+            end
+
+            function make_ppool(neur::$(typeof(neur)))
+
+                inds=Array(Array{Int64,1},0)
+                mtypes=[typeof(neur[i]) for i=1:length(neur)]
+
+                for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))
+                    push!(inds,find(mtypes.==eltype(fieldtype($(symbol("Pool_$num_pool")),i))))
+                end
+
+                $(symbol("Pool_$num_pool"))([distribute(typeof(neur[inds[i]][1])[neur[inds[i]]...]) for i=1:length(inds)]...)
+            end
+        end        
     end
 end

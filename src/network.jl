@@ -21,6 +21,8 @@ function add!(network::Network,extra::Extracellular)
     nothing
 end
 
+
+
 #=
 Add Intracellular Stimulation to network
 =#
@@ -139,8 +141,6 @@ function get_current(neur::DArray{Neuron,1})
 
 end
 
-fetch_current(myind::RemoteRef)=fetch(myind)
-
 function get_current(network::Network)
 
     count=0
@@ -163,6 +163,8 @@ function get_current(network::Network)
     cur
        
 end
+
+fetch_current(myind::RemoteRef)=fetch(myind)
 
 fetch_current(myind::SubArray{Float64,1})=myind
 
