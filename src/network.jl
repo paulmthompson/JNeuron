@@ -11,7 +11,6 @@ function add!(n::NetworkS,extra::Extracellular)
     
     e=typeof(extra)(extra.xyz,coeffs,zeros(Float64,length(n.t)))
     push!(n.extra,e)
-
 end
 
 function add!(network::NetworkS,stim::Stim)
@@ -25,10 +24,7 @@ function add!(network::NetworkS,stim::Stim)
 
     stim.Is=myis
 
-    push!(network.stim,stim)
-
-    nothing
-    
+    push!(network.stim,stim)   
 end
 
 add!(n::NetworkS,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
@@ -42,55 +38,36 @@ function run!(n::NetworkS,init=false)
                          
     for i=1:length(n.t)
 
-        #stimulate if appropriate
-        #=
-        if stim==true
-            for j=1:length(network.stim)
-                add_stim(stim_inds[j],network.stim[j].Is[i])
-            end
+        for j=1:length(n.stim)
+            @inbounds getfield(n.neur,n.stim[j].mtype)[n.stim[j].neur].rhs[n.stim[j].node]+=n.stim[j].Is[i]
         end
-        =#
 
         if n.helper.flags[1]
             count=1
-            for j=1 : @num_fields(n.neur)
+            for j=1 : length(fieldnames(n.neur))
                 for k=1:length(getfield(n.neur,j))
                     @inbounds main(getfield(n.neur,j)[k])
                     for l=1:length(n.extra)
-                        n.extra[l].v[i]+=a_mult_b(n.extra[l].coeffs[count],getfield(n.neur,j)[k])
+                        @inbounds n.extra[l].v[i]+=a_mult_b(n.extra[l].coeffs[count],getfield(n.neur,j)[k])
                     end
                     count+=1
                 end
             end
         else
-            for j=1 : @num_fields(n.neur)
-                for k=1:length(getfield(n.neur,j))
-                    @inbounds main(getfield(n.neur,j)[k])
-                end
-            end
+            @inbounds main(n.neur)
         end
 
-
-        #=
-        #get intracellular potentials
-        for j=1:length(network.intra)
-            network.intra[j].v[i]=fetch_voltage(v_inds[j])
-        end
-        =#
-               
+        for j=1:length(n.intra)
+            @inbounds n.intra[j].v[i]=getfield(n.neur,n.intra[j].mtype)[n.intra[j].neur].v[n.intra[j].node]
+        end             
     end
 
-    nothing
-        
+    nothing       
 end
 
-function init!(n::NetworkS)
+function init!{T<:NetworkS}(n::T)
 
-    for j=1 : @num_fields(n.neur)
-        for k=1:length(getfield(n.neur,j))
-            initialcon!(getfield(n.neur,j)[k])
-        end
-    end
+    @inbounds initialcon!(n.neur)
 
     #set up flags
     if length(n.extra)==0
@@ -104,14 +81,12 @@ function init!(n::NetworkS)
         n.helper.flags[2]=false
     else
         n.helper.flags[2]=true
-        v_inds=get_voltage(n)
     end
 
     if length(n.stim)==0
         n.helper.flags[3]=false
     else
         n.helper.flags[3]=true
-        stim_inds=get_stim(n)
     end
     
 end
@@ -159,25 +134,6 @@ end
 
 fetch_current(myind::RemoteRef)=fetch(myind)
 
-fetch_current(myind::SubArray{Float64,1})=myind
-#=
-function get_stim(network::Network)
-
-    myind=Array(RemoteRef,length(network.stim))
-    
-    #stimulate if appropriate
-    for j=1:length(network.stim)
-        
-        thisneur=network.stim[j].neur
-        neurid=findfirst(thisneur.>=network.neur.cuts[1])
-        myind[j] = @spawnat network.neur.pids[neurid] sub(network.neur[thisneur].rhs,network.stim[j].node:network.stim[j].node)
-        
-    end
-
-    myind
-    
-end
-=#
 function add_stim(myind::RemoteRef,Is::Float64)
     
     @spawn fetch(myind)[1]+=Is
@@ -185,54 +141,16 @@ function add_stim(myind::RemoteRef,Is::Float64)
     nothing
 end
 
-function get_stim(network::Network)
-
-    count=0
-    for j=1:length(fieldnames(network.neur))
-        for k=1:length(getfield(network.neur,j))
-            count+=1
-        end
-    end
-
-    stim=Array(SubArray{Float64,1},count)
-    count=1
-
-    myind=[sub(getfield(network.neur,network.stim[i].mtype)[network.stim[i].neur].rhs, network.stim[i].node:network.stim[i].node) for i=1:length(network.stim)]
-    
-end
-
-add_stim(myind::SubArray,Is::Float64)=myind[1]+=Is
-
-#=
-function get_voltage(network::Network)
-
-    myind=Array(RemoteRef,length(network.intra))
-
-    #get voltage at particular location
-    for j=1:length(network.intra)
-        
-        thisneur=network.intra[j].neur
-        neurid=findfirst(thisneur.>=network.neur.cuts[1])
-        myind[j] = @spawnat network.neur.pids[neurid] sub(network.neur[thisneur].v, network.intra[j].node:network.intra[j].node)
-        
-    end
-
-    myind
-    
-end
-=#
 fetch_voltage(myind::RemoteRef)=fetch(myind[1])
 
 function get_voltage(network::NetworkS)
     myind=[sub(getfield(network.neur,network.intra[i].mtype)[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.intra)]
 end
 
-fetch_voltage(myind::SubArray)=myind[1]
-
 function a_mult_b(x::Extra_coeffs,n::Neuron)
     c=0.0
     for i=1:length(x.c)
-        @inbounds c+=x.c[i]*n.v[x.inds[i]]
+        @inbounds c+=x.c[i]*n.i_vm[x.inds[i]]
     end
     c
 end
