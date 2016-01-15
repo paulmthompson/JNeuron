@@ -8,9 +8,9 @@ abstract Prop
 abstract Neuron
 abstract Source
 abstract NeuronPool
-abstract ParPool <: NeuronPool
-abstract SinglePool <: NeuronPool
 abstract Network
+abstract NetworkS <: Network
+abstract NetworkP <: Network
 abstract Helper
 
 immutable Pt3d
@@ -311,32 +311,6 @@ HelperS()=HelperS(falses(4),Array(SubArray{Float64,1},0))
 type HelperP <: Helper
 end
 
-type NetworkS{T<:SinglePool} <: Network
-    neur::T
-    t::FloatRange{Float64} 
-    extra::Array{Extracellular,1} 
-    #extracellular Stimulation
-    intra::Array{Intracellular,1} 
-    stim::Array{Stim,1}
-    helper::HelperS
-end
-
-type NetworkP{T<:ParPool} <: Network
-    neur::T
-    t::FloatRange{Float64} 
-    extra::Array{Extracellular,1} 
-    #extracellular Stimulation
-    intra::Array{Intracellular,1} 
-    stim::Array{Stim,1}
-    helper::HelperP
-end
-
-Network(p::SinglePool,ts::Float64)=NetworkS(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),HelperS())
-
-Network(n::Neuron,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
-
-Network(n::Tuple,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
-
 function gen_pool_check(neur,par,ts)
 
     global num_pool::Int64
@@ -353,7 +327,7 @@ function gen_pool_check(neur,par,ts)
         p=make_spool(neur)
     end
 
-    Network(p,ts)
+    make_network(p,ts)
     
 end
 
@@ -382,10 +356,20 @@ function gen_npool(neur, par::Bool)
         myfields=[:($(symbol("N_$i"))::Array{($(typeinds[i])),1}) for i=1:length(typeinds)]
         
         @eval begin
-            type $(symbol("Pool_$num_pool")) <: SinglePool
+            type $(symbol("Pool_$num_pool")) <: NeuronPool
                 $(myfields...)
             end
 
+            type $(symbol("Network_$num_pool")) <: NetworkS
+                neur::$(symbol("Pool_$num_pool"))
+                t::FloatRange{Float64} 
+                extra::Array{Extracellular,1} 
+                #extracellular Stimulation
+                intra::Array{Intracellular,1} 
+                stim::Array{Stim,1}
+                helper::HelperS
+            end
+            
             function make_spool(neur::$(typeof(neur)))
 
                 inds=Array(Array{Int64,1},0)
@@ -397,6 +381,11 @@ function gen_npool(neur, par::Bool)
 
                 $(symbol("Pool_$num_pool"))([typeof(neur[inds[i]][1])[neur[inds[i]]...] for i=1:length(inds)]...)
             end
+            
+            function make_network(p::$(symbol("Pool_$num_pool")),ts::Float64)
+                $(symbol("Network_$num_pool"))(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),HelperS())
+            end
+            
         end
     else
 
@@ -420,4 +409,12 @@ function gen_npool(neur, par::Bool)
             end
         end        
     end
+end
+
+Network(n::Neuron,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
+
+Network(n::Tuple,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
+
+macro num_fields(n)
+  length(fieldnames(n))
 end

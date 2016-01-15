@@ -1,6 +1,6 @@
 
 
-function add!{T<:SinglePool}(n::NetworkS{T},extra::Extracellular)
+function add!(n::NetworkS,extra::Extracellular)
 
     coeffs=Array(Extra_coeffs,0)
     
@@ -14,7 +14,7 @@ function add!{T<:SinglePool}(n::NetworkS{T},extra::Extracellular)
 
 end
 
-function add!(network::Network,stim::Stim)
+function add!(network::NetworkS,stim::Stim)
 
     myis=zeros(Float64,length(network.t))
 
@@ -31,9 +31,9 @@ function add!(network::Network,stim::Stim)
     
 end
 
-add!(n::Network,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
+add!(n::NetworkS,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
 
-function run!{T<:SinglePool}(n::NetworkS{T},init=false)
+function run!(n::NetworkS,init=false)
 
     #get initial conditions if uninitialized
     if init==true
@@ -53,7 +53,7 @@ function run!{T<:SinglePool}(n::NetworkS{T},init=false)
 
         if n.helper.flags[1]
             count=1
-            for j=1:length(fieldnames(n.neur))
+            for j=1 : @num_fields(n.neur)
                 for k=1:length(getfield(n.neur,j))
                     @inbounds main(getfield(n.neur,j)[k])
                     for l=1:length(n.extra)
@@ -63,7 +63,7 @@ function run!{T<:SinglePool}(n::NetworkS{T},init=false)
                 end
             end
         else
-           for j=1:length(fieldnames(n.neur))
+            for j=1 : @num_fields(n.neur)
                 for k=1:length(getfield(n.neur,j))
                     @inbounds main(getfield(n.neur,j)[k])
                 end
@@ -84,9 +84,9 @@ function run!{T<:SinglePool}(n::NetworkS{T},init=false)
         
 end
 
-function init!{T<:SinglePool}(n::NetworkS{T})
+function init!(n::NetworkS)
 
-    for j=1:length(fieldnames(n.neur))
+    for j=1 : @num_fields(n.neur)
         for k=1:length(getfield(n.neur,j))
             initialcon!(getfield(n.neur,j)[k])
         end
@@ -134,7 +134,7 @@ function get_current(neur::DArray{Neuron,1})
 
 end
 
-function get_current{T<:SinglePool}(n::NetworkS{T})
+function get_current(n::NetworkS)
 
     count=0
     for j=1:length(fieldnames(n.neur))
@@ -223,7 +223,7 @@ end
 =#
 fetch_voltage(myind::RemoteRef)=fetch(myind[1])
 
-function get_voltage{T<:SinglePool}(network::NetworkS{T})
+function get_voltage(network::NetworkS)
     myind=[sub(getfield(network.neur,network.intra[i].mtype)[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.intra)]
 end
 
