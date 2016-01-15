@@ -299,11 +299,14 @@ end
 Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,node,Array(Float64,0))
 
 type HelperS <: Helper
-    #flags for init, intra extra
-    #intra
+    flags::Array{Bool,1}
+    extra::Array{SubArray{Float64,1},1}
+    #intra::Array{SubArray{Float64,1},1}
     #stim
     #extra
 end
+
+HelperS()=HelperS(falses(4),Array(SubArray{Float64,1},0))
 
 type HelperP <: Helper
 end
