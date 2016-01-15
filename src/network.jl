@@ -1,10 +1,18 @@
 
 
-add!(n::Network,extra::Extracellular)=(e=get_coeffs(n.neur,extra,n);push!(n.extra,e))
+function add!{T<:SinglePool}(n::NetworkS{T},extra::Extracellular)
 
-#=
-Add Intracellular Stimulation to network
-=#
+    coeffs=Array(Extra_coeffs,0)
+    
+    for j=1:length(fieldnames(n.neur)),k in getfield(n.neur,j)
+        (mycoeffs,inds)=extracellular(extra,k,0.3)
+        push!(coeffs,Extra_coeffs(mycoeffs,inds))
+    end
+    
+    e=typeof(extra)(extra.xyz,coeffs,zeros(Float64,length(n.t)))
+    push!(n.extra,e)
+
+end
 
 function add!(network::Network,stim::Stim)
 
@@ -25,7 +33,7 @@ end
 
 add!(n::Network,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
 
-function run!{T<:NeuronPool}(network::Network{T},init=false)
+function run!{T<:SinglePool}(network::NetworkS{T},init=false)
 
     #get initial conditions if uninitialized
     if init==true
@@ -136,8 +144,8 @@ end
 fetch_current(myind::RemoteRef)=fetch(myind)
 
 fetch_current(myind::SubArray{Float64,1})=myind
-
-function get_stim{T <: DArray{Neuron,1}}(network::Network{T})
+#=
+function get_stim(network::Network)
 
     myind=Array(RemoteRef,length(network.stim))
     
@@ -153,7 +161,7 @@ function get_stim{T <: DArray{Neuron,1}}(network::Network{T})
     myind
     
 end
-
+=#
 function add_stim(myind::RemoteRef,Is::Float64)
     
     @spawn fetch(myind)[1]+=Is
@@ -179,7 +187,8 @@ end
 
 add_stim(myind::SubArray,Is::Float64)=myind[1]+=Is
 
-function get_voltage{T <: DArray{Neuron,1}}(network::Network{T})
+#=
+function get_voltage(network::Network)
 
     myind=Array(RemoteRef,length(network.intra))
 
@@ -195,7 +204,7 @@ function get_voltage{T <: DArray{Neuron,1}}(network::Network{T})
     myind
     
 end
-
+=#
 fetch_voltage(myind::RemoteRef)=fetch(myind[1])
 
 function get_voltage(network::Network)

@@ -10,6 +10,8 @@ abstract Source
 abstract NeuronPool
 abstract ParPool <: NeuronPool
 abstract SinglePool <: NeuronPool
+abstract Network
+abstract Helper
 
 immutable Pt3d
     x::Float64
@@ -296,16 +298,37 @@ end
 
 Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,node,Array(Float64,0))
 
-type Network{T <: NeuronPool}
-    neur::T 
+type HelperS <: Helper
+    #flags for init, intra extra
+    #intra
+    #stim
+    #extra
+end
+
+type HelperP <: Helper
+end
+
+type NetworkS{T<:SinglePool} <: Network
+    neur::T
     t::FloatRange{Float64} 
     extra::Array{Extracellular,1} 
     #extracellular Stimulation
     intra::Array{Intracellular,1} 
     stim::Array{Stim,1}
+    helper::HelperS
 end
 
-Network(p::NeuronPool,ts::Float64)=Network(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
+type NetworkP{T<:ParPool} <: Network
+    neur::T
+    t::FloatRange{Float64} 
+    extra::Array{Extracellular,1} 
+    #extracellular Stimulation
+    intra::Array{Intracellular,1} 
+    stim::Array{Stim,1}
+    helper::HelperP
+end
+
+Network(p::SinglePool,ts::Float64)=NetworkS(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),HelperS())
 
 Network(n::Neuron,ts::Float64; par=false)=(gen_pool_check(n,par,ts))
 

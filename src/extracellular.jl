@@ -5,24 +5,6 @@ Extracellular
 sigma: extracellular conductivity
 =#
 
-function get_coeffs(p::SinglePool,extra::Extracellular,network::Network)
-
-    coeffs=Array(Extra_coeffs,0)
-    
-    for j=1:length(fieldnames(p))
-        for k=1:length(getfield(p,j))
-            (mycoeffs,inds)=extracellular(extra,getfield(p,j)[k],0.3)
-            push!(coeffs,Extra_coeffs(mycoeffs,inds))
-        end
-    end
-    
-    e=typeof(extra)(extra.xyz,coeffs,zeros(Float64,length(network.t)))
-    
-end
-
-function get_coeffs(p::ParPool,extra::Extracellular)
-end
-
 #Point Source
 
 function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
