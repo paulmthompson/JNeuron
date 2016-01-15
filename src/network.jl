@@ -1,27 +1,6 @@
 
-#=
-Add extracellular electrode to network
-=#
 
-function add!(network::Network,extra::Extracellular)
-
-    coeffs=Array(Extra_coeffs,0)
-    
-    for j=1:length(fieldnames(network.neur))
-        for k=1:length(getfield(network.neur,j))
-            (mycoeffs,inds)=extracellular(extra,getfield(network.neur,j)[k],0.3)
-            push!(coeffs,Extra_coeffs(mycoeffs,inds))
-        end
-    end
-    
-    extra=typeof(extra)(extra.xyz,coeffs,zeros(Float64,length(network.t)))
-    
-    push!(network.extra,extra)
-
-    nothing
-end
-
-
+add!(n::Network,extra::Extracellular)=(e=get_coeffs(n.neur,extra,n);push!(n.extra,e))
 
 #=
 Add Intracellular Stimulation to network
@@ -44,25 +23,13 @@ function add!(network::Network,stim::Stim)
     
 end
 
-function add!(network::Network,intra::Intracellular)
+add!(n::Network,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
 
-    intra.v=zeros(Float64,length(network.t))
-
-    push!(network.intra,intra)
-
-    nothing
-    
-end
-
-function run!{T<:NeuronPool}(network::Network{T},init=true)
+function run!{T<:NeuronPool}(network::Network{T},init=false)
 
     #get initial conditions if uninitialized
     if init==true
-        for j=1:length(fieldnames(network.neur))
-            for k=1:length(getfield(network.neur,j))
-                initialcon!(getfield(network.neur,j)[k])
-            end
-        end
+        init!(network.neur)
     end
 
     #set up flags
@@ -122,6 +89,8 @@ function run!{T<:NeuronPool}(network::Network{T},init=true)
     nothing
         
 end
+
+init!(p::SinglePool)=(for j=1:length(fieldnames(p)),k in getfield(p,j);initialcon!(k);end)
 
 function get_current(neur::DArray{Neuron,1})
 
