@@ -145,12 +145,12 @@ Notice that in this step the input to the add method is the "blank_neuron" which
 Constructing A Network with different neuron types
 ---------------------------------------------------
 
-Above, we have 3 different neurons, which all have different combinations of neuron channels in different places. We would add these to a network as an array:
+Above, we have 3 different neurons, which all have different combinations of neuron channels in different places. We would add these to a network as a tuple:
 
 .. code-block:: julia
 
 	simulation_time=100.0 #ms
-	mynetwork1=Network([myneuron1,myneuron2,myneuron3],simulation_time)
+	mynetwork1=Network((myneuron1,myneuron2,myneuron3),simulation_time)
 
 The first field of the network, neur, is a NeuronPool type, which will have an array field for each of the different types of neurons. In the example above, the pool would have 3 fields each with one entry. Constrast this to the example below, where all of the neurons have the same channel types, and therefore there would be a neuron pool with 1 field with three entries:
 
@@ -159,7 +159,7 @@ The first field of the network, neur, is a NeuronPool type, which will have an a
 	simulation_time=100.0 #ms
 	myneuron1_1=deepcopy(myneuron1)
 	myneuron1_2=deepcopy(myneuron1)
-	mynetwork2=Network([myneuron1,myneuron1_1,myneuron1_2],simulation_time)
+	mynetwork2=Network((myneuron1,myneuron1_1,myneuron1_2),simulation_time)
 		
 
 ========================

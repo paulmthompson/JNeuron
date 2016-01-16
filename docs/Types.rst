@@ -31,7 +31,7 @@ You could easily construct an array of the neurons above to be accessed during s
 	my_neur_array[2]=myneuron2
 	my_neur_array[3]=myneuron3
 
-But this is actually inefficient, because the methods used for solving the equation in the first one are different than the second, which are different than the third becuase each has different channel types: consequently, the compiler has to figure out which ones to use.
+But this is actually inefficient, because the methods used for solving the equation in the first one are different than the second, which are different than the third because each has different channel types: consequently, the compiler has to figure out which ones to use.
 
 Consequently, you see above that the Network type contains a "Neuron Pool" which for the case above would look like this:
 
