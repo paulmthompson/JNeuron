@@ -300,36 +300,37 @@ Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,nod
 
 type HelperS <: Helper
     flags::Array{Bool,1}
-    extra::Array{SubArray{Float64,1},1}
-    #intra::Array{SubArray{Float64,1},1}
-    #stim
-    #extra
 end
 
-HelperS()=HelperS(falses(4),Array(SubArray{Float64,1},0))
+HelperS()=HelperS(falses(4))
 
 type HelperP <: Helper
+    flags::Array{Bool,1}
 end
+
+HelperP()=HelperP(falses(4))
 
 function gen_pool_check(neur,par,ts)
 
     global num_pool::Int64
-    
-    if method_exists(make_spool,(typeof(neur),))
-    elseif method_exists(make_ppool,(typeof(neur),))
-    else
-        gen_npool(neur,par)
-        num_pool+=1
-    end
 
     if par==true
+        if method_exists(make_ppool,(typeof(neur),))
+        else
+            gen_npool(neur,par)
+            num_pool+=1
+        end
         p=make_ppool(neur)
     else
+        if method_exists(make_spool,(typeof(neur),))
+        else
+            gen_npool(neur,par)
+            num_pool+=1
+        end
         p=make_spool(neur)
     end
 
-    make_network(p,ts)
-    
+    make_network(p,ts)   
 end
 
 make_spool()=nothing
@@ -401,8 +402,18 @@ function gen_npool(neur, par::Bool)
         end
     else     
         @eval begin
-            type $(symbol("Pool_$num_pool")) <: ParPool
+            type $(symbol("Pool_$num_pool")) <: NeuronPool
                 $(myfields...)
+            end
+
+            type $(symbol("Network_$num_pool")) <: NetworkP
+                neur::$(symbol("Pool_$num_pool"))
+                t::FloatRange{Float64} 
+                extra::Array{Extracellular,1} 
+                #extracellular Stimulation
+                intra::Array{Intracellular,1} 
+                stim::Array{Stim,1}
+                helper::HelperP
             end
 
             function make_ppool(neur::$(typeof(neur)))
@@ -415,6 +426,13 @@ function gen_npool(neur, par::Bool)
                 end
 
                 $(symbol("Pool_$num_pool"))([distribute(typeof(neur[inds[i]][1])[neur[inds[i]]...]) for i=1:length(inds)]...)
+            end
+
+            gen_net_func_p($(symbol("Pool_$num_pool")),"initialcon!")
+            gen_net_func_p($(symbol("Pool_$num_pool")),"main")
+            
+            function make_network(p::$(symbol("Pool_$num_pool")),ts::Float64)
+                $(symbol("Network_$num_pool"))(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),HelperP())
             end
         end        
     end
@@ -434,6 +452,20 @@ function gen_net_func(n::DataType,func::ASCIIString)
                 for k=1:length(getfield(n,j))
                     $(symbol("$func"))(getfield(n,j)[k])
                 end
+            end
+        end
+    end   
+    nothing    
+end
+
+function gen_net_func_p(n::DataType,func::ASCIIString)
+
+    a=length(fieldnames(n))
+    
+    @eval begin
+        function $(symbol("$func"))(n::$(n))
+            for j = 1 : $a
+                map($(symbol("$func")),getfield(n,j))
             end
         end
     end   

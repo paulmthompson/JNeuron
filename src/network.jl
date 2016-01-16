@@ -65,7 +65,50 @@ function run!(n::NetworkS,init=false)
     nothing       
 end
 
-function init!{T<:NetworkS}(n::T)
+function run!(n::NetworkP,init=false)
+
+    #get initial conditions if uninitialized
+    if init==true
+        init!(n)
+    end
+                         
+    for i=1:length(n.t)
+
+        #=
+        for j=1:length(n.stim)
+            @inbounds getfield(n.neur,n.stim[j].mtype)[n.stim[j].neur].rhs[n.stim[j].node]+=n.stim[j].Is[i]
+        end
+        =#
+
+        @inbounds main(n.neur)
+        #=
+        if n.helper.flags[1]
+            count=1
+            for j=1 : length(fieldnames(n.neur))
+                for k=1:length(getfield(n.neur,j))
+                    @inbounds main(getfield(n.neur,j)[k])
+                    for l=1:length(n.extra)
+                        @inbounds n.extra[l].v[i]+=a_mult_b(n.extra[l].coeffs[count],getfield(n.neur,j)[k])
+                    end
+                    count+=1
+                end
+            end
+        else
+            @inbounds main(n.neur)
+        end
+        =#
+
+        #=
+        for j=1:length(n.intra)
+            @inbounds n.intra[j].v[i]=getfield(n.neur,n.intra[j].mtype)[n.intra[j].neur].v[n.intra[j].node]
+        end   
+        =#          
+    end
+
+    nothing  
+end
+
+function init!(n::NetworkS)
 
     @inbounds initialcon!(n.neur)
 
@@ -74,7 +117,6 @@ function init!{T<:NetworkS}(n::T)
         n.helper.flags[1]=false
     else
         n.helper.flags[1]=true
-        #cur_inds=get_current(n)
     end
 
     if length(n.intra)==0
@@ -88,7 +130,30 @@ function init!{T<:NetworkS}(n::T)
     else
         n.helper.flags[3]=true
     end
+end
+
+function init!(n::NetworkP)
     
+    @inbounds initialcon!(n.neur)
+
+    #set up flags
+    if length(n.extra)==0
+        n.helper.flags[1]=false
+    else
+        n.helper.flags[1]=true
+    end
+
+    if length(n.intra)==0
+        n.helper.flags[2]=false
+    else
+        n.helper.flags[2]=true
+    end
+
+    if length(n.stim)==0
+        n.helper.flags[3]=false
+    else
+        n.helper.flags[3]=true
+    end
 end
 
 function get_current(neur::DArray{Neuron,1})
@@ -109,29 +174,6 @@ function get_current(neur::DArray{Neuron,1})
 
 end
 
-function get_current(n::NetworkS)
-
-    count=0
-    for j=1:length(fieldnames(n.neur))
-        for k=1:length(getfield(n.neur,j))
-            count+=1
-        end
-    end
-    
-    n.helper.extra=Array(SubArray{Float64,1},count)
-    count=1
-    
-    for j=1:length(fieldnames(n.neur))
-        for k=1:length(getfield(n.neur,j))
-            n.helper.extra[count]=sub(getfield(n.neur,j)[k].i_vm,n.extra[1].coeffs[count].inds)
-            count+=1
-        end
-    end
-
-    nothing
-       
-end
-
 fetch_current(myind::RemoteRef)=fetch(myind)
 
 function add_stim(myind::RemoteRef,Is::Float64)
@@ -142,10 +184,6 @@ function add_stim(myind::RemoteRef,Is::Float64)
 end
 
 fetch_voltage(myind::RemoteRef)=fetch(myind[1])
-
-function get_voltage(network::NetworkS)
-    myind=[sub(getfield(network.neur,network.intra[i].mtype)[network.intra[i].neur].v, network.intra[i].node:network.intra[i].node) for i=1:length(network.intra)]
-end
 
 function a_mult_b(x::Extra_coeffs,n::Neuron)
     c=0.0
