@@ -306,9 +306,10 @@ HelperS()=HelperS(falses(4))
 
 type HelperP <: Helper
     flags::Array{Bool,1}
+    i::SharedArray{Float64,2}
 end
 
-HelperP()=HelperP(falses(4))
+HelperP()=HelperP(falses(4),SharedArray(Float64,0,0))
 
 function gen_pool_check(neur,par,ts)
 

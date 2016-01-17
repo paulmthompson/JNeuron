@@ -27,7 +27,7 @@ function add!(network::NetworkS,stim::Stim)
     push!(network.stim,stim)   
 end
 
-add!(n::NetworkS,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
+add!(n::Network,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
 
 function run!(n::NetworkS,init=false)
 
@@ -98,13 +98,10 @@ function run!(n::NetworkP,init=false)
         end
         =#
 
-        #=
         for j=1:length(n.intra)
-            @inbounds n.intra[j].v[i]=getfield(n.neur,n.intra[j].mtype)[n.intra[j].neur].v[n.intra[j].node]
-        end   
-        =#          
+            n.intra[j].v[i]=getfield(n.neur,n.intra[j].mtype)[n.intra[j].neur].v[n.intra[j].node]
+        end          
     end
-
     nothing  
 end
 

@@ -61,19 +61,14 @@ end
 
 function main(neuron::Neuron)
 
-    #t=tentry+dt for euler, t=tentry+dt/2 for CN
-    ext=false
-
     #reset membrane current
     @inbounds @simd for i=1:length(neuron.v)
         neuron.i_vm[i] = 0.0
     end
     
     for ind=1:4
-
         cur!(getfield(neuron,ind),neuron.v,neuron.i_vm,neuron.internal_nodes[ind])
-        cur!(getfield(neuron,ind),neuron.v1,neuron.i2,neuron.internal_nodes[ind])
-        
+        cur!(getfield(neuron,ind),neuron.v1,neuron.i2,neuron.internal_nodes[ind])      
     end
 
     @inbounds @simd for i=1:length(neuron.v)
@@ -86,15 +81,9 @@ function main(neuron::Neuron)
     hines_solve!(neuron)
 
     #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
-    if ext==true
-        neuron.vext[:] += neuron.delta_vext
-        neuron.v[:] += neuron.delta_v + neuron.delta_vext
-    else   
-        add_delta!(neuron)
-    end
+    add_delta!(neuron)
 
     #find non voltage states (like gate variables for conductances)
-
     for ind=1:4
         con!(getfield(neuron,ind),neuron.v,neuron.internal_nodes[ind])     
     end
