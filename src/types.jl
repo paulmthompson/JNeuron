@@ -465,9 +465,25 @@ function gen_net_func_p(n::DataType,func::ASCIIString)
     @eval begin
         function $(symbol("$func"))(n::$(n))
             for j = 1 : $a
+                #map_noreturn($(symbol("$func")),getfield(n,j))
                 map($(symbol("$func")),getfield(n,j))
             end
         end
     end   
     nothing    
+end
+
+function map_noreturn(f,n)
+    @sync for p in procs(n)
+        @async remotecall_fetch((f,n)->(map(f, localpart(n)); nothing), p, f, n)
+    end
+    nothing
+end
+
+function main{T<:Neuron}(n::Array{T,1})
+
+    @inbounds for i=1:length(n)
+        main(n[i])
+    end
+    nothing
 end
