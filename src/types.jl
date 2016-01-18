@@ -12,6 +12,7 @@ abstract Network
 abstract NetworkS <: Network
 abstract NetworkP <: Network
 abstract Helper
+abstract Puddle
 
 immutable Pt3d
     x::Float64
@@ -126,6 +127,18 @@ Section!(n::Neuron,ind::Int64,p::UnitRange{Int64})=Section!(n.secs,ind,p)
 
 add_sec(neuron::Neuron, sec::Section)=push!(neuron.secs,sec)
 
+type HelperS <: Helper
+    flags::Array{Bool,1}
+end
+
+HelperS()=HelperS(falses(4))
+
+type HelperP <: Helper
+    flags::Array{Bool,1}
+end
+
+HelperP()=HelperP(falses(4))
+
 make_neuron()=nothing
 
 function gen_neur_check(myprop)
@@ -173,6 +186,13 @@ function gen_neuron(prop,k::Int64)
             v1::Array{Float64,1}
             i2::Array{Float64,1}
         end
+
+        type $(symbol("Puddle_$k"))
+            n::Array{$(symbol("Neuron_$k")),1}
+            h::HelperP
+        end
+
+        $(symbol("Puddle_$k"))(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP())
 
         function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
 
@@ -298,18 +318,6 @@ end
 
 Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,node,Array(Float64,0))
 
-type HelperS <: Helper
-    flags::Array{Bool,1}
-end
-
-HelperS()=HelperS(falses(4))
-
-type HelperP <: Helper
-    flags::Array{Bool,1}
-end
-
-HelperP()=HelperP(falses(4))
-
 function gen_pool_check(neur,par,ts)
 
     global num_pool::Int64
@@ -335,7 +343,17 @@ end
 
 make_spool()=nothing
 make_ppool()=nothing
-                                
+
+function findid(d)
+    id=parse(Int,split(string(d),"_")[end])
+    symbol("Puddle_$id")
+end
+
+function findin(d)
+    id=parse(Int,split(string(d),"_")[end])
+    :(Neuron_$id)
+end
+
 function gen_npool(neur, par::Bool)
 
     global num_pool::Int64
@@ -355,7 +373,7 @@ function gen_npool(neur, par::Bool)
         if par==false
             myfields=[:($(symbol("N_$i"))::Array{($(typeinds[i])),1}) for i=1:length(typeinds)]
         else
-            myfields=[:($(symbol("N_$i"))::DArray{($(typeinds[i])),1}) for i=1:length(typeinds)]
+            myfields=[:($(symbol("N_$i"))::DArray{($(findid(typeinds[i]))),1}) for i=1:length(typeinds)]
         end
     end
         
@@ -387,7 +405,7 @@ function gen_npool(neur, par::Bool)
                     for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))
                         push!(inds,find(mtypes.==eltype(fieldtype($(symbol("Pool_$num_pool")),i))))
                     end
-
+                    
                     $(symbol("Pool_$num_pool"))([typeof(neur[inds[i]][1])[neur[inds[i]]...] for i=1:length(inds)]...)
                 end
             end
@@ -422,10 +440,35 @@ function gen_npool(neur, par::Bool)
                 mtypes=[typeof(neur[i]) for i=1:length(neur)]
 
                 for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))
-                    push!(inds,find(mtypes.==eltype(fieldtype($(symbol("Pool_$num_pool")),i))))
+                    nt=findin(eltype(fieldtype(($(symbol("Pool_$num_pool"))),i)))
+                    println(nt)
+                    #push!(inds,find(mtypes .== typeof($nt)))
                 end
 
-                $(symbol("Pool_$num_pool"))([distribute(typeof(neur[inds[i]][1])[neur[inds[i]]...]) for i=1:length(inds)]...)
+                a=[neur[inds[i]] for i=1:length(inds)]
+
+
+                println(inds[1])
+                b=Array(Any,length(inds))
+
+                p=length(workers())
+                
+                for i=1:length(b)
+
+                    println(typeof(a[i][1]))
+                    println(findid(typeof(a[i][1])))
+                    funcname=findid(typeof(a[i][1]))
+                    #=
+                    if length(a[i]>p)
+                        dims=DistributedArrays.chunk_idxs(length(a[i]),p)[1]
+                        b=distribute([($(funcname))(a[i][j]) for j in dims])
+                    else
+                        b=distribute([($(funcname))(a[i])])
+                    end
+                    =#
+                end
+                
+                $(symbol("Pool_$num_pool"))(b...)
             end
 
             gen_net_func_p($(symbol("Pool_$num_pool")),"initialcon!")
