@@ -1,6 +1,29 @@
 
 
+function speed_const(myprop::Prop,props...)
+
+    ex=Array(Symbol,0)
+    
+    for i=1:length(props)
+        mystart=1
+        count=1
+        for j=1:props[i].nodevar
+            push!(ex,(symbol("p.p[i][$(count)]")))
+            mystart+=1
+            count+=1
+        end 
+
+        for j=mystart:length(fieldnames(props[i]))-1
+            push!(ex,(symbol("p_$(count)")))
+            count+=1
+        end     
+    end
+    ex    
+end
+
 function gen_current(props,myprop::Prop)
+
+    constfields=speed_const(myprop,props)
     
     if issubtype(typeof(props),Tuple)
         confields=Array(Expr,length(props))
@@ -24,17 +47,17 @@ function gen_current(props,myprop::Prop)
 
         function con!(p::$(typeof(myprop)),v::Array{Float64,1},internal::Array{Int64,1},dt=.025)
 
-            @fastmath for i=1:length(internal)
+            for i=1:length(internal)
                 k=internal[i]
                 $([confields[j] for j=1:length(confields)]...)
+                p.p[i]=$(typeof(myprop.p))([constfields[j]  for j=1:length(constfields)]...)
             end
             
             nothing
         end
 
         function cur!(p::$(typeof(myprop)),v::Array{Float64,1},im::Array{Float64,1},internal::Array{Int64,1})
-
-            @fastmath for i=1:length(internal)
+            for i=1:length(internal)
                 k=internal[i]
                 $([curfields[j] for j=1:length(curfields)]...)
             end
@@ -43,9 +66,10 @@ function gen_current(props,myprop::Prop)
         end
 
         function init!(p::$(typeof(myprop)),v::Array{Float64,1},internal::Array{Int64,1})
-            @fastmath @simd for i=1:length(internal)
+            for i=1:length(internal)
                 k=internal[i]
                 $([initfields[j] for j=1:length(initfields)]...)
+                p.p[i]=$(typeof(myprop.p))($(constfields...))
             end
         end        
     end    

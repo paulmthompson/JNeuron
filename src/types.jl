@@ -85,16 +85,18 @@ function gen_prop(a,k::Int64)
 
     @eval begin
         type $(symbol("Prop_$k")) <: Prop
-            p::Array{Float64,2}
+            p::Array{Vec{$(num_fields),Float64},1}
         end
 
-        make_prop(b::$(typeof(a)),n::Int64)=$(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))     
+        $(symbol("Prop_$k"))(n::Int64)=$(symbol("Prop_$k"))([Vec{$(num_fields),Float64}(zeros(Float64,$(num_fields))...) for i=1:n])
+        
+        make_prop(b::$(typeof(a)),n::Int64)=$(symbol("Prop_$k"))(n)     
     end
 
     c=make_prop(a,0)
 
     @eval begin       
-        make_prop(a::$(typeof(c)),n::Int64)=$(symbol("Prop_$k"))(zeros(Float64,$(num_fields),n))
+        make_prop(a::$(typeof(c)),n::Int64)=$(symbol("Prop_$k"))(n)
     end
     
     nothing  
