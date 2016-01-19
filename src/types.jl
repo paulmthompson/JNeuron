@@ -127,6 +127,50 @@ Section!(n::Neuron,ind::Int64,p::UnitRange{Int64})=Section!(n.secs,ind,p)
 
 add_sec(neuron::Neuron, sec::Section)=push!(neuron.secs,sec)
 
+type Extra_coeffs
+    c::Array{Float64,1}
+    inds::Array{Int64,1}
+end
+
+type Point <: Source
+end
+
+type Line <: Source
+end
+
+type Mixed <: Source
+end
+
+type Extracellular{S<:Source}
+    xyz::Array{Float64,1}
+    coeffs::Array{Extra_coeffs,1}
+    v::Array{Float64,1}
+end
+
+Extracellular(xyz::Array{Float64,1})=Extracellular(Line(),xyz)
+
+Extracellular(s::Source,xyz)=Extracellular{typeof(s)}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
+
+type Stim
+    Is::Array{Float64,1}
+    mtype::Int64
+    neur::Int64
+    node::Int64
+    tstart::Float64
+    tstop::Float64
+end
+
+Stim(Is,mtype,neur,node,tstart,tstop)=Stim([Is],mtype,neur,node,tstart,tstop)
+
+type Intracellular
+    mtype::Int64
+    neur::Int64
+    node::Int64
+    v::Array{Float64,1}
+end
+
+Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,node,Array(Float64,0))
+
 type HelperS <: Helper
     flags::Array{Bool,1}
 end
@@ -135,9 +179,14 @@ HelperS()=HelperS(falses(4))
 
 type HelperP <: Helper
     flags::Array{Bool,1}
+    dims::UnitRange{Int64}
+    l::Int64
+    i::Array{Intracellular,1}
 end
 
-HelperP()=HelperP(falses(4))
+HelperP()=HelperP(falses(4),0:0,0,Array(Intracellular,0))
+
+HelperP(dims::UnitRange{Int64},l::Int64)=HelperP(falses(4),dims,l,Array(Intracellular,0))
 
 make_neuron()=nothing
 
@@ -193,6 +242,8 @@ function gen_neuron(prop,k::Int64)
         end
 
         Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP())
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h)
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64)=$(symbol("Puddle_$k"))(n,HelperP(dims,l))
 
         function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
 
@@ -273,50 +324,6 @@ function make_props(prop::Tuple,inter_n::Array{Array{Int64,1}})
 
     (soma,axon,dendrite,apical)  
 end
-
-type Extra_coeffs
-    c::Array{Float64,1}
-    inds::Array{Int64,1}
-end
-
-type Point <: Source
-end
-
-type Line <: Source
-end
-
-type Mixed <: Source
-end
-
-type Extracellular{S<:Source}
-    xyz::Array{Float64,1}
-    coeffs::Array{Extra_coeffs,1}
-    v::Array{Float64,1}
-end
-
-Extracellular(xyz::Array{Float64,1})=Extracellular(Line(),xyz)
-
-Extracellular(s::Source,xyz)=Extracellular{typeof(s)}(xyz,Array(Extra_coeffs,0),Array(Float64,0))
-
-type Stim
-    Is::Array{Float64,1}
-    mtype::Int64
-    neur::Int64
-    node::Int64
-    tstart::Float64
-    tstop::Float64
-end
-
-Stim(Is,mtype,neur,node,tstart,tstop)=Stim([Is],mtype,neur,node,tstart,tstop)
-
-type Intracellular
-    mtype::Int64
-    neur::Int64
-    node::Int64
-    v::Array{Float64,1}
-end
-
-Intracellular(mtype::Int64,neur::Int64,node::Int64)=Intracellular(mtype,neur,node,Array(Float64,0))
 
 function gen_pool_check(neur,par,ts)
 
@@ -424,6 +431,9 @@ function gen_npool(neur, par::Bool)
         @eval begin
             type $(symbol("Pool_$num_pool")) <: NeuronPool
                 $(myfields...)
+                c::Array{Array{UnitRange{Int64},1},1}
+                t::Array{Int64,1}
+                i::Array{Int64,1}
             end
 
             type $(symbol("Network_$num_pool")) <: NetworkP
@@ -433,7 +443,6 @@ function gen_npool(neur, par::Bool)
                 #extracellular Stimulation
                 intra::Array{Intracellular,1} 
                 stim::Array{Stim,1}
-                helper::HelperP
             end
 
             function make_ppool(neur::$(typeof(neur)))
@@ -441,11 +450,13 @@ function gen_npool(neur, par::Bool)
                 inds=Array(Array{Int64,1},0)
                 mtypes=[findmyid(typeof(neur[i])) for i=1:length(neur)]
 
-                for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))
+                for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))-3
                     nt=findmyid(eltype(fieldtype(($(symbol("Pool_$num_pool"))),i)))
                     push!(inds,find(mtypes .== nt))
                 end
 
+                c=[Array(UnitRange{Int64},0) for i=1:length(inds)]
+                t=zeros(Int64,length(inds))
                 a=[typeof(neur[inds[i][1]])[neur[inds[i]]...] for i=1:length(inds)]
                 
                 b=Array(Any,length(inds))
@@ -456,22 +467,25 @@ function gen_npool(neur, par::Bool)
       
                     if length(a[i])>w
                         dims=DistributedArrays.chunk_idxs(length(a[i]),w)[1]
+                        l=length(a[i])
+                        t[i]=l
+                        c[i]=get_dims(dims)
                         mtype=typeof(Puddle([a[i][1]]))
-                        b[i]=distribute(mtype[(k=j[1];Puddle(a[i][k])) for j in dims])
+                        b[i]=distribute(mtype[(k=j[1];Puddle(a[i][k],k,l)) for j in dims])
                     else
                         #b=distribute([Puddle(a[i])])
                     end
 
                 end
                 
-                $(symbol("Pool_$num_pool"))(b...)
+                $(symbol("Pool_$num_pool"))(b...,c,t,Array(Int64,0))
             end
 
             gen_net_func_p($(symbol("Pool_$num_pool")),"initialcon!")
             gen_net_func_p($(symbol("Pool_$num_pool")),"main")
             
             function make_network(p::$(symbol("Pool_$num_pool")),ts::Float64)
-                $(symbol("Network_$num_pool"))(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0),HelperP())
+                $(symbol("Network_$num_pool"))(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
             end
         end        
     end
@@ -499,13 +513,13 @@ end
 
 function gen_net_func_p(n::DataType,func::ASCIIString)
 
-    a=length(fieldnames(n))
+    a=length(fieldnames(n))-3
     
     @eval begin
-        function $(symbol("$func"))(n::$(n))
+        function $(symbol("$func"))(n::$(n),i::Int64)
             for j = 1 : $a
                 @sync for p in procs(getfield(n,j))
-                    @async remotecall_wait((n)->($(symbol("$func"))(localpart(n))), p, getfield(n,j))
+                    @async remotecall_wait((n,t)->($(symbol("$func"))(localpart(n),t)), p, getfield(n,j),i)
                 end
                 #map($(symbol("$func")),getfield(n,j))
             end
@@ -513,39 +527,3 @@ function gen_net_func_p(n::DataType,func::ASCIIString)
     end   
     nothing    
 end
-
-function main{T<:Neuron}(n::Array{T,1})
-
-    @inbounds for i=1:length(n)
-        main(n[i])
-    end
-    nothing
-end
-
-function main{T<:Puddle}(p::Array{T,1})
-
-    @inbounds for i=1:length(p)
-        main(p[i])
-    end
-    nothing
-end
-
-main(p::Puddle)=main(p.n)
-
-function initialcon!{T<:Neuron}(n::Array{T,1})
-
-    @inbounds for i=1:length(n)
-        initialcon!(n[i])
-    end
-    nothing
-end
-
-function initialcon!{T<:Puddle}(p::Array{T,1})
-
-    @inbounds for i=1:length(p)
-        initialcon!(p[i])
-    end
-    nothing
-end
-
-initialcon!(p::Puddle)=initialcon!(p.n)
