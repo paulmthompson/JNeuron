@@ -38,6 +38,24 @@ function add!(n::NetworkP,intra::Intracellular)
     nothing
 end
 
+function add!(n::NetworkP,stim::Stim)
+    
+    myis=zeros(Float64,length(n.t))
+
+    startind=findfirst(n.t.>stim.tstart)
+    endind=findfirst(n.t.>stim.tstop)
+
+    myis[startind:endind]=stim.Is[1]
+
+    stim.Is=myis
+
+    push!(n.stim,stim)
+
+    (ind,newx)=neuron_ind(stim.neur,n.neur.c[stim.mtype])
+    l=add_stim(ind,newx,stim.node,stim.Is,getfield(n.neur,stim.mtype))
+    push!(n.neur.s,l)
+end
+
 function run!(n::NetworkS,init=false)
 
     #get initial conditions if uninitialized
@@ -174,6 +192,11 @@ function main{T<:Puddle}(p::Array{T,1},j::Int64)
 end
 
 function main(p::Puddle,i::Int64)
+
+    for j=1:length(p.h.s)
+        @inbounds p.n[p.h.s[j].neur].rhs[p.h.s[j].node]+=p.h.s[j].Is[i]
+    end
+    
     main(p.n)
 
     for j=1:length(p.h.i)
@@ -244,6 +267,12 @@ end
 function add_intra(p::Int64,neur::Int64,node::Int64,t::Int64,n::DArray)
 
     remotecall_fetch(((x,neur,node,t)->(push!(localpart(x)[1].h.i,(Intracellular(1,neur,node,zeros(Float64,t))));length(localpart(x)[1].h.i))),p+1,n,neur,node,t)
+
+end
+
+function add_stim(p::Int64,neur::Int64,node::Int64,s::Array{Float64,1},n::DArray)
+
+    remotecall_fetch(((x,neur,node,t)->(push!(localpart(x)[1].h.s,(Stim(t,1,neur,node,0.0,0.0)));length(localpart(x)[1].h.s))),p+1,n,neur,node,s)
 
 end
 

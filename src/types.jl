@@ -182,11 +182,12 @@ type HelperP <: Helper
     dims::UnitRange{Int64}
     l::Int64
     i::Array{Intracellular,1}
+    s::Array{Stim,1}
 end
 
-HelperP()=HelperP(falses(4),0:0,0,Array(Intracellular,0))
+HelperP()=HelperP(falses(4),0:0,0,Array(Intracellular,0),Array(Stim,0))
 
-HelperP(dims::UnitRange{Int64},l::Int64)=HelperP(falses(4),dims,l,Array(Intracellular,0))
+HelperP(dims::UnitRange{Int64},l::Int64)=HelperP(falses(4),dims,l,Array(Intracellular,0),Array(Stim,0))
 
 make_neuron()=nothing
 
@@ -434,6 +435,7 @@ function gen_npool(neur, par::Bool)
                 c::Array{Array{UnitRange{Int64},1},1}
                 t::Array{Int64,1}
                 i::Array{Int64,1}
+                s::Array{Int64,1}
             end
 
             type $(symbol("Network_$num_pool")) <: NetworkP
@@ -450,7 +452,7 @@ function gen_npool(neur, par::Bool)
                 inds=Array(Array{Int64,1},0)
                 mtypes=[findmyid(typeof(neur[i])) for i=1:length(neur)]
 
-                for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))-3
+                for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))-4
                     nt=findmyid(eltype(fieldtype(($(symbol("Pool_$num_pool"))),i)))
                     push!(inds,find(mtypes .== nt))
                 end
@@ -478,7 +480,7 @@ function gen_npool(neur, par::Bool)
 
                 end
                 
-                $(symbol("Pool_$num_pool"))(b...,c,t,Array(Int64,0))
+                $(symbol("Pool_$num_pool"))(b...,c,t,Array(Int64,0),Array(Int64,0))
             end
 
             gen_net_func_p($(symbol("Pool_$num_pool")),"initialcon!")
@@ -513,7 +515,7 @@ end
 
 function gen_net_func_p(n::DataType,func::ASCIIString)
 
-    a=length(fieldnames(n))-3
+    a=length(fieldnames(n))-4
     
     @eval begin
         function $(symbol("$func"))(n::$(n),i::Int64)
