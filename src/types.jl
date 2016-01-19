@@ -187,12 +187,12 @@ function gen_neuron(prop,k::Int64)
             i2::Array{Float64,1}
         end
 
-        type $(symbol("Puddle_$k"))
+        type $(symbol("Puddle_$k")) <: Puddle
             n::Array{$(symbol("Neuron_$k")),1}
             h::HelperP
         end
 
-        $(symbol("Puddle_$k"))(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP())
+        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP())
 
         function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
 
@@ -344,6 +344,8 @@ end
 make_spool()=nothing
 make_ppool()=nothing
 
+findmyid(d)=parse(Int,split(string(d),"_")[end])
+
 function findid(d)
     id=parse(Int,split(string(d),"_")[end])
     symbol("Puddle_$id")
@@ -351,7 +353,7 @@ end
 
 function findin(d)
     id=parse(Int,split(string(d),"_")[end])
-    :(Neuron_$id)
+    "Neuron_$id"
 end
 
 function gen_npool(neur, par::Bool)
@@ -437,35 +439,29 @@ function gen_npool(neur, par::Bool)
             function make_ppool(neur::$(typeof(neur)))
 
                 inds=Array(Array{Int64,1},0)
-                mtypes=[typeof(neur[i]) for i=1:length(neur)]
+                mtypes=[findmyid(typeof(neur[i])) for i=1:length(neur)]
 
                 for i=1:length(fieldnames($(symbol("Pool_$num_pool"))))
-                    nt=findin(eltype(fieldtype(($(symbol("Pool_$num_pool"))),i)))
-                    println(nt)
-                    #push!(inds,find(mtypes .== typeof($nt)))
+                    nt=findmyid(eltype(fieldtype(($(symbol("Pool_$num_pool"))),i)))
+                    push!(inds,find(mtypes .== nt))
                 end
 
-                a=[neur[inds[i]] for i=1:length(inds)]
-
-
-                println(inds[1])
+                a=[typeof(neur[inds[i][1]])[neur[inds[i]]...] for i=1:length(inds)]
+                
                 b=Array(Any,length(inds))
 
-                p=length(workers())
+                w=length(workers())
                 
                 for i=1:length(b)
-
-                    println(typeof(a[i][1]))
-                    println(findid(typeof(a[i][1])))
-                    funcname=findid(typeof(a[i][1]))
-                    #=
-                    if length(a[i]>p)
-                        dims=DistributedArrays.chunk_idxs(length(a[i]),p)[1]
-                        b=distribute([($(funcname))(a[i][j]) for j in dims])
+      
+                    if length(a[i])>w
+                        dims=DistributedArrays.chunk_idxs(length(a[i]),w)[1]
+                        mtype=typeof(Puddle([a[i][1]]))
+                        b[i]=distribute(mtype[(k=j[1];Puddle(a[i][k])) for j in dims])
                     else
-                        b=distribute([($(funcname))(a[i])])
+                        #b=distribute([Puddle(a[i])])
                     end
-                    =#
+
                 end
                 
                 $(symbol("Pool_$num_pool"))(b...)
@@ -526,6 +522,16 @@ function main{T<:Neuron}(n::Array{T,1})
     nothing
 end
 
+function main{T<:Puddle}(p::Array{T,1})
+
+    @inbounds for i=1:length(p)
+        main(p[i])
+    end
+    nothing
+end
+
+main(p::Puddle)=main(p.n)
+
 function initialcon!{T<:Neuron}(n::Array{T,1})
 
     @inbounds for i=1:length(n)
@@ -533,3 +539,13 @@ function initialcon!{T<:Neuron}(n::Array{T,1})
     end
     nothing
 end
+
+function initialcon!{T<:Puddle}(p::Array{T,1})
+
+    @inbounds for i=1:length(p)
+        initialcon!(p[i])
+    end
+    nothing
+end
+
+initialcon!(p::Puddle)=initialcon!(p.n)
