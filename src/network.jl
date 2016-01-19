@@ -2,14 +2,15 @@
 
 function add!(n::NetworkS,extra::Extracellular)
 
+    extra.v=zeros(Float64,length(n.t))
     coeffs=Array(Extra_coeffs,0)
     
     for j=1:length(fieldnames(n.neur)),k in getfield(n.neur,j)
-        (mycoeffs,inds)=extracellular(extra,k,0.3)
-        push!(coeffs,Extra_coeffs(mycoeffs,inds))
+        mycoeffs=extracellular(extra,k,0.3)
+        push!(coeffs,mycoeffs)
     end
     
-    e=typeof(extra)(extra.xyz,coeffs,zeros(Float64,length(n.t)))
+    e=typeof(extra)(extra.xyz,coeffs,extra.v)
     push!(n.extra,e)
 end
 
@@ -28,6 +29,20 @@ function add!(network::NetworkS,stim::Stim)
 end
 
 add!(n::NetworkS,intra::Intracellular)=(intra.v=zeros(Float64,length(n.t));push!(n.intra,intra))
+
+function add!(n::NetworkP,extra::Extracellular)
+
+    extra.v=zeros(Float64,length(n.t))
+    coeffs=Array(Extra_coeffs,0)
+    
+    for j=1:length(fieldnames(n.neur))-4
+        mycoeffs=add_extra(getfield(n.neur,j),extra)
+        append!(coeffs,mycoeffs)
+    end
+    
+    e=typeof(extra)(extra.xyz,coeffs,extra.v)
+    push!(n.extra,e)
+end
 
 function add!(n::NetworkP,intra::Intracellular)
     intra.v=zeros(Float64,length(n.t))
@@ -100,33 +115,17 @@ function run!(n::NetworkP,init=false)
     end
                          
     for i=1:length(n.t)
-
-        #=
-        for j=1:length(n.stim)
-            @inbounds getfield(n.neur,n.stim[j].mtype)[n.stim[j].neur].rhs[n.stim[j].node]+=n.stim[j].Is[i]
-        end
-        =#
-
-        @inbounds main(n.neur,i)
-        #=
-        if n.helper.flags[1]
-            count=1
-            for j=1 : length(fieldnames(n.neur))
-                for k=1:length(getfield(n.neur,j))
-                    @inbounds main(getfield(n.neur,j)[k])
-                    for l=1:length(n.extra)
-                        @inbounds n.extra[l].v[i]+=a_mult_b(n.extra[l].coeffs[count],getfield(n.neur,j)[k])
-                    end
-                    count+=1
-                end
-            end
-        else
-            @inbounds main(n.neur)
-        end
-        =#
-              
+        @inbounds main(n.neur,i)             
     end
 
+    for j=1:length(n.extra)
+        for k=1:length(fieldnames(n.neur))-4
+            for l=1:length(n.neur.c[k])
+                n.extra[j].v+=fetch_extra(getfield(n.neur,k),l,j)
+            end
+        end
+    end
+    
     for j=1:length(n.intra)
         @inbounds n.intra[j].v=fetch_intra(getfield(n.neur,n.intra[j].mtype),n.intra[j].mtype,n.neur.i[j])   
     end 
@@ -158,22 +157,7 @@ function init!(n::NetworkS)
     end
 end
 
-function init!(n::NetworkP)
-    
-    @inbounds initialcon!(n.neur,0)
-
-    #set up flags
-    if length(n.extra)>0
-    end
-
-    if length(n.intra)>0
-    end
-
-    if length(n.stim)>0
-    end
-
-    nothing
-end
+init!(n::NetworkP)= @inbounds initialcon!(n.neur,0)
 
 function main{T<:Neuron}(n::Array{T,1})
 
@@ -198,6 +182,12 @@ function main(p::Puddle,i::Int64)
     end
     
     main(p.n)
+
+    for j=1:length(p.h.e)
+        for k=1:length(p.n)
+            @inbounds p.h.e[j].v[i]+=a_mult_b(p.h.e[j].coeffs[k],p.n[k])
+        end
+    end
 
     for j=1:length(p.h.i)
         @inbounds p.h.i[j].v[i]=p.n[p.h.i[j].neur].v[p.h.i[j].node]
@@ -278,4 +268,34 @@ end
 
 function fetch_intra(nd::DArray,p::Int64,ind::Int64)
     remotecall_fetch(((n,j)->localpart(n)[1].h.i[j].v),p+1,nd,ind)
+end
+
+function add_extra(n::DArray,e::Extracellular)
+
+    mycoeffs=Array(Extra_coeffs,0)
+    
+    for p in workers()
+        append!(mycoeffs,add_extra(n,e,p))
+    end
+
+    mycoeffs  
+end
+
+function add_extra(n::DArray,e::Extracellular,p::Int64)
+    remotecall_fetch(((x,y)->(c=extracellular(localpart(x)[1].n,y);push!(localpart(x)[1].h.e,typeof(e)(e.xyz,c,zeros(Float64,length(e.v))));c)),p,n,e)
+end
+
+function extracellular{T<:Neuron}(n::Array{T,1},e::Extracellular)
+
+    mycoeffs=Array(Extra_coeffs,length(n))
+    
+    for i=1:length(n)
+        mycoeffs[i]=extracellular(e,n[i],0.3)
+    end
+
+    mycoeffs   
+end
+
+function fetch_extra(nd::DArray,p::Int64,ind::Int64)
+    remotecall_fetch(((n,j)->localpart(n)[1].h.e[j].v),p+1,nd,ind)
 end

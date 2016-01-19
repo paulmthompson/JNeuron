@@ -24,7 +24,7 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
         end
     end
       
-    (coeffs,inds)      
+    Extra_coeffs(coeffs,inds)      
 end
 
 #Line Source
@@ -45,7 +45,7 @@ function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Fl
             end
         end
     end 
-    (coeffs,inds)  
+    Extra_coeffs(coeffs,inds)  
 end
 
 #Mixed Source (Soma as a point, everything else as line)
@@ -71,7 +71,7 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
             end
         end
     end  
-    (coeffs,inds)  
+    Extra_coeffs(coeffs,inds)  
 end
 
 function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})

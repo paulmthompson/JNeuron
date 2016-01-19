@@ -183,11 +183,12 @@ type HelperP <: Helper
     l::Int64
     i::Array{Intracellular,1}
     s::Array{Stim,1}
+    e::Array{Extracellular,1}
 end
 
-HelperP()=HelperP(falses(4),0:0,0,Array(Intracellular,0),Array(Stim,0))
+HelperP()=HelperP(falses(4),0:0,0,Array(Intracellular,0),Array(Stim,0),Array(Extra_coeffs,0))
 
-HelperP(dims::UnitRange{Int64},l::Int64)=HelperP(falses(4),dims,l,Array(Intracellular,0),Array(Stim,0))
+HelperP(dims::UnitRange{Int64},l::Int64)=HelperP(falses(4),dims,l,Array(Intracellular,0),Array(Stim,0),Array(Extra_coeffs,0))
 
 make_neuron()=nothing
 
