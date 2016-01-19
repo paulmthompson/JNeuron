@@ -19,5 +19,6 @@ include("extracellular.jl")
 include("network.jl")
 include("visualization.jl")
 include("speedy.jl")
+include("parallel.jl")
 
 end

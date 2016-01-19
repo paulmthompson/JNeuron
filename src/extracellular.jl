@@ -74,6 +74,17 @@ function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::F
     Extra_coeffs(coeffs,inds)  
 end
 
+function extracellular{T<:Neuron}(n::Array{T,1},e::Extracellular)
+
+    mycoeffs=Array(Extra_coeffs,length(n))
+    
+    for i=1:length(n)
+        mycoeffs[i]=extracellular(e,n[i],0.3)
+    end
+
+    mycoeffs   
+end
+
 function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
     
     (unit_ds, delta_s)=pt3d_vec(pt3d[1],pt3d[end])

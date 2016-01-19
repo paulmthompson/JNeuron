@@ -476,7 +476,10 @@ function gen_npool(neur, par::Bool)
                         mtype=typeof(Puddle([a[i][1]]))
                         b[i]=distribute(mtype[(k=j[1];Puddle(a[i][k],k,l)) for j in dims])
                     else
-                        #b=distribute([Puddle(a[i])])
+                        l=length(a[i])
+                        t[i]=l
+                        c[i]=1:l
+                        b=distribute([Puddle(a[i])])
                     end
 
                 end
