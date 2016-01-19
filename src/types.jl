@@ -478,10 +478,9 @@ function gen_npool(neur, par::Bool)
                     else
                         l=length(a[i])
                         t[i]=l
-                        c[i]=1:l
-                        b=distribute([Puddle(a[i])])
+                        c[i]=[1:l for i=1:1]
+                        b[i]=distribute([Puddle(a[i],1:l,l)])
                     end
-
                 end
                 
                 $(symbol("Pool_$num_pool"))(b...,c,t,Array(Int64,0),Array(Int64,0))
