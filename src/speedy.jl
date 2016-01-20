@@ -43,7 +43,7 @@ function gen_current(props,myprop::Prop)
         end
 
         function init!(p::$(typeof(myprop)),v::Array{Float64,1},internal::Array{Int64,1})
-            @fastmath @simd for i=1:length(internal)
+            @fastmath for i=1:length(internal)
                 k=internal[i]
                 $([initfields[j] for j=1:length(initfields)]...)
             end

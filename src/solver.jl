@@ -62,7 +62,7 @@ end
 function main(neuron::Neuron)
 
     #t=tentry+dt for euler, t=tentry+dt/2 for CN
-    ext=false
+    #ext=false
 
     #reset membrane current
     @inbounds @simd for i=1:length(neuron.v)
@@ -84,7 +84,8 @@ function main(neuron::Neuron)
     
     #solve A \ rhs to get delta_v
     hines_solve!(neuron)
-
+    
+    #=
     #update voltages v_new = delta_v + v_old for euler, v_new  = 2*delta_v + v_old for CN
     if ext==true
         neuron.vext[:] += neuron.delta_vext
@@ -92,12 +93,15 @@ function main(neuron::Neuron)
     else   
         add_delta!(neuron)
     end
+    =#
+    add_delta!(neuron)
 
     #find non voltage states (like gate variables for conductances)
+    con!(neuron.soma,neuron.v,neuron.internal_nodes[1])
+    con!(neuron.axon,neuron.v,neuron.internal_nodes[2])
+    con!(neuron.dendrite,neuron.v,neuron.internal_nodes[3])
+    con!(neuron.apical,neuron.v,neuron.internal_nodes[4]) 
 
-    for ind=1:4
-        con!(getfield(neuron,ind),neuron.v,neuron.internal_nodes[ind])     
-    end
     nothing
 end
 
@@ -115,7 +119,7 @@ function rhs_diag!(neuron::Neuron)
 
     dv=0.0
     
-    @fastmath @inbounds @simd for i=1:(length(neuron.v)-2)
+    @fastmath @inbounds for i=1:(length(neuron.v)-2)
         dv=neuron.v[neuron.par[i]]-neuron.v[i]
         neuron.rhs[i] += neuron.b[i]*dv
         neuron.rhs[neuron.par[i]] -= neuron.a[i]*dv

@@ -200,7 +200,7 @@ function con_calc(prop::Ca_HVA,v::Float64,dt::Float64)
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
 
-    prop.gCa_HVA = prop.gCa_HVAbar*prop.m^2*prop.h
+    prop.gCa_HVA = prop.gCa_HVAbar * prop.m * prop.m * prop.h
 
     nothing
 end
@@ -221,7 +221,6 @@ end
 function rates(prop::Ca_HVA,v::Float64)
     if v == -27.0
         v+=.0001
-    else
     end
 
     mAlpha =  (0.055*(-27-v))/(exp((-27-v)/3.8) - 1)        
@@ -270,7 +269,7 @@ function con_calc(prop::Ca_LVAst,v::Float64,dt::Float64)
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     prop.h=implicit_euler(prop.h,dt,prop.htau,prop.hinf)
     
-    prop.gCa_LVAst = prop.gCa_LVAstbar*prop.m^2*prop.h
+    prop.gCa_LVAst = prop.gCa_LVAstbar * prop.m * prop.m * prop.h
 
     nothing
 end
@@ -317,7 +316,7 @@ function con_calc(prop::Ih,v::Float64,dt::Float64)
 
     prop.m=implicit_euler(prop.m,dt,prop.mtau,prop.minf)
     
-    prop.gIh = prop.gIhbar*prop.m
+    prop.gIh = prop.gIhbar * prop.m
 
     nothing
 end
