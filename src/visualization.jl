@@ -1,8 +1,6 @@
 
 #=
-
 Basic 3D reconstruction
-
 =#
 
 function plot_arrays(neuron::Neuron)
@@ -16,6 +14,64 @@ function plot_arrays(neuron::Neuron)
     end
 
     [hcat(x[i],y[i]) for i=1:length(x)]
+end
+
+function getxyz(n::Neuron)
+    
+    x=Array(Float64,0)
+    y=Array(Float64,0)
+    z=Array(Float64,0)
+    
+    secind=[Array(Int64,0) for i=1:length(n.secs)]    
+    count=1
+    
+    @inbounds for i=1:length(n.secs)
+        for j in n.secs[i].pnode
+            if n.nodes[j].internal == true
+                (x1,y1,z1)=getxyz(n.secs[i].pt3d[n.nodes[j].pt3d])
+                push!(x,x1[1])
+                push!(y,y1[1])
+                push!(z,z1[1])
+                push!(x,x1[end])
+                push!(y,y1[end])
+                push!(z,z1[end])
+                push!(secind[i],count)
+                push!(secind[i],count+1)
+                count+=2
+            end
+        end
+    end   
+    (hcat(x,y,z),secind)    
+end
+
+function getxyz(p::Array{JNeuron.Pt3d,1})
+    
+    x=Array(Float64,0)
+    y=Array(Float64,0)
+    z=Array(Float64,0)
+    
+    @inbounds for i=1:length(p)
+        
+        push!(x,p[i].x)
+        push!(y,p[i].y)
+        push!(z,p[i].z)
+        
+    end   
+    (x,y,z)  
+end
+
+function copyn(xyz::Array{Float64,2})
+   
+    xyz1=zeros(Float64,size(xyz))    
+    resetn!(xyz,xyz1)
+    xyz1
+end
+
+function resetn!(xyz::Array{Float64,2},xyz1::Array{Float64,2})
+    @inbounds @simd for i=1:length(xyz)
+        xyz1[i]=xyz[i]
+    end
+    nothing
 end
 
 function translate3d!(neuron::Neuron,x::Float64,y::Float64,z::Float64)
@@ -88,7 +144,7 @@ end
 
 function randomize_shape!(n::Neuron,xyz::Array{Float64,2},inds::Array{Array{Int64,1},1})
 
-    for i=1:length(n.secs)
+    @inbounds for i=1:length(n.secs)
         if (n.secs[i].parent!=length(n.secs))&&(n.secs[i].parent!=0)
             rot_seg(n,n.secs[i].parent,i,xyz,inds)         
         end
@@ -126,11 +182,11 @@ end
 function rot_seg(n::Neuron,pind::Int64,cind::Int64,xyz::Array{Float64,2},inds::Array{Array{Int64,1},1})
 
     #last point of previous segment
-    a=xyz[inds[pind][end],1]
-    b=xyz[inds[pind][end],2]
-    c=xyz[inds[pind][end],3]
+    @inbounds a=xyz[inds[pind][end],1]
+    @inbounds b=xyz[inds[pind][end],2]
+    @inbounds c=xyz[inds[pind][end],3]
 
-    (vx,vy,vz,mag)=pt3d_vec(xyz[inds[pind][end-1],1],xyz[inds[pind][end-1],2],xyz[inds[pind][end-1],3],a,b,c)
+    @inbounds (vx,vy,vz,mag)=pt3d_vec(xyz[inds[pind][end-1],1],xyz[inds[pind][end-1],2],xyz[inds[pind][end-1],3],a,b,c)
 
     theta=randn()*10
 
@@ -168,7 +224,7 @@ function rot_child(n::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,vx::Fl
         rot_child(n,i,a,b,c,vx,vy,vz,dcos,dsin,xyz,inds)      
     end
 
-    @inbounds for j=1:length(inds[cind])
+    @inbounds @fastmath for j=1:length(inds[cind])
 
         x=xyz[inds[cind][j],1]
         y=xyz[inds[cind][j],2]
@@ -182,4 +238,16 @@ function rot_child(n::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,vx::Fl
         
     end
     nothing
+end
+
+function findcind(n)
+    cinds=Array(Int64,0)
+    @inbounds for i=1:length(n.secs)
+        for j in n.secs[i].pnode
+            if n.nodes[j].internal == true
+                push!(cinds,j)
+            end
+        end
+    end
+    cinds 
 end
