@@ -22,7 +22,18 @@ function translate3d!(neuron::Neuron,x::Float64,y::Float64,z::Float64)
 
     for i=1:length(neuron.secs), j=1:length(neuron.secs[i].pt3d)
             neuron.secs[i].pt3d[j]=add(neuron.secs[i].pt3d[j],x,y,z)     
-    end   
+    end
+    nothing
+end
+
+function translate3d!(xyz::Array{Float64,2},x::Float64,y::Float64,z::Float64)
+
+    @inbounds @simd for i=1:size(xyz,1)
+        xyz[i,1]+=x
+        xyz[i,2]+=y
+        xyz[i,3]+=z
+    end
+    nothing
 end
 
 function rotate3d!(neuron::Neuron,theta::Float64,myaxis::Int64)
@@ -75,6 +86,16 @@ function randomize_shape!(neuron::Neuron)
     nothing   
 end
 
+function randomize_shape!(n::Neuron,xyz::Array{Float64,2},inds::Array{Array{Int64,1},1})
+
+    for i=1:length(n.secs)
+        if (n.secs[i].parent!=length(n.secs))&&(n.secs[i].parent!=0)
+            rot_seg(n,n.secs[i].parent,i,xyz,inds)         
+        end
+    end   
+    nothing  
+end
+
 function rot_3d(a,b,c,u,v,w,x,y,z,dcos,dsin)
   
     xnew=(a*(v*v+w*w)-u*(b*v + c*w - u*x - v*y - w*z))*(1-dcos)+x*dcos+(-c*v + b*w - w*y + v*z)*dsin
@@ -102,6 +123,24 @@ function rot_seg(neuron::Neuron,pind::Int64,cind::Int64)
     nothing
 end
 
+function rot_seg(n::Neuron,pind::Int64,cind::Int64,xyz::Array{Float64,2},inds::Array{Array{Int64,1},1})
+
+    #last point of previous segment
+    a=xyz[inds[pind][end],1]
+    b=xyz[inds[pind][end],2]
+    c=xyz[inds[pind][end],3]
+
+    (vx,vy,vz,mag)=pt3d_vec(xyz[inds[pind][end-1],1],xyz[inds[pind][end-1],2],xyz[inds[pind][end-1],3],a,b,c)
+
+    theta=randn()*10
+
+    dcos=cosd(theta)
+    dsin=sind(theta)
+
+    rot_child(n,cind,a,b,c,vx,vy,vz,dcos,dsin,xyz,inds)
+    nothing
+end
+
 function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,uvw::Array{Float64,1},dcos::Float64,dsin::Float64)
     
     for i in neuron.secs[cind].child
@@ -123,3 +162,24 @@ function rot_child(neuron::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,u
     nothing   
 end
 
+function rot_child(n::Neuron,cind::Int64,a::Float64,b::Float64,c::Float64,vx::Float64,vy::Float64,vz::Float64,dcos::Float64,dsin::Float64,xyz::Array{Float64,2},inds::Array{Array{Int64,1},1})
+    
+    for i in n.secs[cind].child
+        rot_child(n,i,a,b,c,vx,vy,vz,dcos,dsin,xyz,inds)      
+    end
+
+    @inbounds for j=1:length(inds[cind])
+
+        x=xyz[inds[cind][j],1]
+        y=xyz[inds[cind][j],2]
+        z=xyz[inds[cind][j],3]
+            
+        xyz1=rot_3d(a,b,c,vx,vy,vz,x,y,z,dcos,dsin)
+
+        xyz[inds[cind][j],1]=xyz1[1]
+        xyz[inds[cind][j],2]=xyz1[2]
+        xyz[inds[cind][j],3]=xyz1[3]
+        
+    end
+    nothing
+end
