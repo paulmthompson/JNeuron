@@ -241,11 +241,12 @@ function gen_neuron(prop,k::Int64)
         type $(symbol("Puddle_$k")) <: Puddle
             n::Array{$(symbol("Neuron_$k")),1}
             h::HelperP
+            i::Int64
         end
 
-        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP())
-        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h)
-        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64)=$(symbol("Puddle_$k"))(n,HelperP(dims,l))
+        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP(),0)
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h,0)
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64)=$(symbol("Puddle_$k"))(n,HelperP(dims,l),0)
 
         function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
 
@@ -488,6 +489,7 @@ function gen_npool(neur, par::Bool)
 
             gen_net_func_p($(symbol("Pool_$num_pool")),"initialcon!")
             gen_net_func_p($(symbol("Pool_$num_pool")),"main")
+            gen_net_func_p($(symbol("Pool_$num_pool")),"reset_t!")
             
             function make_network(p::$(symbol("Pool_$num_pool")),ts::Float64)
                 $(symbol("Network_$num_pool"))(p,0.0:.025:ts,Array(Extracellular,0),Array(Intracellular,0),Array(Stim,0))
@@ -521,10 +523,10 @@ function gen_net_func_p(n::DataType,func::ASCIIString)
     a=length(fieldnames(n))-4
     
     @eval begin
-        function $(symbol("$func"))(n::$(n),i::Int64)
+        function $(symbol("$func"))(n::$(n))
             for j = 1 : $a
                 @sync for p in procs(getfield(n,j))
-                    @async remotecall_wait((n,t)->($(symbol("$func"))(localpart(n),t)), p, getfield(n,j),i)
+                    @async remotecall_wait((n)->($(symbol("$func"))(localpart(n))), p, getfield(n,j))
                 end
                 #map($(symbol("$func")),getfield(n,j))
             end

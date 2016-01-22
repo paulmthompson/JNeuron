@@ -35,7 +35,7 @@ function run!(n::NetworkP,init=false)
     end
                          
     for i=1:length(n.t)
-        @inbounds main(n.neur,i)             
+        @inbounds main(n.neur)             
     end
 
     for j=1:length(n.extra)
@@ -48,43 +48,47 @@ function run!(n::NetworkP,init=false)
     
     for j=1:length(n.intra)
         @inbounds n.intra[j].v=fetch_intra(getfield(n.neur,n.intra[j].mtype),n.intra[j].mtype,n.neur.i[j])   
-    end 
+    end
+
+    reset_t!(n.neur)
 
     nothing  
 end
 
-init!(n::NetworkP)= @inbounds initialcon!(n.neur,0)
+init!(n::NetworkP)= @inbounds initialcon!(n.neur)
 
 main{T<:Neuron}(n::Array{T,1})=(@inbounds for i=1:length(n);main(n[i]);end;nothing)
 
-main{T<:Puddle}(p::Array{T,1},j::Int64)=(@inbounds for i=1:length(p);main(p[i],j);end;nothing)
+main{T<:Puddle}(p::Array{T,1})=(@inbounds for i=1:length(p);main(p[i]);end;nothing)
 
-function main(p::Puddle,i::Int64)
+function main(p::Puddle)
 
     for j=1:length(p.h.s)
-        @inbounds p.n[p.h.s[j].neur].rhs[p.h.s[j].node]+=p.h.s[j].Is[i]
+        @inbounds p.n[p.h.s[j].neur].rhs[p.h.s[j].node]+=p.h.s[j].Is[p.i]
     end
     
     main(p.n)
 
     for j=1:length(p.h.e)
         for k=1:length(p.n)
-            @inbounds p.h.e[j].v[i]+=a_mult_b(p.h.e[j].coeffs[k],p.n[k])
+            @inbounds p.h.e[j].v[p.i]+=a_mult_b(p.h.e[j].coeffs[k],p.n[k])
         end
     end
 
     for j=1:length(p.h.i)
-        @inbounds p.h.i[j].v[i]=p.n[p.h.i[j].neur].v[p.h.i[j].node]
+        @inbounds p.h.i[j].v[p.i]=p.n[p.h.i[j].neur].v[p.h.i[j].node]
     end
 
+    p.i+=1
+    
     nothing
 end
 
 initialcon!{T<:Neuron}(n::Array{T,1})=(@inbounds for i=1:length(n);initialcon!(n[i]);end;nothing)
 
-initialcon!{T<:Puddle}(p::Array{T,1},i::Int64)=(@inbounds for i=1:length(p);initialcon!(p[i],i);end;nothing)
+initialcon!{T<:Puddle}(p::Array{T,1})=(@inbounds for i=1:length(p);initialcon!(p[i]);end;nothing)
 
-initialcon!(p::Puddle,i::Int64)=initialcon!(p.n)
+initialcon!(p::Puddle)=(initialcon!(p.n); p.i=1)
 
 function neuron_ind(x::Int64,y::Array{UnitRange{Int64},1})
 
@@ -152,3 +156,7 @@ end
 function fetch_extra(nd::DArray,p::Int64,ind::Int64)
     remotecall_fetch(((n,j)->localpart(n)[1].h.e[j].v),p+1,nd,ind)
 end
+
+reset_t!{T<:Puddle}(p::Array{T,1})=(@inbounds for i=1:length(p);reset_t!(p[i]);end;nothing)
+
+reset_t!(p::Puddle)=(p.i=1; nothing)
