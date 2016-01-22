@@ -245,13 +245,15 @@ end
 
 function find_cspikes(v)
 
-    spike_num=Array(Int64,0)
-
+    spike_num=Array(Int64,0)  
+    l=size(v,1)
     for i=1:size(v,2)
-        v9=sub(v,:,i)
-        if sum(v9.<-.03)!=0
-            push!(spike_num,i)
-        end
+        for j=1:l
+            @inbounds if v[j,i]<-.03
+                push!(spike_num,i)
+                break
+            end
+        end 
     end
     spike_num
 end
