@@ -7,18 +7,19 @@ sigma: extracellular conductivity
 
 #Point Source
 
-function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
+function extracellular{T}(e::Extracellular{T},n::Neuron,sigma::Float64)
 
     coeffs=zeros(Float64,0)
     inds=zeros(Int64,0)
 
-    for i=1:length(neuron.secs)
-        for j in neuron.secs[i].pnode
-            if neuron.nodes[j].internal == true
+    for i=1:length(n.secs)
+        for j in n.secs[i].pnode
+            if n.nodes[j].internal == true
 
                 push!(inds,j)
-                mypt3d=neuron.secs[i].pt3d[neuron.nodes[j].pt3d]
-                push!(coeffs,(1/(4*pi*sigma))*point_coeffs(mypt3d,extra.xyz))
+                mypt3d=n.secs[i].pt3d[n.nodes[j].pt3d]
+                myc=calc_coeffs(e,mypt3d,n)
+                push!(coeffs,(1/(4*pi*sigma))*myc)
                 
             end
         end
@@ -27,51 +28,17 @@ function extracellular{T<:Point}(extra::Extracellular{T},neuron::Neuron,sigma::F
     Extra_coeffs(coeffs,inds)      
 end
 
-#Line Source
+calc_coeffs{T<:Point}(e::Extracellular{T},p::Array{Pt3d,1},n::Neuron)=point_coeffs(p,e.xyz)
 
-function extracellular{T<:Line}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
+calc_coeffs{T<:Line}(e::Extracellular{T},p::Array{Pt3d,1},n::Neuron)=line_coeffs(p,e.xyz)
 
-    coeffs=zeros(Float64,0)
-    inds=zeros(Int64,0)
-
-    for i=1:length(neuron.secs)
-        for j in neuron.secs[i].pnode
-            if neuron.nodes[j].internal == true
-
-                push!(inds,j)
-                mypt3d=neuron.secs[i].pt3d[neuron.nodes[j].pt3d]
-                push!(coeffs,(1/(4*pi*sigma))*line_coeffs(mypt3d,extra.xyz))
-                
-            end
-        end
-    end 
-    Extra_coeffs(coeffs,inds)  
-end
-
-#Mixed Source (Soma as a point, everything else as line)
-
-function extracellular{T<:Mixed}(extra::Extracellular{T},neuron::Neuron,sigma::Float64)
-
-    coeffs=zeros(Float64,0)
-    inds=zeros(Int64,0)
-
-    for i=1:length(neuron.secs)
-        for j in neuron.secs[i].pnode
-            if neuron.nodes[j].internal == true
-
-                push!(inds,j)
-                mypt3d=neuron.secs[i].pt3d[neuron.nodes[j].pt3d]
-
-                if neuron.nodes[j].parent==0
-                    push!(coeffs,(1/(4*pi*sigma))*point_coeffs(mypt3d,extra.xyz))
-                else
-                    push!(coeffs,(1/(4*pi*sigma))*line_coeffs(mypt3d,extra.xyz))
-
-                end            
-            end
-        end
-    end  
-    Extra_coeffs(coeffs,inds)  
+function calc_coeffs{T<:Mixed}(e::Extracellular{T},p::Array{Pt3d,1},n::Neuron)
+    if n.nodes[j].parent==0
+        c=point_coeffs(p,e.xyz)
+    else
+        c=line_coeffs(p,e.xyz)
+    end
+    c
 end
 
 function extracellular{T<:Neuron}(n::Array{T,1},e::Extracellular)
@@ -260,12 +227,10 @@ end
 
 function runc(n::NetworkS,init=false)
 
-    myi=zeros(Float64,length(n.neur.N_1[1].i_vm),length(n.t))
-    
+    myi=zeros(Float64,length(n.neur.N_1[1].i_vm),length(n.t))    
     if init==true
         init!(n)
-    end
-                         
+    end                         
     for i=1:length(n.t)
 
         for j=1:length(n.stim)
@@ -273,9 +238,7 @@ function runc(n::NetworkS,init=false)
         end
         @inbounds main(n.neur)
         
-        myi[:,i]=n.neur.N_1[1].i_vm[:]
-          
+        myi[:,i]=n.neur.N_1[1].i_vm[:]          
     end
-
     myi       
 end
