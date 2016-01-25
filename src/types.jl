@@ -524,11 +524,11 @@ function gen_net_func_p(n::DataType,func::ASCIIString)
     
     @eval begin
         function $(symbol("$func"))(n::$(n))
-            for j = 1 : $a
+            mutex=RemoteRef(()->MyChannel(length(workers())), 1)
+            for j = 1 : $a       
                 @sync for p in procs(getfield(n,j))
-                    @async remotecall_wait((n)->($(symbol("$func"))(localpart(n))), p, getfield(n,j))
+                    @async remotecall_wait((n,x)->($(symbol("$func"))(localpart(n),x)), p, getfield(n,j),mutex)
                 end
-                #map($(symbol("$func")),getfield(n,j))
             end
         end
     end   
