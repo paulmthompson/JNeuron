@@ -190,6 +190,12 @@ HelperP()=HelperP(falses(4),0:0,0,Array(Intracellular,0),Array(Stim,0),Array(Ext
 
 HelperP(dims::UnitRange{Int64},l::Int64)=HelperP(falses(4),dims,l,Array(Intracellular,0),Array(Stim,0),Array(Extra_coeffs,0))
 
+type MyChannel <: AbstractChannel
+    d::Array{Bool,1}
+    cond_take::Condition    # waiting for data to become available
+    MyChannel(l::Int64) = new(falses(l), Condition())
+end
+
 make_neuron()=nothing
 
 function gen_neur_check(myprop)
@@ -242,11 +248,13 @@ function gen_neuron(prop,k::Int64)
             n::Array{$(symbol("Neuron_$k")),1}
             h::HelperP
             i::Int64
+            imax::Int64
+            r::RemoteRef{MyChannel}
         end
 
-        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP(),0)
-        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h,0)
-        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64)=$(symbol("Puddle_$k"))(n,HelperP(dims,l),0)
+        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP(),0,0,RemoteRef(()->MyChannel(0),1))
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h,0,0,RemoteRef(()->MyChannel(0),1))
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64,t::Int64,mutex::RemoteRef{MyChannel})=$(symbol("Puddle_$k"))(n,HelperP(dims,l),0,t,mutex)
 
         function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
 
@@ -338,7 +346,7 @@ function gen_pool_check(neur,par,ts)
             gen_npool(neur,par)
             num_pool+=1
         end
-        p=make_ppool(neur)
+        p=make_ppool(neur,ts)
     else
         if method_exists(make_spool,(typeof(neur),))
         else
@@ -449,7 +457,7 @@ function gen_npool(neur, par::Bool)
                 stim::Array{Stim,1}
             end
 
-            function make_ppool(neur::$(typeof(neur)))
+            function make_ppool(neur::$(typeof(neur)),ts::Float64)
 
                 inds=Array(Array{Int64,1},0)
                 mtypes=[findmyid(typeof(neur[i])) for i=1:length(neur)]
@@ -466,6 +474,8 @@ function gen_npool(neur, par::Bool)
                 b=Array(Any,length(inds))
 
                 w=length(workers())
+                mutex=RemoteRef(()->MyChannel(w), 1)
+                tl=length(0.0:.025:ts)
                 
                 for i=1:length(b)
       
@@ -475,12 +485,12 @@ function gen_npool(neur, par::Bool)
                         t[i]=l
                         c[i]=get_dims(dims)
                         mtype=typeof(Puddle([a[i][1]]))
-                        b[i]=distribute(mtype[(k=j[1];Puddle(a[i][k],k,l)) for j in dims])
+                        b[i]=distribute(mtype[(k=j[1];Puddle(a[i][k],k,l,tl,mutex)) for j in dims])
                     else
                         l=length(a[i])
                         t[i]=l
                         c[i]=[1:l for i=1:1]
-                        b[i]=distribute([Puddle(a[i],1:l,l)])
+                        b[i]=distribute([Puddle(a[i],1:l,l,tl,mutex)])
                     end
                 end
                 
@@ -524,13 +534,14 @@ function gen_net_func_p(n::DataType,func::ASCIIString)
     
     @eval begin
         function $(symbol("$func"))(n::$(n))
-            mutex=RemoteRef(()->MyChannel(length(workers())), 1)
             for j = 1 : $a       
                 @sync for p in procs(getfield(n,j))
-                    @async remotecall_wait((n,x)->($(symbol("$func"))(localpart(n),x)), p, getfield(n,j),mutex)
+                    @async remotecall_wait((n)->($(symbol("$func"))(localpart(n))), p, getfield(n,j))
                 end
             end
         end
     end   
     nothing    
 end
+
+    

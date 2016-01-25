@@ -1,11 +1,7 @@
 
 import Base: put!, wait, isready, take!
 
-type MyChannel <: AbstractChannel
-    d::Array{Bool,1}
-    cond_take::Condition    # waiting for data to become available
-    MyChannel(l::Int64) = new(falses(l), Condition())
-end
+
 
 isready(D::MyChannel) = all(D.d)
 

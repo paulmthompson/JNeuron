@@ -55,15 +55,15 @@ end
 
 main{T<:Neuron}(n::Array{T,1})=(@inbounds for i=1:length(n);main(n[i]);end;nothing)
 
-main{T<:Puddle}(p::Array{T,1},m::RemoteRef{MyChannel})=(@inbounds for i=1:length(p);main(p[i],m);end;nothing)
+main{T<:Puddle}(p::Array{T,1})=(@inbounds main(p[1]))
 
-function main(p::Puddle,mutex::RemoteRef{MyChannel})
+function main(p::Puddle)
 
     id=myid()-1
     
-    for p.i=1:41
+    for p.i in 1:p.imax
 
-        take!(mutex)
+        take!(p.r)
         
         for j=1:length(p.h.s)
             @inbounds p.n[p.h.s[j].neur].rhs[p.h.s[j].node]+=p.h.s[j].Is[p.i]
@@ -81,7 +81,7 @@ function main(p::Puddle,mutex::RemoteRef{MyChannel})
             @inbounds p.h.i[j].v[p.i]=p.n[p.h.i[j].neur].v[p.h.i[j].node]
         end
 
-        put!(mutex,id)
+        put!(p.r,id)
         
     end
     
@@ -90,7 +90,7 @@ end
 
 initialcon!{T<:Neuron}(n::Array{T,1})=(@inbounds for i=1:length(n);initialcon!(n[i]);end;nothing)
 
-initialcon!{T<:Puddle}(p::Array{T,1},m)=(@inbounds for i=1:length(p);initialcon!(p[i]);end;nothing)
+initialcon!{T<:Puddle}(p::Array{T,1})=(@inbounds initialcon!(p[1]); nothing)
 
 initialcon!(p::Puddle)=(initialcon!(p.n); p.i=1)
 
@@ -161,6 +161,6 @@ function fetch_extra(nd::DArray,p::Int64,ind::Int64)
     remotecall_fetch(((n,j)->localpart(n)[1].h.e[j].v),p+1,nd,ind)
 end
 
-reset_t!{T<:Puddle}(p::Array{T,1},m::RemoteRef{MyChannel})=(@inbounds for i=1:length(p);reset_t!(p[i]);end;nothing)
+reset_t!{T<:Puddle}(p::Array{T,1})=(@inbounds for i=1:length(p);reset_t!(p[i]);end;nothing)
 
 reset_t!(p::Puddle)=(p.i=1; nothing)
