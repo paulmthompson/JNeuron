@@ -177,34 +177,47 @@ function nete(n,i,ex,num)
 end
 
 function extrap(v,t)
-   
+
     v2=zeros(Float64,length(0.0:.025:t))
 
     spike=find_cspikes(v)
+    cur_spike=spike[1]
+    spike_ind=1
 
     st=[Array(Int64,0) for i=1:length(spike)]
-    
-    sigl=size(v,1)
-    
-    act=zeros(Int64,size(v,2))
-    
-    @inbounds for i=1:length(v2)       
-        for j=1:size(v,2)      
-            if act[j]==0
-                if  rand()>.9995
-                    if sum(j.==spike)!=0
-                        push!(st[find(j.==spike)[1]],i)
+
+    firing=zeros(Int64,length(0.0:.025:t)-size(v,1))
+
+    @inbounds for i=1:size(v,2)
+
+        d=Poisson(100*rand()/40000)
+
+        rand!(d,firing)
+
+        j=1
+        if i==cur_spike
+            while j<length(firing)
+                if firing[j]>0
+                    push!(st[spike_ind],j)
+                    for k=1:size(v,1)
+                        v2[j]+=v[k,i]
+                        j+=1
                     end
-                    act[j]+=1
-                    v2[i]+=v[1,j]
                 end
-            else
-                v2[i]+=v[act[j],j]
-                act[j]+=1
-                    if act[j]>=sigl
-                        act[j]=0
+                j+=1
+            end
+            spike_ind+=1
+            cur_spike=spike[spike_ind]
+        else
+            while j<length(firing)
+                if firing[j]>0
+                    for k=1:size(v,1)
+                        v2[j]+=v[k,i]
+                        j+=1
                     end
-            end  
+                end
+                j+=1
+            end
         end
     end
     (v2,st)
