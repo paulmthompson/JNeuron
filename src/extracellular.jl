@@ -131,52 +131,69 @@ end
 
 pdot(x1,y1,z1,x2,y2,z2)=x1*x2+y1*y2+z1*z2
 
-function getv(i,e,v,l)
+function getv(im::Array{Float64,2},e::Extra_coeffs,v::Array{Float64,2},k::Int64)
     
-    mystart=round(Int,size(i,2)/2)
+    mystart=round(Int,size(im,2)/2)
     
-    for k=1:size(v,1)      
+    for i=1:size(v,1)      
         for j=1:length(e.c)
-            @inbounds v[k,l]+=e.c[j]*i[e.inds[j],mystart+k-1] 
-        end
-        
+            @inbounds v[i,k]+=e.c[j]*im[e.inds[j],mystart+i-1] 
+        end     
     end
     nothing
 end
 
-function mn(n,i,ex,cinds,xyz,inds,xyz1,v,k)
+function getv(im::Array{Float64,2},e::Extra_coeffs,v::Array{Float64,3},k::Int64,l::Int64)
     
-    resetn!(xyz,xyz1)
+    mystart=round(Int,size(im,2)/2)
     
-    randomize_shape!(n,xyz1,inds)
-    
-    translate3d!(xyz1,rand(-500.0:500.0),rand(-500.0:500.0),rand(-500.0:500.0))
-    
-    c=extracellular(ex,xyz1,inds,.3,cinds)
-    
-    getv(i,c,v,k)   
+    for i=1:size(v,1)      
+        for j=1:length(e.c)
+            @inbounds v[i,k,l]+=e.c[j]*im[e.inds[j],mystart+i-1] 
+        end     
+    end
+    nothing
 end
 
-
-function nete(n,i,ex,num)
+function nete(n::Neuron,im::Array{Float64,2},ex::Extracellular,num::Int64)
      
-    mystart=round(Int,size(i,2)/2)
-    v=zeros(Float64,length(mystart:size(i,2)),num)
-    
-    (xyz,inds)=getxyz(n);
-    
-    cinds=findcind(n)
-    
+    mystart=round(Int,size(im,2)/2)
+    v=zeros(Float64,length(mystart:size(im,2)),num)    
+    (xyz,inds)=getxyz(n);   
+    cinds=findcind(n)   
     xyz1=copyn(xyz)
     
-    for k=1:num
-        mn(n,i,ex,cinds,xyz,inds,xyz1,v,k)
-    end
-    
+    for i=1:num
+        resetn!(xyz,xyz1)
+        randomize_shape!(n,xyz1,inds)
+        translate3d!(xyz1,rand(-500.0:500.0),rand(-500.0:500.0),rand(-500.0:500.0))        
+        c=extracellular(ex,xyz1,inds,.3,cinds)
+        getv(im,c,v,i)      
+    end   
     v
 end
 
-function extrap(v,t)
+function nete{T}(n::Neuron,im::Array{Float64,2},ex::Array{T,1},num::Int64)
+
+    mystart=round(Int,size(im,2)/2)
+    v=zeros(Float64,length(mystart:size(im,2)),num,length(ex))    
+    (xyz,inds)=getxyz(n);   
+    cinds=findcind(n)   
+    xyz1=copyn(xyz)
+    
+    for i=1:num
+        resetn!(xyz,xyz1)
+        randomize_shape!(n,xyz1,inds)
+        translate3d!(xyz1,rand(-500.0:500.0),rand(-500.0:500.0),rand(-500.0:500.0))
+        for j=1:length(ex)
+            c=extracellular(ex[j],xyz1,inds,.3,cinds)
+            getv(im,c,v,i,j)  
+        end       
+    end   
+    v
+end
+
+function extrap(v::Array{Float64,2},t::Float64)
 
     v2=zeros(Float64,length(0.0:.025:t))
 
@@ -213,6 +230,57 @@ function extrap(v,t)
                 if firing[j]>0
                     for k=1:size(v,1)
                         v2[j]+=v[k,i]
+                        j+=1
+                    end
+                end
+                j+=1
+            end
+        end
+    end
+    (v2,st)
+end
+
+function extrap(v::Array{Float64,3},t::Float64)
+
+    v2=zeros(Float64,length(0.0:.025:t),size(v,3))
+
+    spike=find_cspikes(v)
+    cur_spike=spike[1]
+    spike_ind=1
+
+    st=[Array(Int64,0) for i=1:length(spike)]
+
+    firing=zeros(Int64,length(0.0:.025:t)-size(v,1))
+
+    @inbounds for i=1:size(v,2)
+
+        d=Poisson(100*rand()/40000)
+
+        rand!(d,firing)
+
+        j=1
+        if i==cur_spike
+            while j<length(firing)
+                if firing[j]>0
+                    push!(st[spike_ind],j)
+                    for k=1:size(v,1)
+                        for l=1:size(v2,2)
+                            v2[j,l]+=v[k,i,l]
+                        end
+                        j+=1
+                    end
+                end
+                j+=1
+            end
+            spike_ind+=1
+            cur_spike=spike[spike_ind]
+        else
+            while j<length(firing)
+                if firing[j]>0
+                    for k=1:size(v,1)
+                        for l=1:size(v2,2)
+                            v2[j,l]+=v[k,i,l]
+                        end
                         j+=1
                     end
                 end
