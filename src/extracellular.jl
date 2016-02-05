@@ -297,7 +297,7 @@ function find_cspikes(v)
     l=size(v,1)
     for i=1:size(v,2)
         for j=1:l
-            @inbounds if v[j,i]<-.03
+            @inbounds if abs(v[j,i])>.03
                 push!(spike_num,i)
                 break
             end

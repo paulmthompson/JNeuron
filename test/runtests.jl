@@ -1,5 +1,7 @@
-using JNeuron
-using Base.Test
+module TestSetup
 
-# write your own tests here
-@test 1 == 1
+using JNeuron
+
+include("import_test.jl")
+
+end
