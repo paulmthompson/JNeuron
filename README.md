@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/paulmthompson/JNeuron.svg?branch=master)](https://travis-ci.org/paulmthompson/JNeuron)
+[![codecov.io](http://codecov.io/github/paulmthompson/JNeuron/coverage.svg?branch=master)](http://codecov.io/github/paulmthompson/JNeuron?branch=master)
+
 # JNeuron
 Simple single neuron simulations in Julia
 
