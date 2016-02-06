@@ -101,9 +101,9 @@ end
 
 function point_coeffs(p::Array{Pt3d,1},xyz::Array{Float64,1})
 
-    middle=round(length(p)/2)
+    middle=round(Int64, length(p)/2)
             
-    dist1=vect(p[middle],xyz)
+    dist1=dist(p[middle],xyz)
 
     1/(dist1)
             

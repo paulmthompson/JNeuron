@@ -1,6 +1,5 @@
 julia 0.4
 ArrayViews
 DistributedArrays
-Yeppp
 PowerSeries
 Distributions
