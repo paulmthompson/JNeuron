@@ -325,7 +325,9 @@ end
 
 function newchild(nlcda::nlcda3) #new branch off of main section
     nlcda.sections[end-1].raw=vcat(nlcda.sections[end-1].raw,[nlcda.curxyz.x nlcda.curxyz.y nlcda.curxyz.z]) #add points that have accumulated to most recent section
-    nlcda.sections[end].raw=nlcda.sections[nlcda.opensecs[nlcda.depth-1]].raw[end,:] #make first point equal to most recent data point (where branch was)
+    #make first point equal to most recent data point (where branch was)
+    nlcda.sections[end].raw=zeros(Float64,1,3)
+    for i=1:3; nlcda.sections[end].raw[1,i]=nlcda.sections[nlcda.opensecs[nlcda.depth-1]].raw[end,i]; end
     nlcda.sections[end].d=[nlcda.sections[nlcda.opensecs[nlcda.depth-1]].d[end]]
 
     push!(nlcda.sections[nlcda.opensecs[nlcda.depth-1]].children,nlcda.sections[end]) #add as child to parent
