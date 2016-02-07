@@ -273,7 +273,9 @@ function extrap(v::Array{Float64,3},t::Float64)
                 j+=1
             end
             spike_ind+=1
-            cur_spike=spike[spike_ind]
+            if spike_ind<=length(spike)
+                cur_spike=spike[spike_ind]
+            end
         else
             while j<length(firing)
                 if firing[j]>0
