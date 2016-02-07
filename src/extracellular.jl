@@ -198,8 +198,12 @@ function extrap(v::Array{Float64,2},t::Float64)
     v2=zeros(Float64,length(0.0:.025:t))
 
     spike=find_cspikes(v)
-    cur_spike=spike[1]
-    spike_ind=1
+    if length(spike)>0
+        cur_spike=spike[1]
+        spike_ind=1
+    else
+        cur_spike=0
+    end
 
     st=[Array(Int64,0) for i=1:length(spike)]
 
@@ -224,7 +228,9 @@ function extrap(v::Array{Float64,2},t::Float64)
                 j+=1
             end
             spike_ind+=1
-            cur_spike=spike[spike_ind]
+            if spike_ind<=length(spike)
+                cur_spike=spike[spike_ind]
+            end
         else
             while j<length(firing)
                 if firing[j]>0
@@ -245,8 +251,12 @@ function extrap(v::Array{Float64,3},t::Float64)
     v2=zeros(Float64,length(0.0:.025:t),size(v,3))
 
     spike=find_cspikes(v)
-    cur_spike=spike[1]
-    spike_ind=1
+    if length(spike)>0
+        cur_spike=spike[1]
+        spike_ind=1
+    else
+        cur_spike=0
+    end
 
     st=[Array(Int64,0) for i=1:length(spike)]
 
