@@ -14,6 +14,10 @@ abstract NetworkP <: Network
 abstract Helper
 abstract Puddle
 
+if VERSION < v"0.5.0-"
+    typealias RemoteChannel RemoteRef
+end
+
 immutable Pt3d
     x::Float64
     y::Float64
@@ -160,7 +164,7 @@ type Stim
     tstop::Float64
 end
 
-Stim(Is,mtype,neur,node,tstart,tstop)=Stim([Is],mtype,neur,node,tstart,tstop)
+Stim(Is::Float64,mtype::Int,neur::Int,node::Int,tstart::Float64,tstop::Float64)=Stim([Is],mtype,neur,node,tstart,tstop)
 
 type Intracellular
     mtype::Int64
@@ -249,12 +253,12 @@ function gen_neuron(prop,k::Int64)
             h::HelperP
             i::Int64
             imax::Int64
-            r::RemoteRef{MyChannel}
+            r::RemoteChannel{MyChannel}
         end
 
-        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP(),0,0,RemoteRef(()->MyChannel(0),1))
-        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h,0,0,RemoteRef(()->MyChannel(0),1))
-        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64,t::Int64,mutex::RemoteRef{MyChannel})=$(symbol("Puddle_$k"))(n,HelperP(dims,l),0,t,mutex)
+        Puddle(n::Array{$(symbol("Neuron_$k")),1})=$(symbol("Puddle_$k"))(n,HelperP(),0,0,RemoteChannel(()->MyChannel(0),1))
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},h::HelperP)=$(symbol("Puddle_$k"))(n,h,0,0,RemoteChannel(()->MyChannel(0),1))
+        Puddle(n::Array{$(symbol("Neuron_$k")),1},dims::UnitRange{Int64},l::Int64,t::Int64,mutex::RemoteChannel{MyChannel})=$(symbol("Puddle_$k"))(n,HelperP(dims,l),0,t,mutex)
 
         function make_neuron(prop::$(typeof(prop)),n::Array{Node,1},s::Array{Section,1},inter::Array{Array{Int64,1}})
 

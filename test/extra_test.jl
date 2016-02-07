@@ -21,7 +21,6 @@ add!(mynetwork,electrode2_1);
 electrode3_1=Extracellular(JNeuron.Mixed(),[0.0,0.0,0.0])
 add!(mynetwork,electrode3_1);
 
-
 mynetwork2=Network((deepcopy(myneuron),myneuron2),15.0)
 
 electrode1_2=Extracellular([0.0,0.0,0.0]);
