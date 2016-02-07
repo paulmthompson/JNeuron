@@ -33,6 +33,9 @@ add!(mynetwork2,electrode2_2);
 electrode3_2=Extracellular(JNeuron.Mixed(),[0.0,0.0,0.0])
 add!(mynetwork2,electrode3_2);
 
+run!(mynetwork,true);
+run!(mynetwork2,true);
+
 facts() do
 
     for i=1:3
@@ -40,12 +43,13 @@ facts() do
         @fact length(mynetwork.extra[i].coeffs) --> 1
         @fact length(mynetwork.extra[i].coeffs[1].c) --> 726
         @fact length(mynetwork.extra[i].coeffs[1].inds) --> 726
+        @fact mynetwork.extra[i].v[end] --> roughly(0.0, atol=1e-4)
     end
 
-    
     for i=1:3
         @fact length(mynetwork2.extra[i].coeffs) --> 2
         @fact length(mynetwork2.extra[i].v) --> 601
+        @fact mynetwork2.extra[i].v[end] --> roughly(0.0, atol=1e-4)
         for j=1:2   
             @fact length(mynetwork2.extra[i].coeffs[j].c) --> 726
             @fact length(mynetwork2.extra[i].coeffs[j].inds) --> 726
@@ -53,5 +57,23 @@ facts() do
     end
 
 end
+
+mynetwork3=Network(deepcopy(myneuron),15.0)
+mystim=Stim(5.0,1,1,924,5.0,5.125)
+add!(mynetwork3,mystim);
+i3=JNeuron.runc(mynetwork3,true);
+mye=Extracellular([500.0,125.0,0.0])
+mye2=Extracellular([500.0,75.0,0.0])
+myv=JNeuron.nete(myneuron,i3,[mye,mye2],1000);
+(myv3, mys)=JNeuron.extrap(myv,500.0);
+
+facts() do
+
+    @fact size(i3) --> (925,601)
+    @fact size(myv) --> (302,1000,2)
+    @fact size(myv3) --> (20001,2)
+
+end
+
 
 end
