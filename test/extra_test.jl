@@ -61,6 +61,19 @@ mynetwork3=Network(deepcopy(myneuron),15.0)
 mystim=Stim(5.0,1,1,924,5.0,5.125)
 add!(mynetwork3,mystim);
 i3=JNeuron.runc(mynetwork3,true);
+
+mye=Extracellular([500.0,125.0,0.0])
+myv=JNeuron.nete(myneuron,i3,mye,100);
+(myv3, mys)=JNeuron.extrap(myv,50.0);
+
+facts() do
+
+    @fact size(i3) --> (925,601)
+    @fact size(myv) --> (302,100)
+    @fact size(myv3) --> (2001,)
+
+end
+
 mye=Extracellular([500.0,125.0,0.0])
 mye2=Extracellular([500.0,75.0,0.0])
 myv=JNeuron.nete(myneuron,i3,[mye,mye2],100);
@@ -68,7 +81,6 @@ myv=JNeuron.nete(myneuron,i3,[mye,mye2],100);
 
 facts() do
 
-    @fact size(i3) --> (925,601)
     @fact size(myv) --> (302,100,2)
     @fact size(myv3) --> (2001,2)
 
