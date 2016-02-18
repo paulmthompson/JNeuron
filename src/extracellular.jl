@@ -133,7 +133,7 @@ pdot(x1,y1,z1,x2,y2,z2)=x1*x2+y1*y2+z1*z2
 
 function getv(im::Array{Float64,2},e::Extra_coeffs,v::Array{Float64,2},k::Int64)
     
-    mystart=round(Int,size(im,2)/2)
+    mystart=20
     
     for i=1:size(v,1)      
         for j=1:length(e.c)
@@ -145,7 +145,7 @@ end
 
 function getv(im::Array{Float64,2},e::Extra_coeffs,v::Array{Float64,3},k::Int64,l::Int64)
     
-    mystart=round(Int,size(im,2)/2)
+    mystart=20
     
     for i=1:size(v,1)      
         for j=1:length(e.c)
@@ -157,7 +157,7 @@ end
 
 function nete(n::Neuron,im::Array{Float64,2},ex::Extracellular,num::Int64)
      
-    mystart=round(Int,size(im,2)/2)
+    mystart=20
     v=zeros(Float64,length(mystart:size(im,2)),num)    
     (xyz,inds)=getxyz(n);   
     cinds=findcind(n)   
@@ -175,7 +175,7 @@ end
 
 function nete{T}(n::Neuron,im::Array{Float64,2},ex::Array{T,1},num::Int64)
 
-    mystart=round(Int,size(im,2)/2)
+    mystart=20
     v=zeros(Float64,length(mystart:size(im,2)),num,length(ex))    
     (xyz,inds)=getxyz(n);   
     cinds=findcind(n)   
@@ -309,7 +309,7 @@ function find_cspikes(v)
     l=size(v,1)
     for i=1:size(v,2)
         for j=1:l
-            @inbounds if abs(v[j,i])>.03
+            @inbounds if v[j,i]<-0.2
                 push!(spike_num,i)
                 break
             end
@@ -323,12 +323,15 @@ function runc(n::NetworkS,init=false)
     myi=zeros(Float64,length(n.neur.N_1[1].i_vm),length(n.t))    
     if init==true
         init!(n)
-    end                         
+    end  
+    for i=1:5
+	n.neur.N_1[1].v[i]=30.0
+    end
+    for i=0:2
+	n.neur.N_1[1].v[end-i]=30
+    end                       
     for i=1:length(n.t)
-
-        for j=1:length(n.stim)
-            @inbounds getfield(n.neur,n.stim[j].mtype)[n.stim[j].neur].rhs[n.stim[j].node]+=n.stim[j].Is[i]
-        end
+	
         @inbounds main(n.neur)
         
         myi[:,i]=n.neur.N_1[1].i_vm[:]          
