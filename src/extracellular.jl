@@ -1,11 +1,3 @@
-#=
-
-Extracellular 
-(x,y,z) extracellular position
-sigma: extracellular conductivity
-=#
-
-#Point Source
 
 function extracellular{T}(e::Extracellular{T},n::Neuron,sigma::Float64)
 
@@ -73,13 +65,27 @@ function line_coeffs(pt3d::Array{Pt3d,1},xyz::Array{Float64,1})
     d1=vect(pt3d[1],xyz)
     d2=vect(pt3d[end],xyz)
 
-    ln=dot(unit_ds,d1)
+    #ln=dot(unit_ds,d1)
     hn=dot(unit_ds,d2)
+    ln=delta_s+hn
 
-    a=sqrt(sum(d2.^2))-hn
-    b=sqrt(sum(d1.^2))-ln
+    if (ln>0) && (hn<0)
 
-    1/delta_s*log(abs(a/b))  
+        a=sqrt(sum(d2.^2))+abs(hn)
+        b=(ln+sqrt(sum(d1.^2))) / abs(sum(d2.^2) - hn*hn)
+
+        d=log(a*b)
+        
+    else
+        
+        a=sqrt(sum(d2.^2))+abs(hn)
+        b=sqrt(sum(d1.^2))+abs(ln)
+
+        d=log(a/b)
+
+    end
+
+    1/delta_s*d
 end
 
 function line_coeffs(xyz::Array{Float64,2},xyze::Array{Float64,1},i::Int64)
@@ -89,14 +95,27 @@ function line_coeffs(xyz::Array{Float64,2},xyze::Array{Float64,1},i::Int64)
     @inbounds (d1_x,d1_y,d1_z)=vect(xyz[i,1],xyz[i,2],xyz[i,3],xyze[1],xyze[2],xyze[3])
     @inbounds (d2_x,d2_y,d2_z)=vect(xyz[i+1,1],xyz[i+1,2],xyz[i+1,3],xyze[1],xyze[2],xyze[3])
 
-    ln=pdot(ds_x,ds_y,ds_z,d1_x,d1_y,d1_z)
+    #ln=pdot(ds_x,ds_y,ds_z,d1_x,d1_y,d1_z)
     hn=pdot(ds_x,ds_y,ds_z,d2_x,d2_y,d2_z)
+    ln=delta_s+hn
 
-     a=sqrt(d2_x*d2_x+d2_y*d2_y+d2_z*d2_z)-hn
-     b=sqrt(d1_x*d1_x+d1_y*d1_y+d1_z*d1_z)-ln
+    if (ln>0) && (hn<0)
 
-    1/delta_s*log(abs(a/b))
-    
+        a=sqrt(d2_x*d2_x+d2_y*d2_y+d2_z*d2_z)+hn
+        b=(ln+sqrt(d1_x*d1_x+d1_y*d1_y+d1_z*d1_z)) / abs(d2_x*d2_x+d2_y*d2_y+d2_z*d2_z - hn*hn)
+
+        d=log(a*b)
+
+    else
+        
+        a=sqrt(d2_x*d2_x+d2_y*d2_y+d2_z*d2_z)+abs(hn)
+        b=sqrt(d1_x*d1_x+d1_y*d1_y+d1_z*d1_z)+abs(ln)
+
+        d=log(a/b)
+
+    end
+
+    1/delta_s*d
 end
 
 function point_coeffs(p::Array{Pt3d,1},xyz::Array{Float64,1})
@@ -105,8 +124,7 @@ function point_coeffs(p::Array{Pt3d,1},xyz::Array{Float64,1})
             
     dist1=dist(p[middle],xyz)
 
-    1/(dist1)
-            
+    1/(dist1)          
 end
 
 dist(p1::Pt3d, p2::Pt3d)=sqrt((p1.x-p2.x)^2+(p1.y-p2.y)^2+(p1.z-p2.z)^2)
@@ -221,7 +239,9 @@ function extrap(v::Array{Float64,2},t::Float64)
                 if firing[j]>0
                     push!(st[spike_ind],j)
                     for k=1:size(v,1)
-                        v2[j]+=v[k,i]
+                        if abs(v[k,i])>abs(v2[j])
+                            v2[j]=v[k,i]+randn()*.01
+                        end
                         j+=1
                     end
                 end
@@ -235,7 +255,9 @@ function extrap(v::Array{Float64,2},t::Float64)
             while j<length(firing)
                 if firing[j]>0
                     for k=1:size(v,1)
-                        v2[j]+=v[k,i]
+                        if abs(v[k,i])>abs(v2[j])
+                            v2[j]=v[k,i]+randn()*.01
+                        end
                         j+=1
                     end
                 end
@@ -250,7 +272,7 @@ function extrap(v::Array{Float64,3},t::Float64)
 
     v2=zeros(Float64,length(0.0:.025:t),size(v,3))
 
-    spike=find_cspikes(v)
+    spike=find_cspikes(mean(v,3))
     if length(spike)>0
         cur_spike=spike[1]
         spike_ind=1
@@ -275,7 +297,9 @@ function extrap(v::Array{Float64,3},t::Float64)
                     push!(st[spike_ind],j)
                     for k=1:size(v,1)
                         for l=1:size(v2,2)
-                            v2[j,l]+=v[k,i,l]
+                            if abs(v[k,i,l])>abs(v2[j,l])
+                                v2[j,l]=v[k,i,l]+randn()*.01
+                            end
                         end
                         j+=1
                     end
@@ -291,7 +315,9 @@ function extrap(v::Array{Float64,3},t::Float64)
                 if firing[j]>0
                     for k=1:size(v,1)
                         for l=1:size(v2,2)
-                            v2[j,l]+=v[k,i,l]
+                            if abs(v[k,i,l])>abs(v2[j,l])
+                                v2[j,l]=v[k,i,l]+randn()*.01
+                            end
                         end
                         j+=1
                     end
@@ -309,7 +335,7 @@ function find_cspikes(v)
     l=size(v,1)
     for i=1:size(v,2)
         for j=1:l
-            @inbounds if v[j,i]<-0.2
+            @inbounds if v[j,i]<-0.12
                 push!(spike_num,i)
                 break
             end
