@@ -69,7 +69,7 @@ myv=JNeuron.nete(myneuron,i3,mye,100);
 facts() do
 
     @fact size(i3) --> (925,601)
-    @fact size(myv) --> (302,100)
+    @fact size(myv) --> (582,100)
     @fact size(myv3) --> (2001,)
 
 end
@@ -81,7 +81,7 @@ myv=JNeuron.nete(myneuron,i3,[mye,mye2],100);
 
 facts() do
 
-    @fact size(myv) --> (302,100,2)
+    @fact size(myv) --> (582,100,2)
     @fact size(myv3) --> (2001,2)
 
 end
