@@ -2,16 +2,14 @@
 [![codecov.io](http://codecov.io/github/paulmthompson/JNeuron/coverage.svg?branch=master)](http://codecov.io/github/paulmthompson/JNeuron?branch=master)
 
 # JNeuron
-Simple single neuron simulations in Julia
+This was designed to do simple single neuron simulations in Julia. Basically it is a Julia port of the most basic features of NEURON. Currently, this can import 3D neurolucida files, spatially discritize these models, insert several kinds of ion channels, and find intracellular voltages along the neuron.
+
+This is basically vaporware, and was mostly an exercise to learn Julia back in the day. I don't expect that it would run without some serious TLC
 
 ## Installation
 
 Pkg.clone("https://github.com/paulmthompson/JNeuron.git")
 
-## Documentation:
+## (Woefully out of data) Documentation:
 http://jneuron.readthedocs.org/en/latest/
-
-## Overview
-
-This is a toolbox for detailed multicompartmental neuronal models, and related calculations such as extracellular potentials and network activity. Currently, this can import 3D neurolucida files, spatially discritize these models, insert several kinds of ion channels, and find intracellular voltages along the neuron. More functionality and documentation to come.
 
